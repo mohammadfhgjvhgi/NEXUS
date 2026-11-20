@@ -1,0 +1,74 @@
+{
+ "worker": "phase28",
+ "stages": {
+  "verify": {
+   "ui": {
+    "expected": "c77f6b4d5bf628c4",
+    "got": "c77f6b4d5bf628c4",
+    "ok": true
+   },
+   "launcher": {
+    "expected": "da9b66c2e9a958e5",
+    "got": "da9b66c2e9a958e5",
+    "ok": true
+   },
+   "gateway": {
+    "expected": "61c2de7ce876363f",
+    "got": "61c2de7ce876363f",
+    "ok": true
+   },
+   "index": {
+    "expected": "5f47b69cf432d03f",
+    "got": "5f47b69cf432d03f",
+    "ok": true
+   },
+   "css": {
+    "expected": "69b179305ca8015f",
+    "got": "69b179305ca8015f",
+    "ok": true
+   },
+   "js": {
+    "expected": "67c1fbd55516e876",
+    "got": "67c1fbd55516e876",
+    "ok": true
+   },
+   "pages": {
+    "expected": "db0fbebb686cc708",
+    "got": "db0fbebb686cc708",
+    "ok": true
+   }
+  },
+  "backup": [
+   "nexus_ui.py.pre28.bak",
+   "nexus_launcher.py.pre28.bak",
+   "NEXUS.exe.spec.pre28.bak"
+  ],
+  "compile": "ok",
+  "rebuild": {
+   "rc": 0,
+   "exe_bytes": 90844941,
+   "exe_sha256": "ac5becdb7e1f9f24fe8b7ab96c21dcd679ba053cfa4fa21092a546d95b4a60f6"
+  },
+  "check": {
+   "rc": 0,
+   "tail": "a mind of its own.\n  local-first  ·  stdlib core  ·  evidence or silence\n==========================================================\ncore packages : 37 ok / 0 err (of 37)\nmodel runtime : offline at http://127.0.0.1:8080\nverdict       : PASS  (2.94s)\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\n"
+  },
+  "selftest": {
+   "rc": 0,
+   "verdict": "PASS",
+   "sections_ok": true,
+   "seconds": 16.04,
+   "port": 8899
+  },
+  "certify": {
+   "status_md": "M:\\NEXUS\\build\\midpoint\\PHASE-28-STATUS.md",
+   "readme": "M:\\NEXUS\\remote\\README-DEPLOY.md",
+   "project_card": "M:\\NEXUS\\proofs\\PROJECT-CARD.md",
+   "phase28_cert_sha256": "5f13d2d6c8ef7eb8b0d0f5ef8552cdb8fa0019b2d1bf8236e47768f70b7602e1"
+  }
+ },
+ "utc_start": "2026-11-19T22:33:58Z",
+ "verdict": "PASS",
+ "seconds": 176.6,
+ "utc_end": "2026-11-19T22:36:55Z"
+}

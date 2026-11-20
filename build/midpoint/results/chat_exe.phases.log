@@ -1,0 +1,30 @@
+{"utc": "2026-09-13T17:37:09Z", "phase": "start", "detail": "worker pid=6536"}
+{"utc": "2026-09-13T17:37:09Z", "phase": "find_begin", "detail": ""}
+{"utc": "2026-09-13T17:37:09Z", "phase": "find_hit", "detail": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:37:09Z", "phase": "model_picked", "detail": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_qwen3-0.6b-q4km.gguf (396.7 MB)"}
+{"utc": "2026-09-13T17:37:09Z", "phase": "server_start_begin", "detail": ""}
+{"utc": "2026-09-13T17:40:11Z", "phase": "done", "detail": "verdict=FAIL"}
+{"utc": "2026-09-13T17:40:11Z", "phase": "server_stopped", "detail": ""}
+{"utc": "2026-09-13T17:43:57Z", "phase": "worker_v2_start", "detail": "proxies={}"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "chat_stage_begin", "detail": "pid=10504"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_begin", "detail": ""}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-vulkan-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "find_hit", "detail": "M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-vulkan-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "model_picked", "detail": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_qwen3-0.6b-q4km.gguf (396.7 MB)"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "server_try", "detail": "1/6 C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:35Z", "phase": "server_died_instantly", "detail": "rc=3221225501"}
+{"utc": "2026-09-13T17:47:35Z", "phase": "server_try", "detail": "2/6 C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:40Z", "phase": "server_died_instantly", "detail": "rc=3221225781"}
+{"utc": "2026-09-13T17:47:40Z", "phase": "server_try", "detail": "3/6 C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-vulkan-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:46Z", "phase": "server_died_instantly", "detail": "rc=3221225501"}
+{"utc": "2026-09-13T17:47:46Z", "phase": "server_try", "detail": "4/6 M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:51Z", "phase": "server_died_instantly", "detail": "rc=3221225501"}
+{"utc": "2026-09-13T17:47:51Z", "phase": "server_try", "detail": "5/6 M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:47:56Z", "phase": "server_died_instantly", "detail": "rc=3221225781"}
+{"utc": "2026-09-13T17:47:56Z", "phase": "server_try", "detail": "6/6 M:\\C-RELIEF\\mohands\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-vulkan-avx2-2.28.2\\llama-server.exe"}
+{"utc": "2026-09-13T17:48:01Z", "phase": "server_died_instantly", "detail": "rc=3221225501"}
+{"utc": "2026-09-13T17:48:01Z", "phase": "chat_stage_done", "detail": "verdict=FAIL"}

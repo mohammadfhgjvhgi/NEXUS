@@ -1,0 +1,7 @@
+{"utc": "2026-09-13T17:52:37Z", "phase": "start", "detail": ""}
+{"utc": "2026-09-13T17:52:40Z", "phase": "cpu_done", "detail": ""}
+{"utc": "2026-09-13T17:52:43Z", "phase": "hardware_done", "detail": ""}
+{"utc": "2026-09-13T17:52:47Z", "phase": "where_done", "detail": ""}
+{"utc": "2026-09-13T17:52:47Z", "phase": "apps_done", "detail": "7 hits"}
+{"utc": "2026-09-13T17:52:47Z", "phase": "mimo_done", "detail": ""}
+{"utc": "2026-09-13T17:52:47Z", "phase": "done", "detail": ""}

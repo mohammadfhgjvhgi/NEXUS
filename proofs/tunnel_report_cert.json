@@ -1,0 +1,11 @@
+{
+ "check": "tunnel-method-report-delivery",
+ "utc": "2026-10-24T13:31:40Z",
+ "file": "M:\\NEXUS\\proofs\\TUNNEL-METHOD-REPORT.md",
+ "size_bytes": 19110,
+ "sha256": "612c6d36c3cde2f481048eecf2488ef75d20b09b07350a5c2423c97c13240144",
+ "expected_crlf_sha256": "612c6d36c3cde2f481048eecf2488ef75d20b09b07350a5c2423c97c13240144",
+ "delivered_via": "tunnel pair #6 (t1) code_write_file",
+ "verified": true,
+ "verdict": "PASS"
+}

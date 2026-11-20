@@ -1,0 +1,57 @@
+{
+  "python": "3.14.5",
+  "machine": "DESKTOP-46N9B2S · Windows 10",
+  "phase": 13,
+  "§13.1 the kinds extracted on the box (failure+decision+pattern+lesson)": {
+    "ok": true,
+    "detail": "kinds=['decision', 'failure', 'lesson', 'pattern']"
+  },
+  "AR lesson stored + promoted into the §12 engine (§13.3)": {
+    "ok": true,
+    "detail": "outcome={'task_id': 'dev-1', 'experiences': 3, 'lessons_stored': 3, 'lessons_merged': 0, 'lessons_promoted': 3, 'lessons_refused': 0, 'skill_candidates': 0, 'skills_promoted': 0, 'refused': [], 'promoted_memory_ids': ['mem_2b9df2607731927b', 'mem_5ed45a205d1aa67a', 'mem_1ec2232bb31140c5']}"
+  },
+  "EN lesson stored + promoted (§13.3)": {
+    "ok": true,
+    "detail": ""
+  },
+  "the opinion (no evidence) refused by §13.3 stage 3": {
+    "ok": true,
+    "detail": "outcome={'task_id': 'dev-3', 'experiences': 2, 'lessons_stored': 0, 'lessons_merged': 0, 'lessons_promoted': 0, 'lessons_refused': 2, 'skill_candidates': 0, 'skills_promoted': 0, 'refused': [{'lesson': 'worked: a moody day for tunnels', 'reason': 'no evidence — an opinion, not a lesson', 'kind': 'su"
+  },
+  "the refused opinion stays in the audit trail": {
+    "ok": true,
+    "detail": ""
+  },
+  "two repeats: no skill candidate yet (§13.4 needs three)": {
+    "ok": true,
+    "detail": ""
+  },
+  "Task A+B+C → ONE skill candidate, occurrences 3, promoted": {
+    "ok": true,
+    "detail": "skills=[(3, 'promoted')]"
+  },
+  "the skill record lives in the §12 engine (source=learning)": {
+    "ok": true,
+    "detail": ""
+  },
+  "recall answers in Arabic from the engine": {
+    "ok": true,
+    "detail": "promoted=['تحقق من رمز الحامل قبل أول نداء عبر النفق', 'failed: فشل الاتصال — يجب إصلاح الرمز قبل أول نداء']"
+  },
+  "a future task's §12.7 retrieve() already carries the lesson": {
+    "ok": true,
+    "detail": "head='[lessons]\\n- close the SQLite handle before removing folders (source: learning, conf: 0.70)\\n- worked: closed the sqlite handle before rmtree — folders lock (sour'"
+  },
+  "the honest ledger: pending lessons exist below threshold": {
+    "ok": true,
+    "detail": "stats={'pending': 1, 'promoted': 6, 'superseded': 0}"
+  },
+  "restart persistence across a process boundary (fresh python)": {
+    "ok": true,
+    "detail": "  child: records=True experiences=True skill=True merge=True recall=True"
+  },
+  "child_output_tail": [
+    "  child: records=True experiences=True skill=True merge=True recall=True",
+    "CHILD RESTART: PASS"
+  ]
+}

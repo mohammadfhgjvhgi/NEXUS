@@ -1,0 +1,20 @@
+{"utc": "2026-09-13T16:34:41Z", "phase": "autopilot:recon_before_begin", "detail": "full device audit starting"}
+{"utc": "2026-09-13T16:37:34Z", "phase": "autopilot:recon_before_done", "detail": "seconds=173.1"}
+{"utc": "2026-09-13T16:37:34Z", "phase": "autopilot:skip_done", "detail": "mimo-snapshots"}
+{"utc": "2026-09-13T16:37:34Z", "phase": "autopilot:candidate_begin", "detail": "nvidia-ota src=C:\\ProgramData\\NVIDIA Corporation\\NVIDIA App\\UpdateFramework\\ota-artifacts"}
+{"utc": "2026-09-13T16:38:52Z", "phase": "autopilot:candidate_end", "detail": "nvidia-ota moved gb=3.47"}
+{"utc": "2026-09-13T16:38:52Z", "phase": "autopilot:candidate_begin", "detail": "minecraft src=C:\\Users\\MohandsMohammad\\AppData\\Roaming\\.minecraft"}
+{"utc": "2026-09-13T16:40:12Z", "phase": "autopilot:candidate_end", "detail": "minecraft moved gb=2.83"}
+{"utc": "2026-09-13T16:40:12Z", "phase": "autopilot:candidate_begin", "detail": "roblox-gdk src=C:\\Users\\MohandsMohammad\\AppData\\Local\\RobloxPCGDK"}
+{"utc": "2026-09-13T16:41:52Z", "phase": "autopilot:candidate_end", "detail": "roblox-gdk moved gb=2.53"}
+{"utc": "2026-09-13T16:41:52Z", "phase": "autopilot:candidate_begin", "detail": "android-sdk src=C:\\Users\\MohandsMohammad\\AppData\\Local\\Android"}
+{"utc": "2026-09-13T16:44:21Z", "phase": "autopilot:candidate_end", "detail": "android-sdk moved gb=1.58"}
+{"utc": "2026-09-13T16:44:21Z", "phase": "autopilot:candidate_begin", "detail": "perplexity src=C:\\Users\\MohandsMohammad\\AppData\\Local\\Perplexity"}
+{"utc": "2026-09-13T16:45:27Z", "phase": "autopilot:candidate_end", "detail": "perplexity moved gb=1.52"}
+{"utc": "2026-09-13T16:45:27Z", "phase": "autopilot:candidate_begin", "detail": "platformio src=C:\\Users\\MohandsMohammad\\.platformio"}
+{"utc": "2026-09-13T16:46:29Z", "phase": "autopilot:candidate_end", "detail": "platformio moved gb=2.52"}
+{"utc": "2026-09-13T16:46:29Z", "phase": "autopilot:candidate_begin", "detail": "bun src=C:\\Users\\MohandsMohammad\\.bun"}
+{"utc": "2026-09-13T16:53:26Z", "phase": "autopilot:candidate_end", "detail": "bun moved gb=1.37"}
+{"utc": "2026-09-13T16:53:26Z", "phase": "autopilot:recon_after_begin", "detail": "full device audit starting"}
+{"utc": "2026-09-13T16:55:23Z", "phase": "autopilot:recon_after_done", "detail": "seconds=116.8"}
+{"utc": "2026-09-13T16:55:23Z", "phase": "autopilot:autopilot_finished", "detail": "stage=candidate freed=15.82GB c_free=33.18GB"}

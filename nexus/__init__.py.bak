@@ -1,0 +1,165 @@
+"""NEXUS — Local Autonomous Computer Intelligence Platform.
+
+Package root. Phase 1 (Final Build Plan §2) delivered the Core
+Foundation:
+
+* ``nexus.core.config``     — typed configuration, environment resolution,
+                               local paths, runtime configuration (§2.1)
+* ``nexus.events``          — central Event Bus with the 28 canonical
+                               events (§2.2)
+* ``nexus.core.session``    — User → Conversation → Task → Session (§2.3)
+* ``nexus.core.engine``     — Task State Machine, 13 states (§2.4)
+* ``nexus.core.persistence``— Task persistence, 11 fields (§2.5)
+
+Phase 2 (Final Build Plan §3) added Workspace + Scope + Policy —
+*Full Control within Task Scope*:
+
+* ``nexus.core.workspace``  — workspace registry, seven fields (§3.1)
+* ``nexus.core.scope``      — six-dimension scope, natural-language
+                               resolution, scoped cross-workspace
+                               access (§3.2–§3.4)
+* ``nexus.core.policy``     — task policies, nine components, and the
+                               decision engine (§3.5)
+
+Phase 3 (Final Build Plan §4) added Hardware Intelligence + the
+Resource Manager — *the machine knows itself and works within its
+capacities*:
+
+* ``nexus.resources``       — the twelve §4.1 scan targets (Windows
+                               system libraries · POSIX · static), the
+                               persisted ``hardware_profile`` (§4.2,
+                               system data — never model memory),
+                               change detection (§4.3), the eight
+                               tracked resources (§4.4) and the Spec
+                               §92 degradation-ladder policies (§4.5)
+
+Phase 4 (Final Build Plan §5) added the Local Model Runtime —
+*the intelligence enters the machine, on its own resources*:
+
+* ``nexus.models``         — the §5.1 ``ModelProvider`` interface
+                               (seven members, verbatim), the §5.2
+                               Model Registry (thirteen fields), the
+                               §5.3 llama.cpp adapter over
+                               ``llama-server``, the §5.4 dynamic
+                               loading (select · load · run · keep
+                               warm · unload — per resources), the §5.5
+                               benchmark protocol (Spec §135) and the
+                               §5.7 Model Router; seeded with the §5.6
+                               MiMo Edge pool (the user's measured
+                               baselines, Spec §88)
+
+Phase 5 (Final Build Plan §6) added the Agent Runtime — *the model
+becomes an agent*:
+
+* ``nexus.agents``         — the §6.1 Agent abstraction (eight
+                               verbatim fields), the §6.2 Agent Loop
+                               (Observe → Context → Decide →
+                               Tool/Agent call → Observe → Verify →
+                               Continue), the §6.3 Master Agent (seven
+                               behaviors driving the §2.4 task machine),
+                               the §6.4 Agent Registry (four verbs,
+                               atomic persistence), the §6.5 structured
+                               Agent Communication (eight verbatim
+                               message fields) and the §6.6 Agent
+                               Ownership (resource → owner, conflicts
+                               become coordination)
+
+Phase 7 (Final Build Plan §8) added the Tool System — *every
+capability enters as one unified tool*:
+
+* ``nexus.tools``         — the §8.1 Tool Registry (nine fields per
+                               tool, validated, version-aware,
+                               freezable), the §8.2 Tool Router (the
+                               verbatim seven-stage pipeline with a
+                               proof trace), the §8.3 nine native
+                               tools (stdlib), and the §8.4/§8.5 MCP
+                               interop — the official Python SDK
+                               (v2, MODE A ``[mcp]`` extra) behind the
+                               router, every server behind NEXUS
+                               permission + scope
+
+Phase 8/9/10 (Final Build Plan §9/§10/§11) added the Windows
+Computer Runtime (the §9.1 façade + the §9.5 fallback hierarchy), the
+Window Manager (ownership · arbitration · monitors · overlay) and
+the Browser Runtime (Playwright behind the router, isolated
+user/agent sessions, the DPAPI vault).
+
+Phase 11 (Final Build Plan §12) added the Vision Runtime — *the eyes
+for the applications with no useful UI structure*:
+
+* ``nexus.vision``         — the §12.1 Screen Capture (full · window
+                               · region — GDI/PrintWindow/DWM in pure
+                               ctypes), the §12.2 VisionProvider
+                               (analyze · locate · classify · compare)
+                               over the Phase 4 Model Runtime, the
+                               §12.5 OCR engine candidates + the
+                               device benchmark that decides, and the
+                               §9.5 chain's fourth rung — locate by
+                               description, then real input
+
+Phase 12 (New Plan §12 / Build Plan §13) added the Memory System —
+*from persistence to a Memory Engine*:
+
+* ``nexus.memory``         — the §12.1 contracts (MemoryProvider ·
+                               MemoryRecord · MemoryQuery ·
+                               MemoryScope · MemoryEvidence), the
+                               §12.2 twelve-scope hierarchy, the §12.4
+                               SQLite index (records · evidence ·
+                               relationships · audit · local vectors in
+                               one file), the §12.5 semantic layer
+                               (Qdrant MODE A behind the ``[qdrant]``
+                               extra, local cosine fallback always),
+                               the §12.6 Mem0 adapter (MODE B), the
+                               §12.7 retrieval pipeline with the
+                               §12.8 conflict ladder, §12.9 audited
+                               forget and §12.10 compression — all
+                               seven §13.1 verbs on one engine
+
+Phase 13 (New Plan §13) added the Learning System — *«يتذكر» is not
+«يتعلم»*:
+
+* ``nexus.learning``       — the §13.1 six experience kinds and the
+                               Experience Extractor, the §13.2 Learning
+                               Record, the §13.3 pipeline (Experience →
+                               Candidate lesson → Evidence check →
+                               Confidence → Store → Future retrieval),
+                               the §13.4 Skill Candidate + Workflow
+                               miner (Task A, B, C → pattern → skill),
+                               all stdlib, all NEXUS-native — with
+                               letta-code/prime-agent/DSPy as MODE D/B
+                               references only, and promoted lessons
+                               landing in the §12 Memory Engine so
+                               future tasks already know them
+
+Phase 14 (New Plan §14) added the Code-Intelligence Engine — *large
+projects, understood without shipping 400k lines to the model*:
+
+* ``nexus.codeintel``  — the §14.1 File Index, §14.2 Symbol Index,
+                               §14.3 AST (stdlib-ast + tree-sitter
+                               MODE A + regex fallback), §14.4
+                               Dependency Graph, §14.5 API Graph,
+                               §14.6 Test Graph, §14.7 Architecture
+                               Map, §14.8 Repository Map (the Aider
+                               PageRank methodology, MODE D/C — zero
+                               imports), §14.11 large-project engine
+                               (budgeted, incremental, 100k+) and
+                               §14.12 live index update (file changed
+                               → parse affected region → update
+                               symbols → update graph)
+
+The Core is stdlib-only by design: NEXUS identity must not depend on any
+external agent framework (Plan §2 goal — reinforced by §0.5: the Master
+Agent and the Agent Registry are NEXUS-owned). External engines enter
+later, behind adapters only (Plan §0.4); the Phase-5 reference
+frameworks (langgraph / autogen / deepagents) were studied in
+``vendor-staging`` and documented — none of their code is imported.
+The Phase-7 MCP layer follows the same law: the official SDK is an
+optional MODE A companion behind the NEXUS Tool Router, never a core
+dependency. The Phase-12 memory engines (qdrant-client, mem0ai)
+follow it too: NEXUS owns Memory semantics (Plan §61) and every
+engine is an adapter away from replacement.
+"""
+
+__version__ = "0.14.0"
+
+NEXUS_PHASE = 14

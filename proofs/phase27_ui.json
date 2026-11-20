@@ -1,0 +1,152 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "phase27-tray-startup-production",
+ "utc": "2026-11-19T22:16:57Z",
+ "pid": 10144,
+ "python": "3.14.5",
+ "toolkit": "tkinter + ctypes win32 (stdlib)",
+ "sections": {
+  "ico": {
+   "ok": true,
+   "dir": "M:\\NEXUS\\assets",
+   "files": {
+    "ready": {
+     "size": 2097,
+     "sha256": "03297c740a84b4ac999e"
+    },
+    "working": {
+     "size": 2095,
+     "sha256": "a2b4c9b9ee4a65f89a16"
+    },
+    "offline": {
+     "size": 2099,
+     "sha256": "6201e5f013493849f199"
+    }
+   }
+  },
+  "tray": {
+   "ok": true,
+   "started": true,
+   "add_ok": true,
+   "load_ok": true,
+   "error": null,
+   "verdicts": {
+    "thread_started": true,
+    "load_big_ok": true,
+    "load_small_ok": true,
+    "add_ok": true,
+    "state_offline": true,
+    "balloon_ok": true
+   }
+  },
+  "states": {
+   "ok": true,
+   "verdicts": {
+    "working": true,
+    "ready": true,
+    "offline": true
+   },
+   "note": "tooltip+icon change per state via NIM_MODIFY"
+  },
+  "balloon": {
+   "ok": true,
+   "api_verdict": true,
+   "screenshot": {
+    "ok": true,
+    "size_bytes": 158411
+   },
+   "note": "balloons fade — the shell API verdict is the binding evidence"
+  },
+  "menu": {
+   "ok": true,
+   "count": 8,
+   "labels": [
+    "فتح NEXUS",
+    "محادثة جديدة",
+    "إيقاف مؤقت",
+    "استئناف",
+    "نقطة حفظ الآن",
+    "حالة النموذج",
+    "الإعدادات",
+    "خروج"
+   ],
+   "screenshot": {
+    "ok": true,
+    "size_bytes": 161083
+   },
+   "note": "menu built with AppendMenuW + GetMenuItemCount — binding evidence"
+  },
+  "autostart": {
+   "ok": true,
+   "command": "\"M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe\" --tray",
+   "set": {
+    "registry": {
+     "ok": true,
+     "rc": 0
+    },
+    "ok": true
+   },
+   "read_after_set": {
+    "present": true,
+    "value": "\"M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe\" --tray",
+    "type": 1,
+    "bat_present": false,
+    "bat_path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\NEXUS.bat",
+    "mechanism": "registry"
+   },
+   "clear": {
+    "registry": {
+     "ok": true,
+     "rc": 0
+    },
+    "bat_removed": true,
+    "ok": true
+   },
+   "read_after_clear": {
+    "present": false,
+    "rc": 2,
+    "bat_present": false,
+    "bat_path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\NEXUS.bat",
+    "mechanism": "none"
+   },
+   "screenshot": {
+    "ok": true,
+    "size_bytes": 141801
+   }
+  },
+  "raise": {
+   "ok": true,
+   "second_process_rc": 0,
+   "window_state_after": "normal",
+   "event": "NEXUS_UI_RAISE_v27",
+   "screenshot": {
+    "ok": true,
+    "size_bytes": 1298938
+   }
+  },
+  "exit": {
+   "ok": true,
+   "exit_info": {
+    "settings_saved": true,
+    "checkpoint_files": 4,
+    "tray_delete_ok": true,
+    "raise_handle_closed": true,
+    "utc": "2026-11-19T22:17:44Z"
+   },
+   "destroyed": true,
+   "screenshot": {
+    "ok": true,
+    "size_bytes": 3324479
+   }
+  }
+ },
+ "runtime_ok": true,
+ "boot_error": null,
+ "core_ok": 37,
+ "window_state_at_boot": "withdrawn",
+ "sections_ok": true,
+ "verdict": "PASS",
+ "seconds": 47.91,
+ "error": null
+}

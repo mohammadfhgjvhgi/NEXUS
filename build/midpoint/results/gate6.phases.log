@@ -1,0 +1,12 @@
+{"utc": "2026-09-13T18:14:16Z", "phase": "worker_gate6_start", "detail": "pid=16416 py=3.14.5"}
+{"utc": "2026-09-13T18:14:16Z", "phase": "build_begin", "detail": ""}
+{"utc": "2026-09-13T18:17:55Z", "phase": "build_done", "detail": "size=87587309 sha256=843c1c8af169869b..."}
+{"utc": "2026-09-13T18:18:19Z", "phase": "exe_check_done", "detail": "rc=0"}
+{"utc": "2026-09-13T18:18:19Z", "phase": "build_stage_done", "detail": "verdict=PASS"}
+{"utc": "2026-09-13T18:18:21Z", "phase": "ollama_serve_begin", "detail": ""}
+{"utc": "2026-09-13T18:18:25Z", "phase": "ollama_up", "detail": "spawned"}
+{"utc": "2026-09-13T18:18:34Z", "phase": "model_ready", "detail": "qwen3:0.6b"}
+{"utc": "2026-09-13T18:18:34Z", "phase": "chat_begin", "detail": "NEXUS.exe --chat --ollama-model qwen3:0.6b (think:false)"}
+{"utc": "2026-09-13T18:19:01Z", "phase": "chat_done", "detail": "reply_chars=191"}
+{"utc": "2026-09-13T18:19:01Z", "phase": "done", "detail": "verdict=PASS"}
+{"utc": "2026-09-13T18:19:01Z", "phase": "ollama_stopped", "detail": ""}

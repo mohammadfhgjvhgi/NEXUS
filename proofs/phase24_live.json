@@ -1,0 +1,27 @@
+{
+  "phase": 24,
+  "section": "Multi-Agent Orchestration (New Plan \u00a724)",
+  "verdict": "PASS",
+  "rungs": 11,
+  "passed": 11,
+  "labels": [
+    "1 \u00b7 \u00a724 vocabulary verbatim",
+    "2 \u00b7 \u00a724.1 the user channel walls out specialists",
+    "3 \u00b7 \u00a724.2 the thirteen on the real registry",
+    "4 \u00b7 \u00a724.3 real parallel threads meet at a barrier",
+    "5 \u00b7 \u00a724.3 a shared file forces sequential order",
+    "6 \u00b7 \u00a724.3 resources_available denies with reasons",
+    "7 \u00b7 \u00a724.4 scope violation refused before work",
+    "8 \u00b7 \u00a724.4 \u00a76.6 coordination, never an overwrite",
+    "9 \u00b7 integration",
+    "10 \u00b7 integration",
+    "11 \u00b7 identity"
+  ],
+  "host": {
+    "system": "Windows",
+    "release": "10",
+    "version": "10.0.19045",
+    "machine": "AMD64",
+    "python": "3.14.5"
+  }
+}

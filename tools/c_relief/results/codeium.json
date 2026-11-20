@@ -1,0 +1,15 @@
+{
+ "name": "codeium",
+ "src": "C:\\Users\\MohandsMohammad\\.codeium",
+ "dst": "M:\\C-RELIEF\\mohands\\.codeium",
+ "status": "moved",
+ "robocopy_exit": 1,
+ "src_files": 189,
+ "src_bytes": 1031353594,
+ "dst_files": 189,
+ "dst_bytes": 1031353594,
+ "src_missing_in_dst": 0,
+ "sha_checked": 3,
+ "sha_bad": [],
+ "seconds": 26.8
+}

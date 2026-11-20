@@ -1,0 +1,245 @@
+"""Model Provider abstraction (Final Build Plan §5.1 / Spec §137).
+
+The seven interface members are verbatim from the plan::
+
+    ModelProvider
+    ├── load
+    ├── unload
+    ├── generate
+    ├── stream
+    ├── health
+    ├── capabilities
+    └── benchmark
+
+Spec §137 fixes the architecture::
+
+    NEXUS Model API   →  this abstraction (``ModelProvider``)
+    llama.cpp Adapter →  :class:`~nexus.models.llamacpp.LlamaCppProvider`
+    llama-server      →  the spawned HTTP server process
+    Model             →  the GGUF weights on disk
+
+The Model Manager stays independent of any backend (Spec §93: «لكن
+Model Manager يبقى مستقلًا عنه»): swapping the inference runtime later
+means writing one more adapter, nothing else.
+
+واجهة المزوّد — الأعضاء السبعة حرفيًا كما في الخطة؛ مدير النماذج مستقل
+عن أي backend (مواصفة §93/§137).
+
+Stdlib only.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections.abc import Iterator, Mapping, Sequence
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # benchmark imports provider at runtime — break the cycle
+    from .benchmark import BenchmarkSpec, ModelBenchmark
+    from .registry import Model
+
+
+class ProviderError(Exception):
+    """Provider misuse or backend failure (load failed, server died…)."""
+
+
+class ModelNotLoadedError(ProviderError):
+    """The requested model is not loaded in this provider."""
+
+
+class UnsupportedModelError(ProviderError):
+    """The provider cannot serve this model (format/backend mismatch)."""
+
+
+#: Capability vocabulary (Spec §136 routing examples).
+class ModelCapability:
+    """Stable capability names used by the registry and the router."""
+
+    CHAT = "chat"
+    CODING = "coding"
+    LONG_CONTEXT = "long_context"
+    VISION = "vision"
+    SPEECH = "speech"
+    EMBEDDINGS = "embeddings"
+
+
+ALL_CAPABILITIES: tuple[str, ...] = (
+    ModelCapability.CHAT,
+    ModelCapability.CODING,
+    ModelCapability.LONG_CONTEXT,
+    ModelCapability.VISION,
+    ModelCapability.SPEECH,
+    ModelCapability.EMBEDDINGS,
+)
+
+
+@dataclass(slots=True)
+class GenerateRequest:
+    """One generation request against the NEXUS Model API."""
+
+    model_id: str
+    prompt: str
+    system: str | None = None
+    max_tokens: int = 256
+    temperature: float = 0.7
+    top_p: float = 0.95
+    stop: Sequence[str] = ()
+    seed: int | None = None
+    # The §5.4 "run" verb may auto-load; explicit loads stay the default.
+    auto_load: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model_id": self.model_id,
+            "prompt": self.prompt,
+            "system": self.system,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "stop": list(self.stop),
+            "seed": self.seed,
+            "auto_load": self.auto_load,
+        }
+
+
+@dataclass(slots=True)
+class GenerateResult:
+    """One completed generation with backend-reported accounting."""
+
+    model_id: str
+    backend: str
+    text: str
+    prompt_tokens: int = 0
+    generation_tokens: int = 0
+    prompt_seconds: float | None = None
+    generation_seconds: float | None = None
+
+    @property
+    def prompt_tokens_per_second(self) -> float | None:
+        if self.prompt_seconds and self.prompt_tokens:
+            return self.prompt_tokens / self.prompt_seconds
+        return None
+
+    @property
+    def generation_tokens_per_second(self) -> float | None:
+        if self.generation_seconds and self.generation_tokens:
+            return self.generation_tokens / self.generation_seconds
+        return None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model_id": self.model_id,
+            "backend": self.backend,
+            "text": self.text,
+            "prompt_tokens": self.prompt_tokens,
+            "generation_tokens": self.generation_tokens,
+            "prompt_seconds": self.prompt_seconds,
+            "generation_seconds": self.generation_seconds,
+        }
+
+
+@dataclass(slots=True)
+class StreamChunk:
+    """One streamed generation delta; the final chunk carries the stats."""
+
+    model_id: str
+    delta: str
+    done: bool = False
+    result: GenerateResult | None = None
+
+
+@dataclass(slots=True)
+class ProviderHealth:
+    """Health probe outcome for one model (§5.1 ``health``)."""
+
+    model_id: str
+    ok: bool
+    status: str  # "ok" | "starting" | "unreachable" | "not_loaded" | "error"
+    detail: str = ""
+    extra: Mapping[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model_id": self.model_id,
+            "ok": self.ok,
+            "status": self.status,
+            "detail": self.detail,
+            "extra": dict(self.extra),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LoadInfo:
+    """What one successful provider ``load`` returned."""
+
+    model_id: str
+    backend: str
+    detail: str = ""
+    #: adapter-private opaque handle (e.g. server endpoint for the manager)
+    handle: Any = None
+
+
+class ModelProvider(ABC):
+    """The NEXUS Model API (Final Build Plan §5.1) — seven members verbatim.
+
+    Implementations own *execution*: process lifetime, HTTP transport,
+    token accounting. Bookkeeping (registry status, resource budgets,
+    keep-warm TTLs, events) belongs to the Model Manager (§5.4), which
+    calls a provider through exactly this interface.
+    """
+
+    #: Backend identity (Spec §253 contract: ``"backend": "llama.cpp"``).
+    backend: str = "abstract"
+
+    # ------------------------------------------------------------- §5.1 API
+
+    @abstractmethod
+    def load(self, model: Model) -> LoadInfo:
+        """Bring ``model`` resident (spawn/attach the inference runtime)."""
+
+    @abstractmethod
+    def unload(self, model_id: str) -> None:
+        """Release ``model_id`` (stop its server / free its memory)."""
+
+    @abstractmethod
+    def generate(self, request: GenerateRequest) -> GenerateResult:
+        """Run one blocking completion (§5.4 «run»)."""
+
+    @abstractmethod
+    def stream(self, request: GenerateRequest) -> Iterator[StreamChunk]:
+        """Run one streaming completion; the last chunk carries stats."""
+
+    @abstractmethod
+    def health(self, model_id: str) -> ProviderHealth:
+        """Probe one model's serving health."""
+
+    @abstractmethod
+    def capabilities(self, model_id: str) -> tuple[str, ...]:
+        """Report the capabilities the backend actually serves."""
+
+    @abstractmethod
+    def benchmark(self, model: Model, spec: BenchmarkSpec) -> ModelBenchmark:
+        """Run the §5.5 benchmark protocol for one model."""
+    # -------------------------------------------------------- concrete base
+
+    def loaded_ids(self) -> tuple[str, ...]:
+        """Resident model ids (default: ask ``health`` of nothing)."""
+        return ()
+
+    def resident_memory_mb(self, model_id: str) -> int | None:
+        """Real resident RAM (MB) of one loaded model's runtime process,
+        when the backend can observe it (optional psutil, MODE A).
+
+        Concrete-base helper like :meth:`loaded_ids` — **not** one of
+        the §5.1 seven abstract members. Returns ``None`` when memory
+        cannot be observed; the Model Manager then keeps its registry
+        estimate (Spec §135: real numbers when available, honest
+        ``None`` otherwise — never invented values).
+        """
+        return None
+
+    def close(self) -> None:  # noqa: B027 — optional hook by design
+        """Release every resource (shutdown hook; default no-op —
+        concrete backends without cleanup need not override)."""
+        return None

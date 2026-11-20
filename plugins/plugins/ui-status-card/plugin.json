@@ -1,0 +1,8 @@
+{
+ "name": "ui-status-card",
+ "type": "ui",
+ "version": "1.0.0",
+ "entry": "ui_status_card.py",
+ "description": "Dashboard status card contribution (spec 81 UI ext)",
+ "permissions": []
+}

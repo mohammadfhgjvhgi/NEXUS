@@ -1,0 +1,429 @@
+name: NEXUS CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  docs-integrity:
+    name: Docs & governance integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify canonical documents and governance pack
+        run: |
+          set -e
+          for f in \
+            docs/reference/NEXUS-Master-Technical-Specification-v1.0.md \
+            docs/reference/NEXUS-Final-Build-Plan-v1.0.md \
+            LICENSE CHANGELOG.md CONTRIBUTING.md SECURITY.md ARCHITECTURE.md; do
+            test -s "$f" || { echo "MISSING/EMPTY: $f"; exit 1; }
+          done
+          echo "✓ canonical docs + governance pack present"
+
+  ownership-skeleton:
+    name: "§0.5 ownership skeleton (nexus/ modules)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify all nexus modules exist (§1.3's 28 + New Plan's codeintel)
+        run: |
+          set -e
+          for d in core orchestration agents tools computer browser models memory learning codeintel coding \
+                   verification recovery workspace windows git github research documents \
+                   speech vision plugins skills events resources security remote ui tests docs; do
+            test -d "nexus/$d" || { echo "MISSING: nexus/$d"; exit 1; }
+          done
+          echo "✓ 30/30 modules present — Plan §1.3's 28 + New Plan §14 codeintel + §15 coding"
+
+  python-quality:
+    name: Python lint, types & exit criteria (Phases 1–20)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Detect Python sources
+        id: detect
+        run: |
+          if [ -n "$(find nexus -name '*.py' -print -quit)" ]; then
+            echo "has_py=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_py=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ruff + Pyright (pinned; MCP SDK §8.4 + pywinauto §9.3 + playwright §11.1 + Pillow/pytesseract §12.5)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install "ruff==0.16.6" "pyright==1.1.411" "mcp>=2.0,<3" "pywinauto==0.6.9" "playwright==1.62.0" "Pillow>=10" "pytesseract>=0.3.10"
+          ruff check nexus/
+          pyright nexus/
+      - name: Phase 1 exit-criteria harness (Build Plan §2.6)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase01/verify_exit_criteria.py
+      - name: Phase 2 exit-criteria harness (Build Plan §3)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase02/verify_exit_criteria.py
+      - name: Phase 3 exit-criteria harness (Build Plan §4)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase03/verify_exit_criteria.py
+      - name: Phase 4 exit-criteria harness (Build Plan §5)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase04/verify_exit_criteria.py
+      - name: Phase 5 exit-criteria harness (Build Plan §6)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase05/verify_exit_criteria.py
+      - name: Phase 6 exit-criteria harness (Build Plan §7)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase06/verify_exit_criteria.py
+      - name: Phase 7 exit-criteria harness (Build Plan §8 — MCP SDK v2)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase07/verify_exit_criteria.py
+      - name: Phase 8 exit-criteria harness (Build Plan §9 — Computer Runtime)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase08/verify_exit_criteria.py
+      - name: Phase 9 exit-criteria harness (Build Plan §10 — Window Manager)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase09/verify_exit_criteria.py
+      - name: Phase 10 exit-criteria harness (Build Plan §11 — Browser Runtime)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase10/verify_exit_criteria.py
+      - name: Phase 11 exit-criteria harness (Build Plan §12 — Vision + OCR)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase11/verify_exit_criteria.py
+      - name: Phase 12 exit-criteria harness (New Plan §12 — Memory System)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase12/verify_exit_criteria.py
+      - name: Phase 13 exit-criteria harness (New Plan §13 — Learning System)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase13/verify_exit_criteria.py --no-regression
+      - name: Phase 14 exit-criteria harness (New Plan §14 — Code Intelligence)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          python tests/phase14/verify_exit_criteria.py --no-regression
+      - name: Phase 15 exit-criteria harness (New Plan §15 — Coding System)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase15 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase15/verify_exit_criteria.py --no-regression
+      - name: Phase 16 exit-criteria harness (New Plan §16 — Git / GitHub)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase16 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase16/verify_exit_criteria.py --no-regression
+      - name: Phase 17 exit-criteria harness (New Plan §17 — Research Engine)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase17 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase17/verify_exit_criteria.py --no-regression
+      - name: Phase 18 exit-criteria harness (New Plan §18 — Document Intelligence)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase18 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase18/verify_exit_criteria.py --no-regression
+      - name: Phase 19 exit-criteria harness (New Plan §19 — Speech System)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase19 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase19/verify_exit_criteria.py --no-regression
+      - name: Phase 20 exit-criteria harness (New Plan §20 — Verification Engine)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase20 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase20/verify_exit_criteria.py --no-regression
+      - name: Phase 21 exit-criteria harness (New Plan §21 — Security System)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase21 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase21/verify_exit_criteria.py --no-regression
+      - name: Phase 22 exit-criteria harness (New Plan §22 — Recovery + Checkpoints)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase22 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase22/verify_exit_criteria.py --no-regression
+      - name: Phase 23 exit-criteria harness (New Plan §23 — Heartbeat + Health)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase23 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase23/verify_exit_criteria.py --no-regression
+      - name: Phase 24 exit-criteria harness (New Plan §24 — Multi-Agent Orchestration)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase24 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase24/verify_exit_criteria.py --no-regression
+      - name: Phase 25 exit-criteria harness (New Plan §25 — Long-Horizon Execution)
+        if: steps.detect.outputs.has_py == 'true'
+        run: |
+          pip install --quiet pytest
+          python -m pytest tests/phase25 -q -p no:cacheprovider --ignore-glob="*test_device_proof*"
+          python tests/phase25/verify_exit_criteria.py --no-regression
+
+  browser-live:
+    name: Browser live proof (Plan §11 — a real Chromium roundtrip)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install playwright + headless chromium
+        run: |
+          pip install "playwright==1.62.0"
+          python -m playwright install chromium --with-deps
+      - name: Run the live browser proof (file:// roundtrip)
+        run: |
+          python tests/phase10/live_browser_ci.py
+
+  vision-live:
+    name: Vision/OCR live proof (Plan §12 — real pixels, real engines)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tesseract + Pillow + pytesseract
+        run: |
+          sudo apt-get update && sudo apt-get install -y tesseract-ocr
+          pip install "Pillow>=10" "pytesseract>=0.3.10"
+      - name: Run the live vision/OCR proof (render → race → route)
+        run: |
+          python tests/phase11/live_vision_ci.py
+
+  memory-live:
+    name: Memory live proof (New Plan §12.5 — real Qdrant local mode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install qdrant-client (the §12.5 MODE A engine)
+        run: |
+          pip install "qdrant-client>=1.19,<2"
+      - name: Run the live memory proof (embed → upsert → search → filter → restart)
+        run: |
+          python tests/phase12/live_memory_ci.py
+
+  learning-live:
+    name: Learning live proof (New Plan §13.3 — learn, restart, recall)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live learning proof (absorb → restart child process → recall)
+        run: |
+          python tests/phase13/live_learning_ci.py
+
+  codeintel-live:
+    name: Code-intel live proof (New Plan §14 — real tree-sitter + the 100k rung)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the §14.9 MODE A engines (the [codeintel] extra)
+        run: |
+          pip install "tree-sitter>=0.24,<1" "tree-sitter-python>=0.23,<1" \
+            "tree-sitter-javascript>=0.23,<1" "tree-sitter-typescript>=0.23,<1"
+      - name: Run the live code-intel proof (MODE A + incremental + 100k + restart)
+        run: |
+          python tests/phase14/live_codeintel_ci.py
+
+  git-github-live:
+    name: Git/GitHub live proof (New Plan §16 — real git roundtrip + real clone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: The §16.1 substrate — a real git binary
+        run: git --version
+      - name: Run the live git/GitHub proof (eight ops + real clone + full lifecycle)
+        run: |
+          python tests/phase16/live_git_ci.py
+
+  research-live:
+    name: Research live proof (New Plan §17 — real search + real corpus + real memory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live research proof (real GitHub + real web + repo corpus + §12 memory)
+        run: |
+          python tests/phase17/live_research_ci.py
+
+  documents-live:
+    name: Documents live proof (New Plan §18 — real DOCX/PPTX/PDF roundtrips + real index)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live documents proof (real files → parse → index → memory)
+        run: |
+          python tests/phase18/live_documents_ci.py
+
+  speech-live:
+    name: Speech live proof (New Plan §19 — real audio fixtures + honest probes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install the §19.2 engine (no model — the probe must stay honest)
+        run: |
+          pip install "sherpa-onnx>=1.10,<2"
+      - name: Run the live speech proof (real audio + machinery; engine-less opt-out)
+        run: |
+          NEXUS_SPEECH_ALLOW_NULL=1 python tests/phase19/live_speech_ci.py
+
+  verification-live:
+    name: Verification live proof (New Plan §20 — nine domains + the repair loop)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live verification proof (all domains probed + Fail→Diagnose→Fix→Retest→Verify)
+        run: |
+          python tests/phase20/live_verification_ci.py
+
+  security-live:
+    name: Security live proof (New Plan §21 — real Trivy + gates + redaction)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Trivy (aquasecurity/trivy — §21.9)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.74.0
+          trivy --version
+      - name: Run the live security proof (MODE A strict — trivy must judge)
+        run: |
+          NEXUS_REQUIRE_TRIVY=1 python tests/phase21/live_security_ci.py
+
+  recovery-live:
+    name: Recovery live proof (New Plan §22 — real checkpoints + no blind resume)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live recovery proof (chain + six surfaces + repair)
+        run: |
+          python tests/phase22/live_recovery_ci.py
+
+  health-live:
+    name: Health live proof (New Plan §23 — real heartbeats + the ladder)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live health proof (beats · silence · loops · the ladder)
+        run: |
+          python tests/phase23/live_heartbeat_ci.py
+
+  agents-live:
+    name: Orchestration live proof (New Plan §24 — real threads + the walls)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live orchestration proof (waves · ownership · the §24.1 wall)
+        run: |
+          python tests/phase24/live_orchestration_ci.py
+
+  horizon-live:
+    name: Horizon live proof (New Plan §25 — real threads + real walls)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run the live horizon proof (goals · workers · the wall · resume)
+        run: |
+          python tests/phase25/live_horizon_ci.py
+
+  packaging:
+    name: Packaging validation (nexus-core manifest, Plan §2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate manifest (typed, stdlib-only core)
+        run: |
+          python - <<'EOF'
+          import tomllib
+          with open("pyproject.toml", "rb") as fh:
+              data = tomllib.load(fh)
+          project = data["project"]
+          assert project["name"] == "nexus-core", project["name"]
+          assert project["dependencies"] == [], "Core must stay stdlib-only (Plan §2)"
+          print("✓ pyproject.toml valid — name/version/deps")
+          EOF
+      - name: Build wheel & verify Phase 1 core modules ship
+        run: |
+          pip install --quiet build
+          python -m build --wheel --outdir dist/
+          python - <<'EOF'
+          import glob, zipfile
+          wheel = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(wheel).namelist()
+          required = [
+              "nexus/__init__.py",
+              "nexus/py.typed",
+              "nexus/core/config/schema.py",
+              "nexus/events/bus.py",
+              "nexus/core/session/models.py",
+              "nexus/core/engine/machine.py",
+              "nexus/core/persistence/repository.py",
+          ]
+          for path in required:
+              assert path in names, f"missing in wheel: {path}"
+          print(f"✓ wheel ships the Phase 1 core modules ({len(names)} files)")
+          EOF

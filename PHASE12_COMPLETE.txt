@@ -1,0 +1,46 @@
+PHASE 12 — MEMORY SYSTEM · COMPLETE ON THIS MACHINE
+===================================================
+
+phase       : 12 / New Plan §12 · Build Plan §13 — Memory System
+identity    : from persistence to a Memory Engine — the seven
+              §13.1 verbs, twelve-scope isolation, one SQLite
+              index, semantic retrieval behind adapters, the
+              §12.8 ladder, audited forget, deterministic
+              compression
+deploy      : 20/20 files written + SHA-verified via bridge
+              (Bearer) + the .gitkeep scaffold removed
+
+What landed (nexus\memory\, 9 modules):
+  contracts.py  — §12.1 the five names · §12.2 the 12 scopes ·
+                  §12.3 the 11 fields · the visibility ladder
+  store.py      — §12.4 SQLite index (5 tables, WAL, one file)
+  embeddings.py — the embedding seam (Hashing · Model via §5.7)
+  vectors.py    — §12.5 LocalVectorIndex (stdlib) + Qdrant
+                  (MODE A, [qdrant] extra, local mode, no server)
+  mem0_adapter.py — §12.6 Mem0MemoryProvider (MODE B, [mem0])
+  conflict.py   — §12.8 the priority ladder (current task wins)
+  forget.py     — §12.9 exact/category/scope + the audit trail
+  compression.py — §12.10 the 5 stages, AR+EN markers
+  engine.py     — §13.1 remember·retrieve·search·update·forget·
+                  summarize·link + the §12.7 pipeline
+
+Repository Round 9 (audited pins — REPOSITORY-INTEGRATION.md):
+  qdrant/qdrant   6ab21cac (Apache-2.0, MODE A via the official
+                  qdrant-client dist — no source, no server)
+  mem0ai/mem0     73e7b876 (Apache-2.0, MODE B — behaviors
+                  adapted, zero imports)
+
+The device proof (this machine is the judge):
+  cd /d M:\NEXUS
+  python -X utf8 tests\phase12\live_proof_device.py
+  → real SQLite file under data\memory-proof, bilingual
+    retrieval, isolation, conflict ladder, forget + audit,
+    compression, and restart persistence across a fresh
+    process → proofs\phase12_live.json
+
+Deferred (documented in docs\DEFERRED-WORK.md): the §41
+harness memory-view wiring (Track A/B convergence) and the
+real mem0 wheel run (operator decision).
+
+Next: PHASE 13 — Learning System (New Plan §2) at the operator's
+command.

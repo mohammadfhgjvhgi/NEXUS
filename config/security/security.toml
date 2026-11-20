@@ -1,0 +1,7 @@
+# NEXUS Core Configuration — section: security (Final Build Plan §2.1)
+# قسم الأمان — الطبقات الثلاث (Spec §124/§161: إخفاء الأسرار إلزامي).
+
+[security]
+redact_secrets = true
+audit_events = true
+sandbox_default = false

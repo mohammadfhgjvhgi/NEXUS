@@ -1,0 +1,259 @@
+{
+  "sync": {
+    "ingest": {
+      "opened": [
+        "win-131162",
+        "win-263510",
+        "win-328862",
+        "win-197994",
+        "win-196862",
+        "win-263012",
+        "win-197192",
+        "win-66638",
+        "win-66492",
+        "win-196704",
+        "win-65796",
+        "win-197186",
+        "win-329158",
+        "win-590506",
+        "win-131390",
+        "win-65972"
+      ],
+      "closed": [],
+      "updated": [],
+      "total": 16
+    },
+    "ok": true,
+    "error": ""
+  },
+  "window_count": 16,
+  "window_opened_events": 16,
+  "windows_sample": [
+    {
+      "window_id": "win-131162",
+      "application": "chrome.exe",
+      "title": "‪Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.3-Flash",
+      "input_owner": "USER",
+      "position": [
+        -8,
+        -8
+      ],
+      "size": [
+        1696,
+        1066
+      ]
+    },
+    {
+      "window_id": "win-263510",
+      "application": "chrome.exe",
+      "title": "‫(262) أرح أذنيك 😴 وقلبك بالقرآن ونصف ساعة 🕧🎧 تلاوة مبكية لإ",
+      "input_owner": "USER",
+      "position": [
+        1671,
+        -379
+      ],
+      "size": [
+        1066,
+        845
+      ]
+    },
+    {
+      "window_id": "win-328862",
+      "application": "chrome.exe",
+      "title": "‫استجواب المشاريع السابقة - Google Chrome‬",
+      "input_owner": "USER",
+      "position": [
+        1673,
+        459
+      ],
+      "size": [
+        1062,
+        850
+      ]
+    },
+    {
+      "window_id": "win-197994",
+      "application": "Video.UI.exe",
+      "title": "الأفلام والبرامج التلفزيونية",
+      "input_owner": "USER",
+      "position": [
+        0,
+        8
+      ],
+      "size": [
+        1680,
+        1050
+      ]
+    },
+    {
+      "window_id": "win-196862",
+      "application": "ApplicationFrameHost.exe",
+      "title": "الأفلام والبرامج التلفزيونية",
+      "input_owner": "USER",
+      "position": [
+        -8,
+        -8
+      ],
+      "size": [
+        1696,
+        1066
+      ]
+    },
+    {
+      "window_id": "win-263012",
+      "application": "SystemSettings.exe",
+      "title": "إعدادات",
+      "input_owner": "USER",
+      "position": [
+        0,
+        8
+      ],
+      "size": [
+        1680,
+        1050
+      ]
+    },
+    {
+      "window_id": "win-197192",
+      "application": "ApplicationFrameHost.exe",
+      "title": "إعدادات",
+      "input_owner": "USER",
+      "position": [
+        -8,
+        -8
+      ],
+      "size": [
+        1696,
+        1066
+      ]
+    },
+    {
+      "window_id": "win-66638",
+      "application": "Twinkle Tray.exe",
+      "title": "Twinkle Tray Panel",
+      "input_owner": "USER",
+      "position": [
+        160,
+        1022
+      ],
+      "size": [
+        160,
+        28
+      ]
+    }
+  ],
+  "ownership_distribution": {
+    "USER": 16
+  },
+  "claim": {
+    "window_id": "win-131162",
+    "owner": "NEXUS",
+    "task_id": "phase9-proof",
+    "workspace": "main",
+    "agent": "prover"
+  },
+  "arbitration_verdicts": [
+    {
+      "allowed": true,
+      "owner": "NEXUS",
+      "reason": "NEXUS-owned window win-131162 — allowed",
+      "window_id": "win-131162",
+      "coordinated": false,
+      "tool": "mouse"
+    },
+    {
+      "allowed": false,
+      "owner": "USER",
+      "reason": "human-owned window win-131162 — NEXUS input denied (Spec §62)",
+      "window_id": "win-131162",
+      "coordinated": false,
+      "tool": "keyboard"
+    }
+  ],
+  "veto_on_human_window": false,
+  "monitors": [
+    {
+      "monitor_id": "mon-0",
+      "resolution": [
+        1050,
+        1680
+      ],
+      "position": [
+        1680,
+        -379
+      ],
+      "work_area": [
+        1680,
+        -379,
+        2730,
+        1301
+      ],
+      "primary": false,
+      "device": "\\\\.\\DISPLAY5"
+    },
+    {
+      "monitor_id": "mon-1",
+      "resolution": [
+        1680,
+        1050
+      ],
+      "position": [
+        0,
+        0
+      ],
+      "work_area": [
+        0,
+        0,
+        1680,
+        1050
+      ],
+      "primary": true,
+      "device": "\\\\.\\DISPLAY1"
+    }
+  ],
+  "geometry": {
+    "hwnd": 131162,
+    "rect": [
+      -8,
+      -8,
+      1688,
+      1058
+    ],
+    "position": [
+      -8,
+      -8
+    ],
+    "size": [
+      1696,
+      1066
+    ],
+    "monitor": "\\\\.\\DISPLAY1",
+    "minimized": false
+  },
+  "overlay": {
+    "begin": true,
+    "found_hwnd": 1509266,
+    "paused": "PAUSED",
+    "resumed": "WORKING",
+    "dismissed": true,
+    "visible_appears": true,
+    "visible_state_repaints": true,
+    "empty_png_bytes": 2206,
+    "working_png_bytes": 2846,
+    "paused_png_bytes": 2828,
+    "placement": {
+      "ok": true,
+      "monitor": "mon-0",
+      "rect": [
+        2065,
+        397,
+        280,
+        128
+      ],
+      "error": "",
+      "within_work_area": true
+    },
+    "backend": "native"
+  },
+  "result": "PASS"
+}

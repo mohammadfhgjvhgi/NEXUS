@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""GATE #5 worker — detached; survives MCP death (mover-v4 laws).
+
+Stages (heartbeat written on every step):
+  rebuild  → PyInstaller on the existing spec (launcher v6 adds --task)
+  check    → NEXUS.exe --check (re-proves GATE #3 on the new build)
+  task     → NEXUS.exe --task "اعمل مجلد داخل M:\\NEXUS-Test وضع داخله ملف نصي"
+  verify   → certificate verdict + artifacts on disk
+  gate     → MIDPOINT-GATE.md row #5 → ✅ (only on real PASS)
+
+Every exception is recorded honestly; the results file is ALWAYS written.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+import traceback
+from pathlib import Path
+
+MID = Path(r"M:\NEXUS\build\midpoint")
+DIST = MID / "dist" / "NEXUS.exe"
+PROOFS = Path(r"M:\NEXUS\proofs")
+RESULTS = MID / "results"
+HB = RESULTS / "worker_task5.hb.json"
+OUT = RESULTS / "worker_task5.result.json"
+GATE_MD = MID / "MIDPOINT-GATE.md"
+GOAL = "اعمل مجلد داخل M:\\NEXUS-Test وضع داخله ملف نصي"
+PY = sys.executable
+
+
+def _hb(stage: str, **extra) -> None:
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        HB.write_text(
+            json.dumps(
+                {"stage": stage,
+                 "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                 "pid": os.getpid(), **extra},
+                ensure_ascii=False, indent=1),
+            encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _sha(p: Path) -> str:
+    h = hashlib.sha256()
+    with p.open("rb") as fh:
+        for c in iter(lambda: fh.read(1 << 16), b""):
+            h.update(c)
+    return h.hexdigest()
+
+
+def _run(cmd, timeout, env=None) -> dict:
+    t0 = time.time()
+    proc = subprocess.run(
+        cmd, capture_output=True, timeout=timeout, cwd=str(MID), env=env)
+    out = (proc.stdout or b"").decode("utf-8", "replace")
+    err = (proc.stderr or b"").decode("utf-8", "replace")
+    return {"cmd": str(cmd[0]) + " …", "rc": proc.returncode,
+            "out_tail": out[-1200:], "err_tail": err[-800:],
+            "seconds": round(time.time() - t0, 1)}
+
+
+def _out(res: dict, verdict: str) -> int:
+    res["verdict"] = verdict
+    res["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        OUT.write_text(json.dumps(res, ensure_ascii=False, indent=1),
+                       encoding="utf-8")
+    except OSError:
+        pass
+    _hb("done", verdict=verdict)
+    return 0 if verdict == "PASS" else 1
+
+
+def main() -> int:
+    _hb("start")
+    res: dict = {
+        "worker": "worker_task5",
+        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "pid": os.getpid(),
+        "goal": GOAL,
+    }
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+
+        # 0) task base dir exists (setup only — the TASK itself creates
+        #    the folder المهمة-أولى inside it via the filesystem tool)
+        Path(r"M:\NEXUS-Test").mkdir(parents=True, exist_ok=True)
+
+        # 1) rebuild the frozen exe with the --task launcher
+        _hb("rebuild")
+        build = _run([PY, "-m", "PyInstaller", "NEXUS.exe.spec", "--noconfirm",
+                      "--distpath", "dist", "--workpath", "build", "--clean"], 1500)
+        res["build"] = {"rc": build["rc"], "seconds": build["seconds"],
+                        "tail": (build["err_tail"] or build["out_tail"])[-500:]}
+        if build["rc"] != 0 or not DIST.is_file():
+            res["error"] = "pyinstaller failed"
+            _hb("rebuild-failed")
+            return _out(res, "FAIL")
+
+        res["exe"] = {"size": DIST.stat().st_size, "sha256": _sha(DIST)}
+
+        # 2) --check must stay green on the new build (GATE #3 refresh)
+        _hb("check", sha256=res["exe"]["sha256"][:16])
+        res["check"] = _run([str(DIST), "--check"], 300)
+        if res["check"]["rc"] != 0:
+            res["error"] = "--check failed on new build"
+            return _out(res, "FAIL")
+
+        # 3) the first real task — through the frozen exe
+        _hb("task", sha256=res["exe"]["sha256"][:16])
+        env = dict(os.environ)
+        env["PYTHONUTF8"] = "1"
+        res["task"] = _run([str(DIST), "--task", GOAL], 900, env=env)
+        _hb("task-done", rc=res["task"]["rc"])
+
+        # 4) certificate + disk proof
+        cert_path = PROOFS / "midpoint_task.json"
+        try:
+            cert = json.loads(cert_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            res["error"] = f"certificate unreadable: {exc}"
+            return _out(res, "FAIL")
+        res["certificate"] = {
+            "path": str(cert_path), "verdict": cert.get("verdict"),
+            "task_id": cert.get("task_id"), "task_dir": cert.get("task_dir"),
+            "artifacts": cert.get("artifacts"),
+            "transitions": cert.get("transitions"),
+            "error": cert.get("error"),
+        }
+
+        folder = Path(cert["task_dir"]) / "مهمة-أولى" if cert.get("task_dir") else None
+        filep = folder / "nexus_task_note.txt" if folder else None
+        disk_ok = bool(folder and folder.is_dir() and filep and filep.is_file())
+        res["disk_proof"] = {
+            "folder": str(folder) if folder else None, "ok": disk_ok,
+            "file_size": (filep.stat().st_size if filep and filep.is_file() else None),
+        }
+        if (cert.get("verdict") != "PASS" or res["task"]["rc"] != 0 or not disk_ok):
+            res["error"] = res.get("error") or (
+                f"task not green (cert={cert.get('verdict')}, "
+                f"rc={res['task']['rc']}, disk={disk_ok})")
+            return _out(res, "FAIL")
+
+        # 5) gate row update — only on a real green
+        _hb("gate")
+        row_new = ("| 5 | أول مهمة حقيقية عبر محرك المهام (Task State Machine) "
+                   f"| مهمة `{cert.get('task_id')}` COMPLETED + سجل محفوظ | "
+                   "✅ **منفذ** — NEXUS.exe --task · filesystem عبر Router · "
+                   "persistence roundtrip · `proofs\\midpoint_task.json` |")
+        try:
+            txt = GATE_MD.read_text(encoding="utf-8")
+            old_rows = [ln for ln in txt.splitlines() if ln.startswith("| 5 |")]
+            if old_rows:
+                GATE_MD.write_text(txt.replace(old_rows[0], row_new),
+                                   encoding="utf-8")
+                res["gate"] = {"updated": True, "old": old_rows[0][:140]}
+            else:
+                res["gate"] = {"updated": False,
+                               "note": "row #5 not found — no fake edit"}
+            res["gate"]["row_new"] = row_new[:200]
+        except OSError as exc:
+            res["gate"] = {"updated": False, "note": f"gate write failed: {exc}"}
+
+        return _out(res, "PASS")
+    except subprocess.TimeoutExpired as exc:
+        res["error"] = f"timeout: {exc}"
+        return _out(res, "FAIL")
+    except BaseException:
+        res["error"] = traceback.format_exc()[-1200:]
+        return _out(res, "FAIL")
+
+
+if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
+    raise SystemExit(main())

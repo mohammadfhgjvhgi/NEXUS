@@ -1,0 +1,14 @@
+Exception in thread Thread-7 (_readerthread):
+Traceback (most recent call last):
+  File "C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+    buffer.append(fh.read())
+                  ~~~~~~~^^
+  File "<frozen codecs>", line 325, in decode
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb7 in position 76: invalid start byte
+{"product": "NEXUS.exe build (MIDPOINT #2+#3)", "utc": "2026-09-13T17:29:33Z", "pid": 2508, "python": "3.14.5", "pyinstaller": "installed_now", "build_rc": 0, "exe": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe", "exe_size_bytes": 87586287, "sha256": "a435fefeac6d1dc669b975011cf0dd9805eef5137fba96c664f49954c5e9f3ec", "check_rc": 0, "check_output": "", "check_verdict": "PASS", "verdict": "PASS", "b

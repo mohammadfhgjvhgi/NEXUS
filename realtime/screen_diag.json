@@ -1,0 +1,28 @@
+{
+ "utc": "2026-11-19T23:20:39Z",
+ "t1_hello": {
+  "rc": 0,
+  "stdout": "hello-ps\r\n",
+  "stderr": "",
+  "duration_ms": 570.4,
+  "label": "hello"
+ },
+ "t2_capture": {
+  "rc": 0,
+  "stdout": "OK 3360x1050\r\n",
+  "stderr": "",
+  "duration_ms": 832.6,
+  "label": "capture"
+ },
+ "t3_exe": {
+  "rc": 0,
+  "stdout": "hello-exe\r\n",
+  "stderr": "",
+  "duration_ms": 513.2,
+  "label": "exe"
+ },
+ "png": {
+  "exists": true,
+  "size": 422713
+ }
+}

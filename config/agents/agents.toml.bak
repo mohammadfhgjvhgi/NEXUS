@@ -1,0 +1,14 @@
+# NEXUS Core Configuration — section: agents (Final Build Plan §2.1)
+# قسم الوكلاء — تعداد الوكلاء المتوازيين تحت الـMaster Agent.
+#
+# Phase 5 (Plan §6) — Agent Runtime keys (additive, all defaulted):
+#   loop_max_turns      → §6.2 «Continue» bound per agent run
+#   master_repair_limit → §6.3 bounded repair rounds (steps + verification)
+#   message_log_enabled → §6.5 per-task JSONL transcript next to the task record
+
+[agents]
+max_parallel = 3
+master_agent_enabled = true
+loop_max_turns = 8
+master_repair_limit = 2
+message_log_enabled = true

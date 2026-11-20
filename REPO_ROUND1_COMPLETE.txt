@@ -1,0 +1,24 @@
+Repository Integration Round 1 — complete (2026-09-07)
+commit 4d3e394 (main == develop, CI green)
+
+Repositories integrated (full Plan 0.2 cycle — docs/REPOSITORY-INTEGRATION.md):
+1. ggml-org/llama.cpp — MODE B (ADAPT), pinned b10829 / 5fdfa628, MIT
+   Live proof: 26/26 checks with Qwen3-0.6B-Q8_0.gguf on the dev sandbox
+   Measured: 147.5 tok/s prompt / 29.7 tok/s generation / 1588 MB real RSS
+   Fixed live-only bug: port disagreement (argv --port vs polled port)
+2. giampaolo/psutil — MODE A (DIRECT), pinned 7.2.2 / 9eea97d, BSD-3
+   Real RSS correction after every model load (135: measured, not guessed)
+
+On THIS Windows box (to reproduce the live proof locally):
+  a) download llama-b10829-bin-win-cpu-x64.zip (or win-vulkan for GPU)
+     from https://github.com/ggml-org/llama.cpp/releases/tag/b10829
+     extract into M:\NEXUS\build\llama-b10829\
+  b) download Qwen3-0.6B-Q8_0.gguf (639 MB) from
+     https://huggingface.co/Qwen/Qwen3-0.6B-GGUF
+     into M:\NEXUS\models\
+  c) pip install psutil
+  d) run: python tests\phase04\integration_llama_server.py
+     (auto-detects build\llama-b10829\llama-server.exe + models\*.gguf)
+
+Gates: ruff clean, pyright 0 errors, 98/98, 143/143, 104/104, 106/106, live 26/26
+Next: PHASE 5 — Agent Runtime (Plan section 6)

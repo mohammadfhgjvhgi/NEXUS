@@ -1,0 +1,191 @@
+# -*- coding: utf-8 -*-
+"""worker_phase26.py — detached worker for PHASE 26 (Desktop UI Production).
+
+mover-v4 laws: heartbeats each stage · result file ALWAYS written · runs as a
+detached Windows process (triggered once via code_run_tests spawn).
+
+Stages:
+  verify    — the deployed nexus_ui.py hash matches the expected CRLF hash
+  backup    — nexus_ui.py.pre26.bak
+  compile   — py_compile the new UI
+  rebuild   — PyInstaller onefile (~200s)
+  check     — NEXUS.exe --check (37/37)
+  selftest  — NEXUS.exe --ui-selftest (11 sections + screenshots)
+  certify   — read phase26_ui.json verdict + update PHASE-26-STATUS.md
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import py_compile
+import shutil
+import subprocess
+import sys
+import time
+import traceback
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # M:\NEXUS\build\midpoint
+NEXUS = HERE.parent.parent                      # M:\NEXUS
+PROOFS = NEXUS / "proofs"
+RESULTS = HERE / "results"
+RESULTS.mkdir(exist_ok=True)
+HB = RESULTS / "worker_phase26.hb.json"
+RESULT = RESULTS / "worker_phase26.result.json"
+LOG = RESULTS / "worker_phase26.log"
+UI = HERE / "nexus_ui.py"
+EXPECTED_UI_SHA = "7c80ea9dc5bfa30b6e9f67d3cbbc4a99df4b0e828ee00a06e13f455c3c551b8e"
+DIST_EXE = HERE / "dist" / "NEXUS.exe"
+
+
+def hb(stage: str, note: str = "") -> None:
+    try:
+        HB.write_text(json.dumps(
+            {"worker": "phase26", "stage": stage, "note": note[:200],
+             "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+             "pid": os.getpid()}, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def log(line: str) -> None:
+    try:
+        with open(LOG, "a", encoding="utf-8") as fh:
+            fh.write(f"{time.strftime('%H:%M:%S')} {line}\n")
+    except OSError:
+        pass
+
+
+def sha256_file(p: Path) -> str:
+    h = hashlib.sha256()
+    with open(p, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def run(cmd: list, timeout: int, cwd: Path = HERE) -> tuple[int, str]:
+    log("$ " + " ".join(str(c) for c in cmd)[:220])
+    proc = subprocess.run([str(c) for c in cmd], cwd=str(cwd), timeout=timeout,
+                          capture_output=True, text=True, encoding="utf-8",
+                          errors="replace", shell=False)
+    tail = ((proc.stdout or "") + (proc.stderr or ""))[-2000:]
+    log(f"rc={proc.returncode} tail={tail[-300:]!r}")
+    return proc.returncode, tail
+
+
+def main() -> int:
+    t0 = time.time()
+    result: dict = {"worker": "phase26", "stages": {}, "utc_start":
+                    time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    try:
+        # 1 verify -------------------------------------------------------
+        hb("verify")
+        got = sha256_file(UI)
+        result["stages"]["verify"] = {"expected": EXPECTED_UI_SHA[:16],
+                                      "got": got[:16],
+                                      "ok": (not EXPECTED_UI_SHA.startswith("%%")) and got == EXPECTED_UI_SHA}
+        if not result["stages"]["verify"]["ok"]:
+            raise RuntimeError(f"ui hash mismatch: {got[:16]} != {EXPECTED_UI_SHA[:16]}")
+
+        # 2 backup -------------------------------------------------------
+        hb("backup")
+        bak = HERE / "nexus_ui.py.pre26.bak"
+        if not bak.exists():
+            shutil.copy2(UI, bak)
+        result["stages"]["backup"] = str(bak.name)
+
+        # 3 compile ------------------------------------------------------
+        hb("compile")
+        py_compile.compile(str(UI), doraise=True)
+        result["stages"]["compile"] = "ok"
+
+        # 4 rebuild ------------------------------------------------------
+        hb("rebuild", "PyInstaller starting")
+        rc, tail = run([sys.executable, "-m", "PyInstaller", "NEXUS.exe.spec",
+                        "--noconfirm", "--distpath", "dist",
+                        "--workpath", "build"], timeout=2400)
+        exe_ok = DIST_EXE.is_file()
+        exe_sha = sha256_file(DIST_EXE) if exe_ok else ""
+        result["stages"]["rebuild"] = {"rc": rc, "exe_bytes":
+                                       DIST_EXE.stat().st_size if exe_ok else 0,
+                                       "exe_sha256": exe_sha}
+        if rc != 0 or not exe_ok:
+            raise RuntimeError(f"rebuild failed rc={rc}: {tail[-300:]}")
+
+        # 5 check --------------------------------------------------------
+        hb("check")
+        rc, tail = run([DIST_EXE, "--check"], timeout=300)
+        result["stages"]["check"] = {"rc": rc, "tail": tail[-300:]}
+        if rc != 0:
+            raise RuntimeError(f"--check failed rc={rc}")
+
+        # 6 selftest (11 sections + screenshots — the long one) ----------
+        hb("selftest", "running 11-section selftest")
+        rc, tail = run([DIST_EXE, "--ui-selftest"], timeout=1500)
+        cert_path = PROOFS / "phase26_ui.json"
+        cert = {}
+        try:
+            cert = json.loads(cert_path.read_text(encoding="utf-8"))
+        except BaseException as exc:  # noqa: BLE001
+            cert = {"read_error": f"{type(exc).__name__}: {exc}"}
+        result["stages"]["selftest"] = {"rc": rc, "verdict": cert.get("verdict"),
+                                        "sections_ok": cert.get("sections_ok"),
+                                        "runtime_ok": cert.get("runtime_ok"),
+                                        "seconds": cert.get("seconds")}
+        if rc != 0 or cert.get("verdict") != "PASS":
+            raise RuntimeError(f"ui-selftest verdict={cert.get('verdict')} rc={rc} "
+                               f"sections={json.dumps(cert.get('sections', {}), ensure_ascii=False)[:500]}")
+
+        # 7 certify ------------------------------------------------------
+        hb("certify")
+        cards_cert = {}
+        try:
+            cards_cert = json.loads((PROOFS / "midpoint_cards.json").read_text(encoding="utf-8"))
+        except BaseException:
+            pass
+        gate_cert_sha = sha256_file(PROOFS / "midpoint_gate.json") if (PROOFS / "midpoint_gate.json").is_file() else ""
+        status_md = (
+            "# PHASE 26 — Desktop UI Production (حالة حية)\n\n"
+            f"- utc: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n"
+            f"- verdict: **{cert.get('verdict')}** · sections_ok={cert.get('sections_ok')} · "
+            f"runtime_ok={cert.get('runtime_ok')} · core={cert.get('core_ok')} pkgs\n"
+            f"- exe: {DIST_EXE.name} · {DIST_EXE.stat().st_size} B · sha256 {exe_sha[:32]}…\n"
+            f"- الشهادة: proofs\\phase26_ui.json (11 قسمًا بأدلة لكل قسم)\n"
+            f"- اللقطات: proofs\\phase26\\sec_01..11_*.png (11 لقطة حية)\n"
+            f"- البوابة مرتبطة: gate_cert_sha256={gate_cert_sha[:32]}…\n\n"
+            "| # | القسم | البرهان |\n|---|---|---|\n"
+        )
+        titles = ["chat", "conversations", "tasks", "activity", "models",
+                  "workspace", "memory", "checkpoints", "settings", "voice",
+                  "attachments"]
+        secs = cert.get("sections", {})
+        for i, t in enumerate(titles, start=1):
+            s = secs.get(t, {})
+            status_md += f"| 26.{i} | {t} | ok={s.get('ok')} · {json.dumps({k: v for k, v in s.items() if k != 'ok'}, ensure_ascii=False)[:110]} |\n"
+        (HERE / "PHASE-26-STATUS.md").write_text(status_md, encoding="utf-8")
+        result["stages"]["certify"] = {"status_md": str(HERE / "PHASE-26-STATUS.md"),
+                                       "cards_cert_verdict": cards_cert.get("verdict")}
+
+        result["verdict"] = "PASS"
+        hb("done")
+    except BaseException as exc:  # noqa: BLE001
+        result["verdict"] = "FAIL"
+        result["error"] = f"{type(exc).__name__}: {exc}"[:400]
+        result["traceback"] = traceback.format_exc()[-1200:]
+        hb("fatal", result["error"])
+    finally:
+        result["seconds"] = round(time.time() - t0, 1)
+        result["utc_end"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        try:
+            RESULT.write_text(json.dumps(result, ensure_ascii=False, indent=1),
+                              encoding="utf-8")
+        except OSError:
+            pass
+        log(json.dumps(result, ensure_ascii=False)[:400])
+    return 0 if result.get("verdict") == "PASS" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

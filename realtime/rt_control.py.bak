@@ -1,0 +1,129 @@
+# -*- coding: utf-8 -*-
+"""NEXUS Realtime Remote — PHASE 29 — CONTROL channel (port 9411).
+
+The control plane. Separated module/port/thread; startable standalone:
+    python rt_control.py
+
+Routes (all Bearer-token protected):
+  GET  /control/status   uptime, channel map, config digest
+  POST /control/exec     allowlisted command execution (shell), audited
+  POST /control/admin    stop/restart a channel, or shutdown the gateway
+"""
+from __future__ import annotations
+
+import subprocess
+import time
+
+from rt_common import (PHASE, VERSION, ChannelContext, serve_forever_standalone)
+
+_OUT_TAIL = 8192
+
+
+def _status(ctx: ChannelContext, body, qs, handler):
+    gw = ctx.gateway
+    chans = {}
+    if gw is not None:
+        chans = gw.channels_state()
+    return 200, {
+        "ok": True, "channel": "control", "phase": PHASE, "version": VERSION,
+        "pid": ctx.gateway.pid if gw is not None else None,
+        "started_utc": ctx.started_utc, "uptime_s": round(time.time() - _t0, 1),
+        "channels": chans,
+        "allow_prefixes": sorted(ctx.cfg["control_allow_prefixes"]),
+    }
+
+
+def _exec(ctx: ChannelContext, body, qs, handler):
+    body = body or {}
+    cmdline = str(body.get("cmd") or "").strip()
+    if not cmdline:
+        return 400, {"ok": False, "error": "cmd_required"}
+    first = cmdline.split(None, 1)[0].lower()
+    allow = set(str(p).lower() for p in ctx.cfg["control_allow_prefixes"])
+    if first not in allow:
+        ctx.audit.write("control", "exec_denied",
+                        {"cmd": cmdline[:120], "prefix": first})
+        ctx.publish("control.exec_denied", {"cmd": cmdline[:120],
+                                            "prefix": first})
+        return 403, {"ok": False, "error": "cmd_not_allowed",
+                     "prefix": first,
+                     "allow": sorted(allow)}
+    try:
+        timeout_s = float(body.get("timeout_s", ctx.cfg["control_timeout_s"]))
+    except (TypeError, ValueError):
+        timeout_s = float(ctx.cfg["control_timeout_s"])
+    timeout_s = max(1.0, min(timeout_s, 300.0))
+    t0 = time.perf_counter()
+    rc, out, err, killed = None, "", "", False
+    try:
+        proc = subprocess.run(cmdline, shell=True, capture_output=True,
+                              timeout=timeout_s)
+        rc = proc.returncode
+        out = proc.stdout.decode("utf-8", "replace")[-_OUT_TAIL:]
+        err = proc.stderr.decode("utf-8", "replace")[-_OUT_TAIL:]
+    except subprocess.TimeoutExpired as exc:
+        killed = True
+        out = (exc.stdout or b"").decode("utf-8", "replace")[-_OUT_TAIL:]
+        err = (exc.stderr or b"").decode("utf-8", "replace")[-_OUT_TAIL:]
+    except BaseException as exc:  # noqa: BLE001
+        err = f"{type(exc).__name__}: {exc}"[:_OUT_TAIL]
+    dur_ms = round((time.perf_counter() - t0) * 1000, 1)
+    detail = {"cmd": cmdline[:200], "rc": rc, "killed": killed,
+              "duration_ms": dur_ms}
+    ctx.audit.write("control", "exec", detail)
+    ctx.publish("control.exec", detail)
+    return 200, {"ok": True, "rc": rc, "stdout": out, "stderr": err,
+                 "killed": killed, "duration_ms": dur_ms,
+                 "timeout_s": timeout_s}
+
+
+def _admin(ctx: ChannelContext, body, qs, handler):
+    body = body or {}
+    op = str(body.get("op") or "")
+    gw = ctx.gateway
+    if gw is None:
+        return 503, {"ok": False,
+                     "error": "admin_unavailable_standalone"}
+    detail = {"op": op, "body_keys": sorted(body.keys())}
+    ctx.audit.write("control", "admin", detail)
+
+    if op == "shutdown":
+        if str(body.get("confirm") or "") != "PHASE29":
+            return 400, {"ok": False,
+                         "error": "confirm_required",
+                         "hint": 'POST {"op":"shutdown","confirm":"PHASE29"}'}
+        ctx.publish("control.shutdown_requested", {})
+        return 200, {"ok": True, "op": "shutdown", "accepted": True,
+                     "note": "gateway will stop gracefully"}
+
+    if op in ("stop", "restart"):
+        ch = str(body.get("channel") or "")
+        if ch not in ("control", "events", "screen", "files"):
+            return 400, {"ok": False, "error": "unknown_channel",
+                         "channels": ["control", "events", "screen", "files"]}
+        if ch == "control" and op == "stop":
+            return 400, {"ok": False,
+                         "error": "refused_stop_control_self",
+                         "hint": "use shutdown to stop the whole gateway"}
+        res = gw.channel_stop(ch) if op == "stop" else gw.channel_restart(ch)
+        code = 200 if res.get("ok") else 500
+        return code, {"ok": bool(res.get("ok")), "op": op,
+                      "channel": ch, "result": res}
+
+    return 400, {"ok": False, "error": "unknown_op",
+                 "ops": ["stop", "restart", "shutdown"]}
+
+
+_t0 = time.time()
+
+
+def routes() -> dict:
+    return {
+        ("GET", "/control/status"): _status,
+        ("POST", "/control/exec"): _exec,
+        ("POST", "/control/admin"): _admin,
+    }
+
+
+if __name__ == "__main__":
+    serve_forever_standalone("control", routes)

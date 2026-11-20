@@ -1,0 +1,9 @@
+{"utc": "2026-09-13T16:40:12Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:41:16Z", "phase": "detached:copy_done", "detail": "exit=1"}
+{"utc": "2026-09-13T16:41:16Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:41:19Z", "phase": "detached:verify_walk_done", "detail": "src=15469f/2716139968B dst=15469f/2716139968B"}
+{"utc": "2026-09-13T16:41:28Z", "phase": "detached:sha_file", "detail": "1 rbx-storage.db"}
+{"utc": "2026-09-13T16:41:28Z", "phase": "detached:sha_done", "detail": "checked=1 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:41:28Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:41:29Z", "phase": "detached:purge_begin", "detail": "files_to_delete=15469"}
+{"utc": "2026-09-13T16:41:52Z", "phase": "detached:purge_done", "detail": "exit=2"}

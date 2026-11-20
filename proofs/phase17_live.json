@@ -1,0 +1,42 @@
+{
+  "phase": 17,
+  "verdict": "PASS",
+  "rungs_passed": 6,
+  "rungs_failed": 0,
+  "rungs": [
+    {
+      "ok": true,
+      "label": "17.1 github: real api.github.com repository search",
+      "detail": "5 hits · https://github.com/QwenAudio/Fun-ASR"
+    },
+    {
+      "ok": true,
+      "label": "17.1 web: real public search endpoint",
+      "detail": "5 hits · en.wikipedia.org · https://en.wikipedia.org/wiki/GGUF"
+    },
+    {
+      "ok": true,
+      "label": "17.1 docs+local: the repository's own trees answer",
+      "detail": "docs=10 local=10"
+    },
+    {
+      "ok": true,
+      "label": "17.2 workflow: eight stages walked with verdicts",
+      "detail": "reached=evidence findings=8"
+    },
+    {
+      "ok": true,
+      "label": "17.4 confidence: authority/relevance/freshness/evidence all present",
+      "detail": "score=0.882 class=official"
+    },
+    {
+      "ok": true,
+      "label": "17.5 memory: findings remembered and recalled with sources",
+      "detail": "records=9 recalled=9"
+    }
+  ],
+  "nexus_version": "0.17.0",
+  "python": "3.14.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "timestamp": "2026-09-09T19:14:26"
+}

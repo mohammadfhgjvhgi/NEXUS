@@ -1,0 +1,37 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "gate7-tray",
+ "utc": "2026-09-13T20:22:43Z",
+ "pid": 7404,
+ "api": "Shell_NotifyIconW (ctypes, stdlib)",
+ "icon_source": "sys.executable",
+ "add_ok": true,
+ "modify_ok": true,
+ "states_shown": [
+  "Ready",
+  "Working"
+ ],
+ "menu_items": [
+  "فتح NEXUS",
+  "إيقاف مؤقت",
+  "استئناف",
+  "خروج"
+ ],
+ "pump_iterations": 59,
+ "screenshot": {
+  "method": "ctypes GDI BitBlt → GetDIBits → zlib PNG",
+  "path": "M:\\NEXUS\\proofs\\midpoint_tray.png",
+  "width": 1680,
+  "height": 1050,
+  "getdibits_lines": 1050,
+  "pixel_checksum": 413866,
+  "size_bytes": 65166,
+  "ok": true
+ },
+ "screenshot_note": "full desktop — the tray icon may sit in the overflow flyout (Win11); the API verdicts here are the binding evidence",
+ "delete_ok": true,
+ "verdict": "PASS",
+ "seconds": 4.58,
+ "error": null
+}

@@ -1,0 +1,23 @@
+{
+ "triggered_utc": "2026-11-19T23:47:39Z",
+ "pid": 2056,
+ "hb_before": {
+  "utc": "2026-11-19T23:46:52Z",
+  "phase": 30,
+  "version": "0.30.0",
+  "pid": 18320,
+  "uptime_s": 243.5,
+  "running": false,
+  "selftest": "done",
+  "loaded": 7,
+  "counts": {
+   "agent": 1,
+   "tool": 1,
+   "skill": 1,
+   "model": 1,
+   "mcp": 1,
+   "integration": 1,
+   "ui": 1
+  }
+ }
+}

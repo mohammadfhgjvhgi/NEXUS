@@ -1,0 +1,86 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "check": "gate10-signed-certificate",
+ "utc": "2026-09-13T20:29:39Z",
+ "checks": {
+  "#1 boot": {
+   "file": "midpoint_boot.json",
+   "present": true,
+   "sha256": "811817149c81660b582a924665f17521938a97815d5910e2d7de2b4bfbb1f7f3",
+   "size": 1266,
+   "verdict": "PASS"
+  },
+  "#4 chat": {
+   "file": "midpoint_chat.json",
+   "present": true,
+   "sha256": "067a4231ef18c69cb196af3769757e368731dfe6c272c94361c8b3f4ec2da584",
+   "size": 1096,
+   "verdict": "PASS"
+  },
+  "#5 task": {
+   "file": "midpoint_task.json",
+   "present": true,
+   "sha256": "2c86b94dd02b2e2d748251558e1987a6aada9386fe2ebbd9b84c015fd07218e1",
+   "size": 5025,
+   "verdict": "PASS"
+  },
+  "#6 ui": {
+   "file": "midpoint_ui.json",
+   "present": true,
+   "sha256": "b5e450f29a32da196b7cbb83905ecf61d78e914e3993718620f556130bb688d1",
+   "size": 663,
+   "verdict": "PASS"
+  },
+  "#6 ui-png": {
+   "file": "midpoint_ui.png",
+   "present": true,
+   "sha256": "fd2631f12d62498fa2f2afaa686877324be50ba2e32ab2943c16be8c204dc1da",
+   "size": 63089
+  },
+  "#7 tray": {
+   "file": "midpoint_tray.json",
+   "present": true,
+   "sha256": "b806fdeb320791ed8b9d742d0c2e7b5499cd91612fb447b0ff0bb3a050b9619a",
+   "size": 939,
+   "verdict": "PASS"
+  },
+  "#7 tray-png": {
+   "file": "midpoint_tray.png",
+   "present": true,
+   "sha256": "536673df4cac9f27ec947a8bc1da1b9fed1ce744dd72cd8d721f5e3e0e588577",
+   "size": 65166
+  },
+  "#8 overlay": {
+   "file": "midpoint_overlay.json",
+   "present": true,
+   "sha256": "50efab34c79662b9da31e44389c896d922bb666205d25e7299f3c30357a2b1a5",
+   "size": 744,
+   "verdict": "PASS"
+  },
+  "#8 overlay-png": {
+   "file": "midpoint_overlay.png",
+   "present": true,
+   "sha256": "1a59b4cdb02a908a9bec02be50034035490deb37fb7c82c62a6c39f2c55cce87",
+   "size": 60617
+  },
+  "#9 install": {
+   "file": "midpoint_install.json",
+   "present": true,
+   "sha256": "6c274789d51cd051d4cc757124650197303f583322597c55ffdde596fcb43ce4",
+   "size": 1648,
+   "verdict": "PASS"
+  },
+  "product-exe": {
+   "file": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe",
+   "sha256": "6d49d19bd2cf90b1dd67bb83afb8bcfe000876dc080630668b35d381b2f31df9",
+   "size": 90701203
+  },
+  "setup-exe": {
+   "file": "M:\\NEXUS\\build\\midpoint\\installer\\dist\\NEXUS-Setup.exe",
+   "sha256": "7d44a5aded309a48a89c7e69d2b1d042c324bad01c93f9add051d2da45ed958b",
+   "size": 9423147
+  }
+ },
+ "verdict": "PASS",
+ "sealed_by": "worker_task910 (sha256 evidence chain)"
+}

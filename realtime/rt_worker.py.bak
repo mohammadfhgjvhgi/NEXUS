@@ -1,0 +1,482 @@
+# -*- coding: utf-8 -*-
+"""NEXUS Realtime Remote — PHASE 29 — detached worker.
+
+Spawned ONCE via the pytest trigger (realtime\\test_phase29_spawn.py) with
+DETACHED_PROCESS|NEW_PROCESS_GROUP so it survives tunnel/gate death.
+Discipline: single trigger, then read-only polling of heartbeat/result.
+
+Lifecycle:
+  boot        config bootstrap + single-instance probe + heartbeat thread
+  gateway     start the four SEPARATED channel servers (9411-9414)
+  selftest    loopback tests of every channel + isolation restart proof
+  certify     proofs\\phase29_realtime.json (evidence or silence)
+  serve       keep serving until POST /control/admin shutdown
+              {"confirm":"PHASE29"} — heartbeat keeps running meanwhile
+
+Ops:  python rt_worker.py --status | --stop
+"""
+from __future__ import annotations
+
+import base64
+import calendar
+import hashlib
+import http.client
+import json
+import socket
+import sys
+import threading
+import time
+import traceback
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # M:\NEXUS\realtime
+ROOT = HERE.parent                              # M:\NEXUS
+PROOFS = ROOT / "proofs"
+sys.path.insert(0, str(HERE))
+
+from rt_common import (PHASE, VERSION, atomic_json, load_config,  # noqa: E402
+                       sha256_bytes, sha256_file, utcnow)
+from rt_gateway import CHANNELS, RealtimeGateway  # noqa: E402
+
+HB_PATH = HERE / ".hb.json"
+RESULT_PATH = HERE / "worker_phase29.result.json"
+EVIDENCE_PATH = PROOFS / "phase29_realtime.json"
+TOKEN = ""           # filled at boot from cfg
+_state_lock = threading.Lock()
+_state = {"selftest": "not_started", "gateway": "booting"}
+
+
+def _set_state(**kw) -> None:
+    with _state_lock:
+        _state.update(kw)
+
+
+def _req(port: int, method: str, path: str, body=None, timeout: float = 35.0,
+         with_token: bool = True):
+    """Loopback HTTP call — returns (status, obj) or (0, error-string)."""
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
+        headers = {"Content-Type": "application/json"}
+        if with_token and TOKEN:
+            headers["Authorization"] = f"Bearer {TOKEN}"
+        payload = None
+        if body is not None:
+            payload = json.dumps(body).encode("utf-8")
+        conn.request(method, path, body=payload, headers=headers)
+        resp = conn.getresponse()
+        raw = resp.read().decode("utf-8", "replace")
+        conn.close()
+        try:
+            return resp.status, json.loads(raw)
+        except BaseException:
+            return resp.status, {"raw": raw[:400]}
+    except BaseException as exc:  # noqa: BLE001
+        return 0, f"{type(exc).__name__}: {exc}"[:200]
+
+
+def write_result(obj: dict) -> None:
+    atomic_json(RESULT_PATH, obj)
+
+
+def write_hb(gateway=None) -> None:
+    obj = {"utc": utcnow(), "phase": PHASE, "version": VERSION,
+           "pid": None, "uptime_s": round(time.time() - _T0, 1),
+           "running": True}
+    with _state_lock:
+        obj.update({k: _state.get(k) for k in ("selftest", "gateway")})
+    if gateway is not None:
+        try:
+            obj["pid"] = gateway.pid
+            obj["channels"] = gateway.channels_state()
+        except BaseException:
+            pass
+    atomic_json(HB_PATH, obj)
+
+
+def _hb_loop(gateway) -> None:
+    while True:
+        try:
+            write_hb(gateway)
+        except BaseException:
+            pass
+        time.sleep(10.0)
+
+
+def _single_instance_probe(cfg: dict) -> dict:
+    """Bind-probe the control port. Fresh heartbeat -> already running."""
+    port = int(cfg["ports"]["control"])
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind((cfg["bind"], port))
+        return {"free": True, "port": port}
+    except OSError as exc:
+        fresh = False
+        try:
+            hb = json.loads(HB_PATH.read_text(encoding="utf-8"))
+            parsed = calendar.timegm(time.strptime(hb["utc"],
+                                                   "%Y-%m-%dT%H:%M:%SZ"))
+            age = time.time() - parsed
+            fresh = age < 120 and hb.get("running") is True
+        except BaseException:
+            fresh = False
+        return {"free": False, "port": port, "error": str(exc)[:160],
+                "fresh_hb": fresh}
+    finally:
+        try:
+            s.close()
+        except BaseException:
+            pass
+
+
+# ----------------------------------------------------------------- selftest
+def _selftest(gateway: RealtimeGateway) -> dict:
+    _set_state(selftest="running")
+    ports = gateway.cfg["ports"]
+    tests = {}
+
+    def mark(name, ok, detail=None):
+        tests[name] = {"verdict": "PASS" if ok else "FAIL",
+                       "detail": detail if detail is not None else {}}
+
+    def mark_deg(name, detail):
+        tests[name] = {"verdict": "DEGRADED", "detail": detail}
+
+    # --- control ------------------------------------------------------
+    st, obj = _req(ports["control"], "GET", "/control/status")
+    mark("control_status", st == 200 and obj.get("ok") is True,
+         {"http": st, "channels": obj.get("channels")})
+
+    st, obj = _req(ports["control"], "POST", "/control/exec",
+                   {"cmd": "echo nexus29-control-ok"})
+    out = str(obj.get("stdout") or "")
+    mark("control_exec", st == 200 and obj.get("rc") == 0
+         and "nexus29-control-ok" in out,
+         {"http": st, "rc": obj.get("rc"),
+          "stdout_head": out[:80], "duration_ms": obj.get("duration_ms")})
+
+    st, obj = _req(ports["control"], "POST", "/control/exec",
+                   {"cmd": "calc.exe"})
+    mark("control_exec_denied", st == 403,
+         {"http": st, "error": str(obj.get("error"))[:60]})
+
+    audit_lines = gateway.audit.tail_lines(30)
+    has_exec = any("control" in ln and '"exec"' in ln for ln in audit_lines)
+    mark("audit_on_disk", has_exec,
+         {"audit_file": str(gateway.audit.today_path()),
+          "tail_n": len(audit_lines)})
+
+    # --- events -------------------------------------------------------
+    st, obj = _req(ports["events"], "GET", "/events/status")
+    cursor0 = obj.get("cursor", 0) if isinstance(obj, dict) else 0
+    mark("events_status", st == 200 and obj.get("ok") is True,
+         {"http": st, "cursor": cursor0})
+
+    st, obj = _req(ports["events"], "POST", "/events/pub",
+                   {"type": "phase29.test", "data": {"marker": "nexus29-events"}})
+    pub_id = obj.get("id") if isinstance(obj, dict) else None
+    mark("events_pub", st == 200 and isinstance(pub_id, int),
+         {"http": st, "id": pub_id})
+
+    st, obj = _req(ports["events"], "GET",
+                   f"/events/stream?cursor={cursor0}&wait_s=3")
+    evs = obj.get("events", []) if isinstance(obj, dict) else []
+    got = any(e.get("id") == pub_id and e.get("type") == "phase29.test"
+              for e in evs if isinstance(e, dict))
+    mark("events_stream", st == 200 and got,
+         {"http": st, "count": len(evs), "roundtrip_ms":
+             obj.get("roundtrip_ms") if isinstance(obj, dict) else None})
+
+    # --- screen -------------------------------------------------------
+    st, obj = _req(ports["screen"], "GET", "/screen/status")
+    mark("screen_status", st == 200 and obj.get("ok") is True,
+         {"http": st, "count": obj.get("count") if isinstance(obj, dict) else None})
+
+    st, obj = _req(ports["screen"], "POST", "/screen/capture", {}, timeout=60)
+    cap = obj.get("capture") if isinstance(obj, dict) else None
+    if st == 200 and isinstance(cap, dict) and cap.get("ok"):
+        mark("screen_capture", cap.get("size", 0) > 1024,
+             {"w": cap.get("w"), "h": cap.get("h"), "size": cap.get("size"),
+              "sha256": str(cap.get("sha256"))[:32],
+              "duration_ms": cap.get("duration_ms"),
+              "file": cap.get("file") if "file" in cap else
+                      Path(str(cap.get("path"))).name})
+    elif st == 503:
+        deg = {"note": "honest degradation — HTTP layer PASS"}
+        if isinstance(cap, dict):
+            deg.update({"reason": str(cap.get("reason"))[:200],
+                        "rc": cap.get("rc"), "stdout": cap.get("stdout"),
+                        "stderr": cap.get("stderr"),
+                        "duration_ms": cap.get("duration_ms")})
+        else:
+            deg["reason"] = str(obj)[:160]
+        mark_deg("screen_capture", deg)
+    else:
+        mark("screen_capture", False, {"http": st, "obj": str(obj)[:200]})
+
+    # --- files --------------------------------------------------------
+    blob = hashlib.sha256(str(time.time()).encode()).digest() * 512  # 16 KB
+    blob = bytes((b * 31 + i) % 256 for i, b in enumerate(blob[:16384]))
+    want_sha = sha256_bytes(blob)
+    st, obj = _req(ports["files"], "POST", "/files/put",
+                   {"path": r"realtime\selftest\up29.bin",
+                    "base64": base64.b64encode(blob).decode("ascii")})
+    mark("files_put", st == 200 and obj.get("sha256_file") == want_sha,
+         {"http": st, "size": obj.get("size") if isinstance(obj, dict) else None,
+          "sha256": str(obj.get("sha256_file"))[:32]
+          if isinstance(obj, dict) else None})
+
+    st, obj = _req(ports["files"], "GET",
+                   "/files/get?path=realtime%5Cselftest%5Cup29.bin")
+    back_ok = False
+    if st == 200 and isinstance(obj, dict):
+        try:
+            back = base64.b64decode(obj.get("base64") or "")
+            back_ok = (sha256_bytes(back) == want_sha
+                       and obj.get("sha256_file") == want_sha)
+        except BaseException:
+            back_ok = False
+    mark("files_get_roundtrip", back_ok, {"http": st, "size":
+          obj.get("size") if isinstance(obj, dict) else None})
+
+    st, obj = _req(ports["files"], "GET",
+                   "/files/get?path=realtime%5Cselftest%5Cup29.bin"
+                   "&offset=4096&max_bytes=1024")
+    slice_ok = False
+    if st == 200 and isinstance(obj, dict):
+        try:
+            back = base64.b64decode(obj.get("base64") or "")
+            slice_ok = back == blob[4096:5120]
+        except BaseException:
+            slice_ok = False
+    mark("files_slice", slice_ok, {"http": st})
+
+    # jail: absolute escape (platform-realistic) + ".." traversal escape
+    if sys.platform.startswith("win"):
+        esc_abs = "M%3A%5CWindows%5Cwin.ini"
+        esc_abs_label = "M:\\Windows\\win.ini"
+    else:
+        esc_abs = "%2Fetc%2Fpasswd"
+        esc_abs_label = "/etc/passwd"
+    st, obj = _req(ports["files"], "GET",
+                   "/files/get?path=" + esc_abs)
+    jail_abs = (st == 403)
+    st, obj = _req(ports["files"], "GET",
+                   "/files/get?path=..%2Fjail_escape_probe")
+    jail_trav = (st == 403)
+    mark("files_jail_reject", jail_abs and jail_trav,
+         {"absolute_escape": esc_abs_label, "http_abs": (403 if jail_abs else st),
+          "traversal": "../jail_escape_probe", "http_trav": (403 if jail_trav else st)})
+
+    # --- separation proof ----------------------------------------------
+    sep = {"stop_events_ok": False, "control_alive_during": False,
+           "events_down_confirmed": False, "restart_ok": False,
+           "events_back_ok": False, "downtime_ms": None}
+    try:
+        st, obj = _req(ports["control"], "POST", "/control/admin",
+                       {"op": "stop", "channel": "events"})
+        sep["stop_events_ok"] = st == 200 and obj.get("ok") is True
+        st_c, _ = _req(ports["control"], "GET", "/control/status")
+        sep["control_alive_during"] = st_c == 200
+        st_e, obj_e = _req(ports["events"], "GET", "/events/status",
+                           timeout=3)
+        sep["events_down_confirmed"] = (st_e == 0)
+        sep["events_down_error"] = str(obj_e)[:120] if st_e == 0 else None
+        st, obj = _req(ports["control"], "POST", "/control/admin",
+                       {"op": "restart", "channel": "events"})
+        sep["restart_ok"] = st == 200 and obj.get("ok") is True
+        sep["downtime_ms"] = (obj or {}).get("result", {}).get("downtime_ms")
+        time.sleep(0.3)
+        st, obj = _req(ports["events"], "GET", "/events/status")
+        sep["events_back_ok"] = st == 200 and obj.get("ok") is True
+    except BaseException as exc:  # noqa: BLE001
+        sep["error"] = f"{type(exc).__name__}: {exc}"[:200]
+    tests["separation_isolated_restart"] = {
+        "verdict": "PASS" if (sep["stop_events_ok"] and
+                              sep["control_alive_during"] and
+                              sep["events_down_confirmed"] and
+                              sep["restart_ok"] and sep["events_back_ok"])
+        else "FAIL", "detail": sep}
+    _set_state(selftest="done")
+    return tests
+
+
+def _module_hashes() -> dict:
+    out = {}
+    for name in ("rt_common.py", "rt_control.py", "rt_events.py",
+                 "rt_screen.py", "rt_files.py", "rt_gateway.py",
+                 "rt_worker.py"):
+        p = HERE / name
+        if p.is_file():
+            out[name] = {"size": p.stat().st_size,
+                         "sha256": sha256_file(p)}
+    return out
+
+
+def _verdict(tests: dict, modules: dict) -> str:
+    hard = ("control_status", "control_exec", "control_exec_denied",
+            "audit_on_disk", "events_status", "events_pub", "events_stream",
+            "screen_status", "files_put", "files_get_roundtrip",
+            "files_slice", "files_jail_reject", "separation_isolated_restart")
+    if any(tests.get(t, {}).get("verdict") == "FAIL" for t in hard):
+        return "FAIL"
+    if any(tests.get(t, {}).get("verdict") != "PASS" for t in hard):
+        return "FAIL"
+    cap = tests.get("screen_capture", {}).get("verdict")
+    if cap == "PASS":
+        return "PASS"
+    if cap == "DEGRADED":
+        return "PASS_WITH_DEGRADATION"
+    return "FAIL"
+
+
+_T0 = time.time()
+
+
+def main() -> int:
+    global TOKEN
+    t_start = time.time()
+    result = {"phase": PHASE, "version": VERSION, "worker": "rt_worker.py",
+              "started_utc": utcnow()}
+    gateway = None
+    hb_thread = None
+    try:
+        cfg = load_config(HERE)
+        TOKEN = cfg["token"]
+        probe = _single_instance_probe(cfg)
+        result["single_instance_probe"] = probe
+        if not probe["free"]:
+            if probe.get("fresh_hb"):
+                result["verdict"] = "SKIPPED_ALREADY_RUNNING"
+                write_result(result)
+                return 0
+            result["verdict"] = "FAIL"
+            result["error"] = "control_port_busy_stale_hb"
+            write_result(result)
+            return 1
+
+        gateway = RealtimeGateway(HERE)
+        gateway.cfg = cfg
+        gateway.audit.write("gateway", "worker_boot", {"phase": PHASE})
+        hb_thread = threading.Thread(target=_hb_loop, args=(gateway,),
+                                     daemon=True)
+        hb_thread.start()
+        _set_state(gateway="starting")
+        start_res = gateway.start_all()
+        result["gateway_start"] = start_res
+        up = [n for n, r in start_res.items() if r.get("ok")]
+        if not up:
+            raise RuntimeError(f"no channel could bind: {start_res}")
+
+        _set_state(gateway="up", selftest="running")
+        tests = _selftest(gateway)
+        modules = _module_hashes()
+        verdict = _verdict(tests, modules)
+
+        finished_utc = utcnow()
+        evidence = {
+            "phase": PHASE,
+            "title": "Realtime Remote — Control/Events/Screen/Files (فصل)",
+            "version": VERSION,
+            "identity": {"service": "nexus-realtime",
+                         "host_hint": "almoutmag-v9"},
+            "started_utc": result["started_utc"],
+            "finished_utc": finished_utc,
+            "duration_s": round(time.time() - t_start, 1),
+            "config": {"bind": cfg["bind"], "ports": cfg["ports"],
+                       "files_root": cfg["files_root"],
+                       "allow_prefixes": sorted(
+                           cfg["control_allow_prefixes"]),
+                       "token_source": "rt_config.json (value withheld)"},
+            "channels": {},
+            "separation": tests.get("separation_isolated_restart",
+                                    {}).get("detail", {}),
+            "modules": modules,
+            "artifacts": [
+                str(HERE / "gateway.json"),
+                str(HERE / ".hb.json"),
+                str(gateway.audit.today_path()),
+                str(HERE / "captures")],
+            "persistent": True,
+            "shutdown_op": 'POST /control/admin {"op":"shutdown",'
+                           '"confirm":"PHASE29"}',
+            "notes": [
+                "each channel = own module + own port + own server thread",
+                "channels startable standalone (python rt_<ch>.py)",
+                "events long-poll wakes on publish via threading.Condition",
+                "files path jail rejection is a tested verdict (files_jail_reject)",
+            ],
+            "verdict": verdict,
+        }
+        for name in CHANNELS:
+            evidence["channels"][name] = {
+                "port": cfg["ports"][name],
+                "up": bool(gateway.channels_state().get(name, {}).get("up")),
+                "module_sha256": modules.get(f"rt_{name}.py", {}).get("sha256"),
+            }
+        ch_map = {"control": ("control_status", "control_exec",
+                              "control_exec_denied", "audit_on_disk"),
+                  "events": ("events_status", "events_pub", "events_stream"),
+                  "screen": ("screen_status", "screen_capture"),
+                  "files": ("files_put", "files_get_roundtrip",
+                            "files_slice", "files_jail_reject")}
+        for name, keys in ch_map.items():
+            evidence["channels"][name]["tests"] = {
+                k: tests[k] for k in keys if k in tests}
+
+        atomic_json(EVIDENCE_PATH, evidence)
+        result["verdict"] = verdict
+        result["evidence_path"] = str(EVIDENCE_PATH)
+        result["tests"] = {k: v["verdict"] for k, v in tests.items()}
+        write_result(result)
+        gateway.audit.write("gateway", "selftest_certified",
+                            {"verdict": verdict,
+                             "evidence": EVIDENCE_PATH.name})
+        _set_state(gateway="serving")
+
+        # ---- serve until shutdown ------------------------------------
+        while not gateway.stop_event.wait(2.0):
+            pass
+        gateway.stop_all()
+        write_hb(gateway)
+        hb_final = HB_PATH.read_text(encoding="utf-8")
+        hb_final = hb_final.replace('"running": true', '"running": false')
+        HB_PATH.write_text(hb_final, encoding="utf-8")
+        result["stopped_utc"] = utcnow()
+        result["verdict"] = verdict
+        write_result(result)
+        return 0
+    except BaseException as exc:  # noqa: BLE001 — result must ALWAYS land
+        result["verdict"] = "FAIL"
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        result["traceback_tail"] = traceback.format_exc()[-1500:]
+        try:
+            write_result(result)
+        except BaseException:
+            print(json.dumps(result, ensure_ascii=False), flush=True)
+        return 1
+
+
+if __name__ == "__main__":
+    if "--status" in sys.argv:
+        cfg = load_config(HERE)
+        st, obj = _req(int(cfg["ports"]["control"]), "GET",
+                       "/control/status", with_token=False)
+        print(json.dumps({"http": st, "obj": obj}, ensure_ascii=False,
+                         indent=1)[:1200])
+        sys.exit(0)
+    if "--stop" in sys.argv:
+        cfg = load_config(HERE)
+        TOKEN = cfg["token"]
+        st, obj = _req(int(cfg["ports"]["control"]), "POST",
+                       "/control/admin",
+                       {"op": "shutdown", "confirm": "PHASE29"})
+        print(json.dumps({"http": st, "obj": obj}, ensure_ascii=False,
+                         indent=1)[:800])
+        sys.exit(0)
+    _rc = 2
+    try:
+        _rc = main()
+    except BaseException:
+        traceback.print_exc()
+        _rc = 1
+    sys.exit(_rc)

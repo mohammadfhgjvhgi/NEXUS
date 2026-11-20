@@ -1,0 +1,380 @@
+"""NEXUS C-RELIEF AUTOPILOT — the whole disk job runs ITSELF (move-only, never delete).
+
+One detached process that:
+  1. Runs the FULL device audit (recon) -> M:\\NEXUS\\proofs\\device_audit.json
+     (plus device_audit_before.json snapshot)  -- answers "who is stealing space".
+  2. Walks the ENTIRE remaining queue candidate by candidate, reusing the proven
+     worker.py phases: copy -> verify -> sha -> purge -> finalize (mklink /J).
+     Every phase short-circuits safely if already done; purge self-verifies
+     src⊆dst byte-level before touching anything.
+  3. Writes a live status file (results\\autopilot_status.json) + heartbeat log
+     (results\\autopilot.phases.log) so monitoring is pure read-only.
+  4. Is idempotent & resumable: power loss / service crash / tunnel death ->
+     re-run (double-click C_AUTOPILOT.bat or one pytest trigger) and it
+     continues exactly where it stopped. Nothing is ever deleted twice.
+
+Usage:
+    python autopilot.py              (foreground; also what the .bat runs)
+    (or spawned detached by tools\\c_recon\\test_c_autopilot.py)
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sys
+import time
+import traceback
+from pathlib import Path
+
+BASE = Path(r"M:\NEXUS\tools\c_relief")
+RESULTS = BASE / "results"
+STATUS = RESULTS / "autopilot_status.json"
+STATUS_TMP = RESULTS / "autopilot_status.json.tmp"
+AUDIT_LIVE = Path(r"M:\NEXUS\proofs\device_audit.json")
+AUDIT_BEFORE = Path(r"M:\NEXUS\proofs\device_audit_before.json")
+AUDIT_AFTER = Path(r"M:\NEXUS\proofs\device_audit_after.json")
+MANIFEST = Path(r"M:\C-RELIEF\MANIFEST.jsonl")
+PHASES_LOG = RESULTS / "autopilot.phases.log"
+
+BUDGET_SECONDS = 6 * 3600          # hard graceful stop between phases
+M_FREE_FLOOR_GB = 5.0              # never risk filling M:
+FRESH_RUNNING_SECONDS = 300        # status younger than this => assume running
+
+sys.path.insert(0, str(BASE))
+import worker  # proven phase engine (same folder)  # noqa: E402
+
+PROFILE = r"C:\Users\MohandsMohammad"
+PLAN: dict[str, tuple[str, str]] = {
+    "cache":          (PROFILE + r"\.cache",        r"M:\C-RELIEF\mohands\.cache"),
+    "gradle":         (PROFILE + r"\.gradle",       r"M:\C-RELIEF\mohands\.gradle"),
+    "platformio":     (PROFILE + r"\.platformio",   r"M:\C-RELIEF\mohands\.platformio"),
+    "bun":            (PROFILE + r"\.bun",          r"M:\C-RELIEF\mohands\.bun"),
+    "codeium":        (PROFILE + r"\.codeium",      r"M:\C-RELIEF\mohands\.codeium"),
+    "pm2":            (PROFILE + r"\.pm2",          r"M:\C-RELIEF\mohands\.pm2"),
+    "lmstudio":       (PROFILE + r"\.lmstudio",     r"M:\C-RELIEF\mohands\.lmstudio"),
+    "arduino15":      (PROFILE + r"\AppData\Local\Arduino15",  r"M:\C-RELIEF\mohands\AppData\Arduino15"),
+    "android-sdk":    (PROFILE + r"\AppData\Local\Android",    r"M:\C-RELIEF\mohands\AppData\Android"),
+    "roblox-gdk":     (PROFILE + r"\AppData\Local\RobloxPCGDK", r"M:\C-RELIEF\mohands\AppData\RobloxPCGDK"),
+    "perplexity":     (PROFILE + r"\AppData\Local\Perplexity", r"M:\C-RELIEF\mohands\AppData\Perplexity"),
+    "minecraft":      (PROFILE + r"\AppData\Roaming\.minecraft", r"M:\C-RELIEF\roaming\.minecraft"),
+    "nvidia-ota":     (r"C:\ProgramData\NVIDIA Corporation\NVIDIA App\UpdateFramework\ota-artifacts",
+                       r"M:\C-RELIEF\programdata\nvidia-ota-artifacts"),
+    "mimo-snapshots": (PROFILE + r"\.mimo_storage", r"M:\C-RELIEF\mohands\.mimo_storage"),
+}
+# whale first (instant skip if junction live), then biggest-first for fast C: relief
+ORDER = ["mimo-snapshots", "nvidia-ota", "minecraft", "roblox-gdk",
+         "android-sdk", "perplexity", "platformio", "bun"]
+
+STATE: dict = {}
+
+
+def utc() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def free_gb(letter: str) -> float:
+    try:
+        return round(shutil.disk_usage(letter + "\\").free / 1024**3, 2)
+    except Exception:  # noqa: BLE001
+        return -1.0
+
+
+def save() -> None:
+    STATE["updated_utc"] = utc()
+    try:
+        STATUS_TMP.write_text(json.dumps(STATE, ensure_ascii=False, indent=1),
+                              encoding="utf-8")
+        os.replace(str(STATUS_TMP), str(STATUS))
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def log(phase: str, detail: str = "") -> None:
+    try:
+        with open(PHASES_LOG, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"utc": utc(), "phase": f"autopilot:{phase}",
+                                 "detail": str(detail)[:300]},
+                                ensure_ascii=False) + "\n")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def is_junction(p: str) -> bool:
+    try:
+        return os.path.exists(p) and os.path.realpath(p).lower() != os.path.abspath(p).lower()
+    except OSError:
+        return False
+
+
+def already_running() -> bool:
+    try:
+        st = json.loads(STATUS.read_text(encoding="utf-8"))
+        if st.get("done"):
+            return False
+        ages = []
+        for f in (STATUS, PHASES_LOG):
+            if f.exists():
+                ages.append(time.time() - f.stat().st_mtime)
+        return bool(ages) and min(ages) < FRESH_RUNNING_SECONDS
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def manifest_tail(lines: int = 3) -> list:
+    out = []
+    try:
+        with open(MANIFEST, "rb") as fh:
+            raw = fh.read()[-8000:]
+        for ln in raw.splitlines()[-lines:]:
+            try:
+                d = json.loads(ln.decode("utf-8", "replace"))
+                out.append({"name": d.get("name"), "gb": round((d.get("src_bytes") or 0) / 2**30, 2),
+                            "utc": d.get("utc"), "junction_ok": d.get("junction_ok")})
+            except Exception:  # noqa: BLE001
+                continue
+    except OSError:
+        pass
+    return out
+
+
+def inventory(limit: int = 200) -> list:
+    out = []
+    try:
+        for p in sorted(RESULTS.iterdir(), key=lambda x: x.stat().st_mtime):
+            try:
+                out.append({"f": p.name, "kb": round(p.stat().st_size / 1024, 1)})
+            except OSError:
+                continue
+            if len(out) >= limit:
+                break
+    except OSError:
+        pass
+    return out
+
+
+def cumulative_from_manifest() -> dict:
+    total_bytes, moved = 0.0, 0
+    try:
+        with open(MANIFEST, "r", encoding="utf-8") as fh:
+            for ln in fh:
+                try:
+                    d = json.loads(ln)
+                except Exception:  # noqa: BLE001
+                    continue
+                if d.get("junction_ok"):
+                    moved += 1
+                    total_bytes += d.get("src_bytes") or 0
+    except OSError:
+        pass
+    return {"manifest_moved": moved, "manifest_gb": round(total_bytes / 2**30, 2)}
+
+
+def do_recon(tag: str) -> dict:
+    log(f"recon_{tag}_begin", "full device audit starting")
+    t0 = time.time()
+    info: dict = {"seconds": None, "error": None}
+    try:
+        worker.run_recon()  # writes M:\NEXUS\proofs\device_audit.json
+        target = AUDIT_BEFORE if tag == "before" else AUDIT_AFTER
+        shutil.copyfile(str(AUDIT_LIVE), str(target))
+        try:
+            a = json.loads(target.read_text(encoding="utf-8"))
+            info["drives"] = a.get("drives")
+            info["pagefile_gb"] = a.get("pagefile_gb")
+            info["hiberfil_gb"] = a.get("hiberfil_gb")
+            info["profile_level1_top"] = dict(
+                list((a.get("profile_level1_gb") or {}).items())[:6])
+            info["appdata_local_top"] = dict(
+                list((a.get("appdata_local_gb") or {}).items())[:6])
+        except Exception:  # noqa: BLE001
+            pass
+        log(f"recon_{tag}_done", f"seconds={round(time.time()-t0,1)}")
+    except BaseException as exc:  # noqa: BLE001
+        info["error"] = f"{type(exc).__name__}: {exc}"[:250]
+        log(f"recon_{tag}_exception", info["error"])
+    info["seconds"] = round(time.time() - t0, 1)
+    return info
+
+
+def run_candidate(name: str) -> dict:
+    src, dst = PLAN[name]
+    rec: dict = {"src": src, "dst": dst, "status": "unknown"}
+
+    if is_junction(src):
+        rec["status"] = "already_done"
+        rec["junction"] = True
+        log("skip_done", name)
+        return rec
+
+    if not os.path.exists(src):
+        fin = RESULTS / f"{name}__finalize.json"
+        rec["status"] = "done_no_src" if fin.exists() else "blocked_missing_src"
+        log("src_state", f"{name} {rec['status']}")
+        return rec
+
+    t0 = time.time()
+    log("candidate_begin", f"{name} src={src}")
+
+    # ---- copy + verify (retry loop: robocopy resumes partial copies)
+    vres: dict | None = None
+    for attempt in range(1, 4):
+        if is_junction(src):
+            rec["status"] = "already_done"
+            rec["junction"] = True
+            return rec
+        if not os.path.exists(src):
+            rec["status"] = "blocked_src_vanished_midrun"
+            log("src_vanished", name)
+            return rec
+        c = worker.ph_copy(name, src, dst, t0)
+        rec["copy"] = c
+        save()
+        if c.get("status") == "copy_failed":
+            rec["status"] = "blocked_copy_failed"
+            return rec
+        v = worker.ph_verify(name, src, dst, t0)
+        rec["verify"] = v
+        vres = v
+        save()
+        if v.get("status") == "verified":
+            break
+        log("copy_retry", f"{name} attempt={attempt} missing={v.get('src_missing_in_dst')}")
+    else:
+        rec["status"] = "blocked_copy_incomplete"
+        return rec
+
+    if not vres or vres.get("status") != "verified":
+        rec["status"] = "blocked_unexpected_verify"
+        return rec
+
+    # ---- sha spot-check (files >= 100MB, bounded)
+    s = worker.ph_sha(name, src, dst, t0)
+    rec["sha"] = {"sha_checked": s.get("sha_checked"), "sha_bad": s.get("sha_bad"),
+                  "status": s.get("status")}
+    save()
+    if s.get("status") != "sha_ok" or s.get("sha_bad"):
+        rec["status"] = "blocked_sha_failed"
+        return rec
+
+    # ---- purge (self-verifies superset first; aborts otherwise)
+    p = worker.ph_purge(name, src, dst, t0)
+    rec["purge"] = {k: p.get(k) for k in
+                    ("status", "purge_exit", "husk_removed", "src_files", "src_bytes",
+                     "remove_error")}
+    save()
+    if p.get("status") != "purged":
+        rec["status"] = "blocked_purge_" + str(p.get("status"))
+        return rec
+
+    # ---- finalize: junction + manifest line
+    f = worker.ph_finalize(name, src, dst, t0)
+    rec["finalize"] = {k: f.get(k) for k in ("status", "mklink_rc", "junction_ok")}
+    if f.get("junction_ok"):
+        rec["status"] = "moved"
+        rec["gb"] = round((p.get("src_bytes") or 0) / 2**30, 2)
+        rec["files"] = p.get("src_files")
+    else:
+        rec["status"] = "blocked_finalize"
+    rec["seconds"] = round(time.time() - t0, 1)
+    log("candidate_end", f"{name} {rec['status']} gb={rec.get('gb')}")
+    return rec
+
+
+def main() -> int:
+    t0 = time.time()
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+
+    STATE.clear()
+    STATE.update({
+        "engine": "c-relief-autopilot v1", "started_utc": utc(),
+        "pid": os.getpid(), "stage": "starting", "done": False,
+        "current": None, "candidates": {}, "c_free_timeline": [],
+        "c_free_gb": free_gb("C:"), "m_free_gb": free_gb("M:"),
+        "errors": [],
+    })
+    if already_running():
+        STATE["stage"] = "aborted_already_running"
+        STATE["done"] = True
+        save()
+        return 0
+    save()
+
+    # 1) full device audit BEFORE (finds the space thieves)
+    STATE["stage"] = "recon_before"
+    save()
+    STATE["audit_before"] = do_recon("before")
+    STATE["c_free_gb"] = free_gb("C:")
+    STATE["m_free_gb"] = free_gb("M:")
+    save()
+
+    STATE["inventory"] = inventory()
+    STATE["manifest_tail"] = manifest_tail()
+    STATE["cumulative"] = cumulative_from_manifest()
+    STATE["stage"] = "queue"
+    save()
+
+    # 2) the whole queue, candidate by candidate
+    for name in ORDER:
+        elapsed = time.time() - t0
+        if elapsed > BUDGET_SECONDS:
+            STATE["stage"] = "budget_exhausted_resumable"
+            log("budget_stop", f"elapsed={round(elapsed)}s")
+            break
+        m_free = free_gb("M:")
+        if 0 < m_free < M_FREE_FLOOR_GB:
+            STATE["stage"] = "stopped_low_m_space_resumable"
+            log("low_m_stop", f"m_free={m_free}GB")
+            break
+        STATE["current"] = name
+        STATE["stage"] = "candidate"
+        save()
+        try:
+            rec = run_candidate(name)
+        except BaseException as exc:  # noqa: BLE001
+            rec = {"status": "exception",
+                   "error": f"{type(exc).__name__}: {exc}"[:250],
+                   "tb": traceback.format_exc()[-400:]}
+            STATE["errors"].append(f"{name}: {rec['error']}")
+        STATE["candidates"][name] = rec
+        STATE["current"] = None
+        if rec.get("status") == "moved":
+            STATE["freed_this_run_gb"] = round(
+                STATE.get("freed_this_run_gb", 0.0) + rec.get("gb", 0.0), 2)
+        STATE["c_free_timeline"].append({"utc": utc(), "after": name,
+                                         "c_free_gb": free_gb("C:")})
+        STATE["c_free_gb"] = free_gb("C:")
+        STATE["m_free_gb"] = free_gb("M:")
+        save()
+
+    # 3) full device audit AFTER (proof of gains) + final status
+    if STATE.get("stage") == "queue":
+        STATE["stage"] = "recon_after"
+    save()
+    STATE["audit_after"] = do_recon("after")
+    STATE["cumulative"] = cumulative_from_manifest()
+    STATE["c_free_gb"] = free_gb("C:")
+    STATE["m_free_gb"] = free_gb("M:")
+    STATE["total_seconds"] = round(time.time() - t0, 1)
+    if STATE.get("stage") in ("queue", "recon_after"):
+        STATE["stage"] = "finished"
+    STATE["done"] = True
+    save()
+    log("autopilot_finished", f"stage={STATE.get('stage')} "
+        f"freed={STATE.get('freed_this_run_gb', 0)}GB "
+        f"c_free={STATE.get('c_free_gb')}GB")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except BaseException as exc:  # noqa: BLE001  — status must ALWAYS be written
+        STATE["stage"] = "fatal_exception"
+        STATE["done"] = True
+        STATE["errors"].append(f"{type(exc).__name__}: {exc}"[:250])
+        STATE["tb"] = traceback.format_exc()[-500:]
+        save()
+        raise

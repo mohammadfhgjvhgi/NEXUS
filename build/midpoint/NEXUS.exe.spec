@@ -1,0 +1,60 @@
+# -*- mode: python ; coding: utf-8 -*-
+"""PyInstaller spec — the first real NEXUS.exe (MIDPOINT).
+
+Build ON DEVICE (Windows):
+    py -3.14 -m pip install pyinstaller
+    py -3.14 -m PyInstaller --noconfirm --clean NEXUS.exe.spec
+Result: build\\midpoint\\dist\\NEXUS.exe  (onefile, console)
+
+Core is stdlib-only by law — heavy deps only ever sit behind adapters,
+so the exe stays small and the build stays hermetic. All 28+ core
+packages are pinned as hiddenimports because the package root is lazy
+(docstring + registry only) — without the pins the bundle would carry
+only the root and the exe's own boot check would silently degrade to
+disk imports instead of proving the exe is self-contained.
+
+v2 (gate #6/#7/#8): + nexus_ui + tkinter (explicit hiddenimports, and
+tkinter REMOVED from excludes — it was silently stripped before, which
+killed every selftest mode with an ImportError at import time).
+"""
+
+CORE = [
+    "nexus", "nexus.core.config", "nexus.events", "nexus.core.session",
+    "nexus.core.engine", "nexus.core.persistence", "nexus.core.workspace",
+    "nexus.core.scope", "nexus.core.policy", "nexus.resources",
+    "nexus.models", "nexus.agents", "nexus.harness", "nexus.tools",
+    "nexus.computer", "nexus.windows", "nexus.browser", "nexus.vision",
+    "nexus.verification", "nexus.recovery", "nexus.health", "nexus.horizon",
+    "nexus.orchestration", "nexus.security", "nexus.memory", "nexus.learning",
+    "nexus.research", "nexus.documents", "nexus.speech", "nexus.codeintel",
+    "nexus.coding", "nexus.git", "nexus.github", "nexus.remote",
+    "nexus.skills", "nexus.plugins", "nexus.ui", "nexus.workspace",
+]
+
+a = Analysis(
+    ["nexus_launcher.py"],
+    pathex=["M:\\NEXUS"],
+    binaries=[],
+    datas=[],
+    hiddenimports=CORE + ["nexus_ui", "nexus_remote_gateway", "tkinter",
+                          "tkinter.scrolledtext", "tkinter.filedialog"],
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=["matplotlib", "numpy", "pandas", "torch", "cv2"],
+    noarchive=False,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name="NEXUS",
+    debug=False,
+    strip=False,
+    upx=False,
+    console=True,
+    icon=None,
+)

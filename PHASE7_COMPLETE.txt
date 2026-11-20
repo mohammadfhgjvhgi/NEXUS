@@ -1,0 +1,31 @@
+PHASE 7 — TOOL SYSTEM · COMPLETE ON THIS MACHINE
+==================================================
+
+repo commit : 8338c90 (develop == main)
+phase       : 7 / Plan §8 — Tool System (Spec §71 gates)
+exit proof  : 88/88 + 1 bonus (tests\phase07\verify_exit_criteria.py)
+              + regressions 98/143/104/106/116/88 re-run inside §F
+              (A=16, B=20, C=22, D=16, E=8, F=6)
+CI          : NEXUS CI on 8338c90 (job "Phases 1-7", MCP SDK v2)
+deploy      : 33/33 files written + SHA-verified via bridge (Bearer)
+
+What landed (nexus\tools\, 15 files):
+  §8.1 models.py + registry.py — the nine verbatim fields, risk 0..4,
+        upgrade-only, freezable, honest capability probes
+  §8.2 router.py — the verbatim 7-stage pipeline with proof traces,
+        risk gate, folded confirmations, resource gate, Verify flip
+  §8.3 native/ (9 tools) — filesystem · terminal · process · hardware
+        · windows · clipboard · screen · git · github (stdlib only)
+  §8.4 mcp/adapter.py — the official MCP SDK v2 (pip install
+        "nexus-core[mcp]", i.e. mcp>=2.0,<3) behind the router
+  §8.5 config/tools/mcp.toml — filesystem/git/fetch/memory/database,
+        each behind risk ceiling + allow/block gates + scope paths
+
+On this machine (optional — the MCP layer needs the extra):
+  pip install "mcp>=2.0,<3"
+  python tests\phase07\verify_exit_criteria.py  (88/88 + bonus)
+
+Repository Round 4 (audited pins — see REPOSITORY-INTEGRATION.md):
+  modelcontextprotocol/python-sdk      08a3bc8 (dist mcp 2.1.1, MIT, MODE A)
+  modelcontextprotocol/servers         d73f99e (MIT→Apache-2.0, MODE B)
+  modelcontextprotocol/servers-archived 9be4674 (MIT, MODE B — sqlite)

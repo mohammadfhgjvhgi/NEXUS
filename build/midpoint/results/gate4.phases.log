@@ -1,0 +1,17 @@
+{"utc": "2026-09-13T17:56:20Z", "phase": "worker_gate4_start", "detail": "pid=15368 py=3.14.5"}
+{"utc": "2026-09-13T17:56:20Z", "phase": "build_begin", "detail": ""}
+{"utc": "2026-09-13T17:59:29Z", "phase": "build_done", "detail": "size=87586533 sha256=455c31ca47b8e888..."}
+{"utc": "2026-09-13T17:59:50Z", "phase": "exe_check_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:59:50Z", "phase": "build_stage_done", "detail": "verdict=PASS"}
+{"utc": "2026-09-13T17:59:52Z", "phase": "ollama_serve_begin", "detail": ""}
+{"utc": "2026-09-13T17:59:57Z", "phase": "ollama_up", "detail": "spawned"}
+{"utc": "2026-09-13T18:00:08Z", "phase": "ollama_listed", "detail": "NAME    ID    SIZE    MODIFIED  | "}
+{"utc": "2026-09-13T18:00:08Z", "phase": "ollama_create_begin", "detail": "import snap_000001_qwen3-0.6b-q4km.gguf (zero downloads)"}
+{"utc": "2026-09-13T18:00:08Z", "phase": "ollama_create_failed", "detail": "\u001b[?2026h\u001b[?25l\u001b[1Ggathering model components \u001b[K\u001b[?25h\u001b[?2026l\nError: 400 Bad Request: invalid model name\n"}
+{"utc": "2026-09-13T18:00:08Z", "phase": "ollama_pull_fallback", "detail": "qwen3:0.6b"}
+{"utc": "2026-09-13T18:01:06Z", "phase": "ollama_model_ready", "detail": "qwen3:0.6b"}
+{"utc": "2026-09-13T18:01:06Z", "phase": "chat_begin", "detail": "NEXUS.exe --chat --ollama-model qwen3:0.6b"}
+{"utc": "2026-09-13T18:03:06Z", "phase": "chat_done", "detail": "reply_chars=0"}
+{"utc": "2026-09-13T18:03:06Z", "phase": "chat_stage_done", "detail": "verdict=FAIL"}
+{"utc": "2026-09-13T18:03:06Z", "phase": "ollama_stopped", "detail": ""}
+{"utc": "2026-09-13T18:03:06Z", "phase": "worker_gate4_done", "detail": "chat verdict=FAIL"}

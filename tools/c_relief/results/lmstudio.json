@@ -1,0 +1,15 @@
+{
+ "name": "lmstudio",
+ "src": "C:\\Users\\MohandsMohammad\\.lmstudio",
+ "dst": "M:\\C-RELIEF\\mohands\\.lmstudio",
+ "status": "moved",
+ "robocopy_exit": 2,
+ "src_files": 2910,
+ "src_bytes": 69716039,
+ "dst_files": 4328,
+ "dst_bytes": 1678143512,
+ "src_missing_in_dst": 0,
+ "sha_checked": 0,
+ "sha_bad": [],
+ "seconds": 3.4
+}

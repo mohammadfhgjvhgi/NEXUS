@@ -1,0 +1,231 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "phase26-desktop-ui-production",
+ "utc": "2026-10-24T14:59:25Z",
+ "pid": 17968,
+ "python": "3.14.5",
+ "toolkit": "tkinter (stdlib)",
+ "sections": {
+  "conversations": {
+   "ok": true,
+   "conv_id": "conv_a4ca9ff5c19243e38dc0194a180",
+   "live_count": 1
+  },
+  "memory": {
+   "ok": true,
+   "hits": 1,
+   "core": {
+    "import": "ok",
+    "sqlite": "ok · schema v1 · SQLiteMemoryStore"
+   },
+   "file_bytes": 101
+  },
+  "checkpoints": {
+   "ok": true,
+   "files": 3,
+   "dir": "M:\\NEXUS\\checkpoints",
+   "listed": 2
+  },
+  "settings": {
+   "ok": true,
+   "fields": 5,
+   "file_bytes": 176
+  },
+  "voice": {
+   "ok": true,
+   "tone": {
+    "ok": true,
+    "path": "M:\\NEXUS\\voice\\tone_20261024_175959.wav",
+    "size_bytes": 38444,
+    "rms": 0.2475
+   },
+   "providers": {
+    "available": [
+     {
+      "provider": "sherpa-onnx",
+      "pin": "sherpa-onnx>=1.10,<2",
+      "mode": "A (direct use) when installed + model present",
+      "detect_language": "native (whisper language token)",
+      "installed": "True",
+      "version": "1.13.7",
+      "model_found": "True",
+      "model_dir": "M:\\NEXUS\\models\\sherpa-onnx-whisper-tiny",
+      "detail": ""
+     },
+     {
+      "provider": "sapi",
+      "mode": "A (Windows built-in — zero installs)",
+      "engine": "SAPI 5.1 System.Speech dictation (file input)",
+      "detect_language": "script-inference (SAPI has no native detector)",
+      "installed": "False",
+      "recognizer_count": "0",
+      "cultures": "",
+      "detail": "no SAPI recognizer installed on this host"
+     },
+     {
+      "provider": "null",
+      "installed": "False",
+      "mode": "refusal floor — no engine on this host",
+      "detail": "install sherpa-onnx sherpa-onnx>=1.10,<2 (the [speech] extra) or use the Windows SAPI floor (MODE A)"
+     }
+    ],
+    "error": ""
+   },
+   "files": 1
+  },
+  "attachments": {
+   "ok": true,
+   "sha256": "5b821c5cde51231fd56f",
+   "error": "",
+   "files": 2
+  },
+  "chat": {
+   "ok": true,
+   "cap_seed_check": "ok",
+   "transcript_lines": 5
+  },
+  "tasks": {
+   "ok": true,
+   "count": 1
+  },
+  "activity": {
+   "ok": true,
+   "lines": 17
+  },
+  "models": {
+   "ok": true,
+   "status": "النموذج: offline — صادق (شغّل Ollama أو llama-server)",
+   "ollama_models": []
+  },
+  "workspace": {
+   "ok": true,
+   "entries": 7
+  }
+ },
+ "runtime_ok": true,
+ "boot_error": null,
+ "core_ok": 37,
+ "tasks_count": 1,
+ "title": "NEXUS 0.25.0 — PHASE 26 · Desktop UI Production",
+ "cap_clicks": 1,
+ "caps_cards": 7,
+ "cap_seed_check": "ok",
+ "pump_frames": 30,
+ "screenshots": {
+  "chat": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 67892,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "conversations": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 59114,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "tasks": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 58025,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "activity": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 92046,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "models": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 78685,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "workspace": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 75078,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "memory": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 76806,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "checkpoints": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 74068,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "settings": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 76126,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "voice": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 85108,
+    "width": 1680,
+    "height": 1050
+   }
+  },
+  "attachments": {
+   "frames": 12,
+   "png": {
+    "ok": true,
+    "size_bytes": 75603,
+    "width": 1680,
+    "height": 1050
+   }
+  }
+ },
+ "screenshot": {
+  "method": "ctypes GDI BitBlt → GetDIBits → zlib PNG",
+  "path": "M:\\NEXUS\\proofs\\midpoint_ui.png",
+  "width": 1680,
+  "height": 1050,
+  "getdibits_lines": 1050,
+  "pixel_checksum": 665253,
+  "size_bytes": 81975,
+  "ok": true
+ },
+ "model": "offline",
+ "sections_ok": true,
+ "verdict": "PASS",
+ "seconds": 72.02,
+ "error": null
+}

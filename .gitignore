@@ -1,0 +1,93 @@
+# --- NEXUS .gitignore ---
+
+# Secrets & credentials (NEVER commit)
+.env
+.env.*
+*.key
+*.pem
+*.token
+secrets/
+credentials/
+
+# Local databases & state (ROOT-SCOPED so nexus/ source modules are never shadowed)
+*.db
+*.sqlite
+*.sqlite3
+/db/
+/data/
+/cache/
+/checkpoints/
+/tasks/
+/logs/
+
+# Models (large binaries — downloaded per install, not committed) — ROOT-SCOPED
+/models/
+*.gguf
+*.bin
+
+# --- Node / TypeScript ---
+node_modules/
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+coverage/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Rust / Cargo (future runtimes) ---
+target/
+
+# --- Tooling & IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- AI context artifacts (local-only) ---
+.nexus/
+agent-ctx/
+
+# --- Workspace staging layout (Plan §1.2 / §45) ---
+/vendor-staging/*
+!/vendor-staging/.gitkeep
+!/vendor-staging/README.md
+/external/*
+!/external/.gitkeep
+/runtime/*
+!/runtime/.gitkeep
+/tests-results/
+
+# --- GH30 product tree re-inclusion (append-only) ---
+.recovery/
+/_gh30_*
+/_gh_worker.hb.json
+/remote/token.txt
+/realtime/rt_config.json
+/proofs/phase10-work/
+!realtime/selftest/
+realtime/selftest/*
+!realtime/selftest/up29.bin
+!build/
+build/*
+!build/midpoint/
+build/midpoint/build/
+!build/midpoint/dist/
+build/midpoint/dist/*
+!build/midpoint/dist/NEXUS.exe
+
+# --- GH30 product tree re-inclusion (append-only) ---
+/tools-bin/
+
+# push-protection auto-exclusions
+/SESSION_RESUME.txt.bak

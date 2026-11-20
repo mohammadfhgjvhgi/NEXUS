@@ -1,0 +1,200 @@
+{
+ "drives": {
+  "C:": {
+   "used_gb": 166.7,
+   "free_gb": 0.5
+  },
+  "M:": {
+   "used_gb": 300.0,
+   "free_gb": 258.1
+  }
+ },
+ "c_root_dirs_gb": {
+  "C:\\Users": 91.47,
+  "C:\\ProgramData": 12.9,
+  "C:\\Python313": 0.12,
+  "C:\\DevTools": 0.06,
+  "C:\\360SANDBOX": 0.01,
+  "C:\\$360Section": 0.0,
+  "C:\\$Windows.~WS": 0.0,
+  "C:\\$WinREAgent": 0.0,
+  "C:\\Config.Msi": 0.0,
+  "C:\\Documents and Settings": 0.0,
+  "C:\\Downloads": 0.0,
+  "C:\\Drivers": 0.0,
+  "C:\\Games": 0.0,
+  "C:\\Installers": 0.0,
+  "C:\\PerfLogs": 0.0
+ },
+ "c_users_subdirs_gb": {},
+ "c_programdata_subdirs_gb": {
+  "C:\\ProgramData\\Microsoft": 4.54,
+  "C:\\ProgramData\\NVIDIA Corporation": 3.5,
+  "C:\\ProgramData\\Malwarebytes": 2.37,
+  "C:\\ProgramData\\Epic": 0.79,
+  "C:\\ProgramData\\NVIDIA": 0.47,
+  "C:\\ProgramData\\Package Cache": 0.41
+ },
+ "big_files_over_300mb": [
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000139_ministral-8b-q4km.gguf",
+   "gb": 4.84
+  },
+  {
+   "path": "C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows\\Windows.edb",
+   "gb": 3.81
+  },
+  {
+   "path": "C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows\\Windows.edb",
+   "gb": 3.81
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000009_llama32-3b-q4km.gguf",
+   "gb": 1.88
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000010_qwen25-coder-3b-q4km.gguf",
+   "gb": 1.8
+  },
+  {
+   "path": "C:\\ProgramData\\Malwarebytes\\MBAMService\\Quarantine\\023a379a-c58a-11f0-864b-94de8021ee3b\\49d27ae0-c58a-11f0-988e-94de8021ee3b.quar",
+   "gb": 1.1
+  },
+  {
+   "path": "C:\\ProgramData\\Malwarebytes\\MBAMService\\Quarantine\\023a379a-c58a-11f0-864b-94de8021ee3b\\49d27ae0-c58a-11f0-988e-94de8021ee3b.quar",
+   "gb": 1.1
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_ds-r1-distill-qwen-1.5b-q4km.gguf",
+   "gb": 1.04
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000008_qwen3-1.7b-q4km.gguf",
+   "gb": 1.03
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000006_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.92
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000174_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.92
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-0.5B-Instruct\\blobs\\fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+   "gb": 0.92
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000007_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.9
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.81
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000019_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.81
+  },
+  {
+   "path": "C:\\ProgramData\\NVIDIA Corporation\\NVIDIA App\\UpdateFramework\\ota-artifacts\\grd\\7e4b95038688eb7a072631493af24e41\\582.28-desktop-win10-win11-64bit-international-dch-whql-g.exe",
+   "gb": 0.69
+  },
+  {
+   "path": "C:\\ProgramData\\NVIDIA Corporation\\NVIDIA App\\UpdateFramework\\ota-artifacts\\grd\\7e4b95038688eb7a072631493af24e41\\582.28-desktop-win10-win11-64bit-international-dch-whql-g.exe",
+   "gb": 0.69
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000003_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.68
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000004_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.68
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000018_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.68
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\cuda_v12\\cublasLt64_12.dll",
+   "gb": 0.64
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.63
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000006_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.63
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000031_bitnet-b1.58-2b.gguf",
+   "gb": 0.62
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\lm-studio-updater\\installer.exe",
+   "gb": 0.59
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000009_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.59
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000010_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.59
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.58
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000002_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.58
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.31.42.05.Enemy destruction moment.DVR.mp4",
+   "gb": 0.54
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000003_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.54
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000004_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.54
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000011_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.53
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000012_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.53
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA\\DXCache\\b15aa9b80bec0c27.nvph",
+   "gb": 0.5
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.pm2\\pm2.log",
+   "gb": 0.5
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\ggml-cuda.dll",
+   "gb": 0.5
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\cuda_v13\\cublasLt64_13.dll",
+   "gb": 0.45
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\rocm_v7_1\\ggml-hip.dll",
+   "gb": 0.44
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.pm2\\logs\\mimo-app-error-0.log",
+   "gb": 0.44
+  }
+ ]
+}

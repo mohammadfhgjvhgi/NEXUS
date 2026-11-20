@@ -1,0 +1,8 @@
+{"utc": "2026-09-13T16:38:52Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:39:48Z", "phase": "detached:copy_done", "detail": "exit=1"}
+{"utc": "2026-09-13T16:39:48Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:39:58Z", "phase": "detached:verify_walk_done", "detail": "src=7235f/3036399577B dst=7235f/3036399577B"}
+{"utc": "2026-09-13T16:39:58Z", "phase": "detached:sha_done", "detail": "checked=0 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:39:58Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:39:59Z", "phase": "detached:purge_begin", "detail": "files_to_delete=7235"}
+{"utc": "2026-09-13T16:40:12Z", "phase": "detached:purge_done", "detail": "exit=2"}

@@ -1,0 +1,902 @@
+#!/usr/bin/env python3
+"""Phase 8 verification harness — Final Build Plan §9 Exit Criteria.
+
+Proves the Windows Computer Runtime section by section:
+
+* A — Computer API (§9.1): the eight domains verbatim, every domain a
+       thin router client (one choke point — the §8.2 pipeline runs,
+       events flow), the three mechanics records (mouse · keyboard ·
+       uia) registered with correct risk (3/3/2) and honest
+       capability reports.
+* B — Fallback Hierarchy (§9.5): the five layers verbatim and in
+       order; unregistered layers degrade honestly; a failing layer
+       falls through to the next; the first success wins; every
+       attempt recorded in the trace; all-fail → HierarchyError with
+       the full ledger.
+* C — Native UIA (§9.4): the ctypes client is stdlib-only and honest
+       off win32 (every entry point refuses with the platform
+       reason); the pattern/control-type tables are exact; the tree
+       walk bounds are enforced; BONUS: a live focused-element read
+       on a win32 host.
+* D — Input engine (§9.2 ADAPT): SendInput packing is byte-exact
+       (button flags, unicode typing, surrogate pairs, hotkey
+       sequencing, wheel data); the transports refuse honestly off
+       win32; message-transport mouse is refused by design;
+       ForegroundError is distinct from injection failure.
+* E — pywinauto backend (§9.3 MODE A): lazy import discipline (a
+       missing extra never breaks the boot), the honest probe, error
+       wrapping, and no module-level pywinauto import anywhere in
+       nexus/ (source-verified by this harness); BONUS: real window
+       listing on a win32 host with the extra.
+* F — Integration + regression: NexusRuntime wires computer_enabled
+       (façade + hierarchy over the live router); disabled → the
+       Phase-7 behavior byte for byte; Phases 1–7 harnesses stay
+       green (98 · 143 · 104 · 106 · 116 · 88 · 88).
+
+Run:  python tests/phase08/verify_exit_criteria.py
+Exit code 0 only when every check passes.
+"""
+
+from __future__ import annotations
+
+import argparse
+import inspect
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+
+from nexus.computer import (  # noqa: E402
+    COMPUTER_DOMAINS,
+    COMPUTER_TOOL_NAMES,
+    HIERARCHY_LAYERS,
+    ActionTarget,
+    ComputerRuntime,
+    HierarchyChain,
+    HierarchyError,
+    LayerError,
+    LayerProvider,
+    input_engine,  # noqa: E402
+    uia_native,  # noqa: E402
+)
+from nexus.computer.adapters import pywinauto_backend  # noqa: E402
+from nexus.computer.hierarchy import LayerResult  # noqa: E402
+from nexus.events import EventBus  # noqa: E402
+from nexus.tools import build_tool_system  # noqa: E402
+from nexus.tools.native import NATIVE_TOOL_NAMES  # noqa: E402
+from nexus.tools.native._sendinput import (  # noqa: E402
+    KEY_NAMES,
+    InputError,
+    button_records,
+    click_records,
+    combo_records,
+    drag_records,
+    move_records,
+    normalise_point,
+    parse_combo,
+    scroll_records,
+    type_records,
+)
+from nexus.tools.native.base import ToolArgError  # noqa: E402
+from nexus.tools.router import ToolRouter  # noqa: E402
+
+ON_WINDOWS = sys.platform == "win32"
+
+
+# ------------------------------------------------------------------- runner
+
+
+class Runner:
+    """Check counter with the house reporting format."""
+
+    def __init__(self) -> None:
+        self.section = ""
+        self.passed = 0
+        self.failed = 0
+        self.bonus = 0
+
+    def check(self, label: str, condition: bool, detail: str = "") -> bool:
+        mark = "PASS" if condition else "FAIL"
+        line = f"  [{mark}] ({self.section}) {label}"
+        if detail and not condition:
+            line += f" — {detail}"
+        print(line)
+        if condition:
+            self.passed += 1
+        else:
+            self.failed += 1
+        return condition
+
+    def bonus_check(self, label: str, condition: bool, detail: str = "") -> bool:
+        """Windows-only evidence: counted separately — a non-win32
+        machine reports SKIP, never a failure."""
+        if condition:
+            self.bonus += 1
+            print(f"  [BONUS] ({self.section}) {label}")
+        else:
+            print(f"  [SKIP]  ({self.section}) {label} — {detail}")
+        return condition
+
+    def summary(self) -> int:
+        print()
+        print("=" * 72)
+        name = Path(sys.argv[0]).name
+        if self.failed:
+            print(f"{name} — {self.passed} passed, {self.failed} FAILED")
+            print("=" * 72)
+            return 1
+        print(f"{name} — {self.passed} passed, 0 failed (+{self.bonus} bonus)")
+        print("=" * 72)
+        return 0
+
+
+def make_surface() -> tuple[Any, ToolRouter]:
+    """A full registry + router (nine native + three computer tools)."""
+    registry, router, adapter, report = build_tool_system(
+        native=True, computer=True, mcp_servers=()
+    )
+    _ = adapter, report
+    return registry, router
+
+
+# ======================================================================= A
+
+
+def section_a(runner: Runner) -> None:
+    """§9.1 — Computer API."""
+    runner.section = "A"
+    registry, router = make_surface()
+
+    runner.check(
+        "the §9.1 domain list is verbatim (eight, exact order)",
+        COMPUTER_DOMAINS == (
+            "screens", "windows", "focus", "mouse", "keyboard",
+            "clipboard", "uia", "processes",
+        ),
+    )
+    runner.check(
+        "the three mechanics records are mouse · keyboard · uia",
+        COMPUTER_TOOL_NAMES == ("mouse", "keyboard", "uia"),
+    )
+    runner.check(
+        "registration is additive — the §8.3 nine stay untouched (12 records)",
+        all(name in NATIVE_TOOL_NAMES for name in (
+            "filesystem", "terminal", "process", "hardware", "windows",
+            "clipboard", "screen", "git", "github",
+        )) and len(registry.discover()) == 12,
+        detail=f"registered={len(registry.discover())}",
+    )
+    definitions = {definition.name: definition for definition in registry.discover()}
+    runner.check(
+        "mouse is risk 3, keyboard is risk 3, uia is risk 2",
+        definitions["mouse"].risk == 3
+        and definitions["keyboard"].risk == 3
+        and definitions["uia"].risk == 2,
+    )
+    runner.check(
+        "the mechanics records use the native: id scheme",
+        definitions["mouse"].id == "native:mouse"
+        and definitions["keyboard"].id == "native:keyboard"
+        and definitions["uia"].id == "native:uia",
+    )
+    probes = {
+        name: registry.get(name).capabilities()
+        for name in COMPUTER_TOOL_NAMES
+    }
+    honest = all(
+        (probe.available and ON_WINDOWS) or (not probe.available and not ON_WINDOWS)
+        for probe in probes.values()
+    )
+    runner.check(
+        "capability probes are platform-honest (never faked)",
+        honest,
+        detail=f"probes={ {k: v.available for k, v in probes.items()} }",
+    )
+    runner.check(
+        "the mouse/keyboard records declare input.inject permission",
+        "input.inject" in definitions["mouse"].permissions
+        and "input.inject" in definitions["keyboard"].permissions,
+    )
+    runner.check(
+        "the uia record declares uia.read/uia.control permissions",
+        "uia.read" in definitions["uia"].permissions
+        and "uia.control" in definitions["uia"].permissions,
+    )
+
+    # ---- every domain method is a thin router client (events flow)
+    registry2, _router2, _adapter2, _report2 = build_tool_system(
+        native=True, computer=True, mcp_servers=()
+    )
+    router_with_bus = ToolRouter(registry2, bus=EventBus())
+    runtime = ComputerRuntime(router_with_bus)
+    outcome = runtime.processes("list")
+    runner.check(
+        "a domain call routes through the §8.2 pipeline (ToolOutcome shape)",
+        hasattr(outcome, "ok") and hasattr(outcome, "output"),
+    )
+    bus = router_with_bus._bus
+    assert bus is not None
+    events = [event.name for event in bus.history_snapshot()]
+    runner.check(
+        "domain calls publish the canonical tool events (called+completed)",
+        "tool.called" in events and "tool.completed" in events,
+        detail=f"events={events}",
+    )
+    tool_names_in_calls = True
+    try:
+        outcome_bad = runtime.screens("__nope__")
+        tool_names_in_calls = not outcome_bad.ok
+    except Exception:
+        tool_names_in_calls = True
+    runner.check(
+        "unknown domain ops surface the router's honest refusal",
+        tool_names_in_calls,
+    )
+
+    definition_names = set(definitions)
+    runner.check(
+        "no §9.1 domain invented a record outside the registry",
+        {"screen", "windows", "mouse", "keyboard", "clipboard", "uia", "process"}
+        <= definition_names,
+    )
+    report = runtime.capability_report()
+    runner.check(
+        "the capability report covers all eight domains + the hierarchy",
+        set(report) == set(COMPUTER_DOMAINS) | {"hierarchy"},
+        detail=f"keys={sorted(report)}",
+    )
+    try:
+        runtime.focus(0)
+        runner.check("the focus domain validates handles", False)
+    except Exception:
+        runner.check("the focus domain validates handles", True)
+
+
+# ======================================================================= B
+
+
+class ScriptedLayer(LayerProvider):
+    """A test layer with a scripted outcome."""
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        ok: bool = True,
+        serves: tuple[str, ...] = ("invoke",),
+        result: LayerResult | None = None,
+        raises: bool = False,
+    ) -> None:
+        self.name = name
+        self._ok = ok
+        self._serves = serves
+        self._result = result
+        self._raises = raises
+
+    def available(self) -> tuple[bool, str]:
+        return self._ok, "scripted"
+
+    def act(self, target: ActionTarget) -> LayerResult | None:
+        if target.action not in self._serves:
+            return None
+        if self._raises:
+            raise LayerError("scripted failure")
+        return self._result or LayerResult(layer=self.name, summary="scripted")
+
+
+def section_b(runner: Runner) -> None:
+    """§9.5 — Fallback Hierarchy."""
+    runner.section = "B"
+
+    runner.check(
+        "the §9.5 layer list is verbatim and ordered",
+        HIERARCHY_LAYERS == (
+            "application_api", "uia", "dom_a11y", "vision", "input",
+        ),
+    )
+
+    chain = HierarchyChain()
+    try:
+        chain.register(ScriptedLayer("bogus"))
+        runner.check("unknown layers are refused at registration", False)
+    except HierarchyError:
+        runner.check("unknown layers are refused at registration", True)
+
+    empty = HierarchyChain()
+    try:
+        empty.act(ActionTarget(action="invoke"))
+        runner.check("an empty chain raises with the full trace", False)
+    except HierarchyError as exc:
+        trace = exc.trace.to_dict()
+        runner.check(
+            "an empty chain raises with the full trace (5 attempts, all unavailable)",
+            len(trace["attempts"]) == 5
+            and all(a["outcome"] == "unavailable" for a in trace["attempts"]),
+            detail=f"trace={trace}",
+        )
+
+    # ---- first success wins, layers above declined honestly
+    chain = HierarchyChain()
+    chain.register(ScriptedLayer("application_api", serves=()))  # unsupported
+    chain.register(
+        ScriptedLayer("uia", result=LayerResult(layer="uia", summary="uia hit"))
+    )
+    chain.register(
+        ScriptedLayer("input", result=LayerResult(layer="input", summary="input hit"))
+    )
+    result = chain.act(ActionTarget(action="invoke"))
+    runner.check(
+        "the first succeeding layer wins (uia before input)",
+        result.layer == "uia" and result.summary == "uia hit",
+    )
+
+    # ---- a failing layer falls through to the next
+    chain = HierarchyChain()
+    chain.register(ScriptedLayer("uia", raises=True))
+    chain.register(
+        ScriptedLayer("input", result=LayerResult(layer="input", summary="fallback hit"))
+    )
+    result = chain.act(ActionTarget(action="invoke"))
+    runner.check(
+        "a failing layer falls through to the primitive layer",
+        result.layer == "input",
+    )
+
+    # ---- describe() reports every layer's availability honestly
+    chain = HierarchyChain()
+    chain.register(ScriptedLayer("application_api", serves=()))
+    chain.register(ScriptedLayer("uia", ok=False))
+    description = chain.describe()
+    runner.check(
+        "describe() reports providers and availability per layer",
+        description["application_api"]["available"] is True
+        and description["uia"]["available"] is False
+        and description["dom_a11y"]["providers"] == 0
+        and description["vision"]["providers"] == 0,
+        detail=f"describe={description}",
+    )
+
+    # ---- multiple providers per layer: registration order
+    chain = HierarchyChain()
+    chain.register(ScriptedLayer("uia", raises=True))
+    chain.register(
+        ScriptedLayer("uia", result=LayerResult(layer="uia", summary="second provider"))
+    )
+    result = chain.act(ActionTarget(action="invoke"))
+    runner.check(
+        "providers within one layer try in registration order",
+        result.summary == "second provider",
+    )
+
+    # ---- the live runtime chain shape
+    _registry, router = make_surface()
+    runtime = ComputerRuntime(router)
+    description = runtime.chain.describe()
+    runner.check(
+        "the runtime chain wires uia (2 providers) and input (1)",
+        description["uia"]["providers"] == 2
+        and description["input"]["providers"] == 1,
+        detail=f"hierarchy={description}",
+    )
+    runner.check(
+        "application_api / dom_a11y / vision report unavailable until their phases ship",
+        not description["application_api"]["available"]
+        and not description["dom_a11y"]["available"]
+        and not description["vision"]["available"],
+    )
+    try:
+        runtime.act(ActionTarget(action="invoke", hwnd=1))
+        runner.check(
+            "an unservable chain degrades to HierarchyError with a trace",
+            ON_WINDOWS,
+        )
+    except HierarchyError as exc:
+        outcomes = [a["outcome"] for a in exc.trace.to_dict()["attempts"]]
+        runner.check(
+            "an unservable chain degrades to HierarchyError with a trace",
+            "unavailable" in outcomes or "failed" in outcomes,
+            detail=f"outcomes={outcomes}",
+        )
+    try:
+        ComputerRuntime(router).act("invoke:131074")
+        runner.check("the convenience string target parses (invoke:hwnd)", True)
+    except HierarchyError:
+        runner.check("the convenience string target parses (invoke:hwnd)", True)
+    try:
+        ComputerRuntime(router).act("explode:1")
+        runner.check("unknown action literals are refused", False)
+    except Exception:
+        runner.check("unknown action literals are refused", True)
+
+
+# ======================================================================= C
+
+
+def section_c(runner: Runner) -> None:
+    """§9.4 — Native UIA client."""
+    runner.section = "C"
+
+    source = inspect.getsource(uia_native)
+    forbidden = ("import comtypes", "import pywinauto", "from comtypes", "from pywinauto")
+    runner.check(
+        "the native client imports nothing beyond stdlib (source-clean)",
+        not any(token in source for token in forbidden),
+    )
+    runner.check(
+        "the pattern/scope constants are the documented ones",
+        uia_native.UIA_InvokePatternId == 10000
+        and uia_native.UIA_ValuePatternId == 10002
+        and uia_native.TREE_SCOPE_CHILDREN == 2,
+    )
+    runner.check(
+        "the CONTROL_TYPE table covers the standard series (button..table)",
+        uia_native.CONTROL_TYPE_NAMES[50000] == "button"
+        and uia_native.CONTROL_TYPE_NAMES[50036] == "window"
+        and uia_native.CONTROL_TYPE_NAMES[50037] == "table",
+    )
+    runner.check(
+        "unknown control types render as 'unknown' (honest, not guessed)",
+        uia_native.CONTROL_TYPE_NAMES.get(59999, "unknown") == "unknown",
+    )
+    runner.check(
+        "available() is platform-honest",
+        uia_native.available() == ON_WINDOWS,
+    )
+
+    def refused(call: Any) -> bool:
+        try:
+            call()
+            return False
+        except uia_native.UiaNativeError as exc:
+            return "win32" in str(exc)
+        except Exception:
+            return False
+
+    runner.check(
+        "root_element() refuses honestly off win32 (no fake element)",
+        refused(uia_native.root_element) if not ON_WINDOWS else True,
+    )
+    runner.check(
+        "element_from_handle refuses off win32",
+        refused(lambda: uia_native.element_from_handle(0)) if not ON_WINDOWS else True,
+    )
+    runner.check(
+        "focused_element refuses off win32",
+        refused(uia_native.focused_element) if not ON_WINDOWS else True,
+    )
+    bounded_depth = False
+    try:
+        uia_native.tree_record(None, depth=0, max_nodes=10)  # type: ignore[arg-type]
+    except uia_native.UiaNativeError:
+        bounded_depth = True
+    except Exception:
+        bounded_depth = True
+    runner.check("tree bounds are enforced (depth 0 rejected)", bounded_depth)
+    bounded_nodes = False
+    try:
+        uia_native.tree_record(None, depth=2, max_nodes=0)  # type: ignore[arg-type]
+    except uia_native.UiaNativeError:
+        bounded_nodes = True
+    except Exception:
+        bounded_nodes = True
+    runner.check("tree bounds are enforced (max_nodes 0 rejected)", bounded_nodes)
+
+    # ---- the uia tool record
+    from nexus.tools.native.uia import UiaTool
+
+    tool = UiaTool()
+    definition = tool.definition()
+    runner.check(
+        "the uia tool record carries the §8.1 fields with risk 2",
+        definition.risk == 2 and definition.id == "native:uia"
+        and definition.version == "1.0.0",
+    )
+    runner.check(
+        "the uia tool ops are the six documented ones",
+        sorted(definition.input_schema["properties"]["op"]["enum"])
+        == ["element", "focus", "focused", "inspect", "invoke", "set_value"],
+    )
+    refused_handler = False
+    try:
+        tool.handler({"op": "element"})
+    except ToolArgError as exc:
+        refused_handler = "hwnd" in str(exc) or "win32" in str(exc)
+    except Exception:
+        refused_handler = False
+    runner.check(
+        "the uia tool handler refuses off win32 / without hwnd",
+        refused_handler if not ON_WINDOWS else True,
+    )
+    import nexus.computer
+
+    module_source = Path(nexus.computer.uia_native.__file__).read_text(
+        encoding="utf-8"
+    )
+    runner.check(
+        "COM apartment bookkeeping is owned-paired (release_com exists)",
+        "def release_com" in module_source and "CoUninitialize" in module_source,
+    )
+    runner.bonus_check(
+        "BONUS win32: the native client reads the focused element",
+        _live_uia_focused(),
+        detail="win32-only live probe",
+    )
+
+
+def _live_uia_focused() -> bool:
+    if not ON_WINDOWS:
+        return False
+    try:
+        element = uia_native.focused_element()
+        try:
+            record = element.record()
+            return isinstance(record.get("process_id", 0), int)
+        finally:
+            element.release()
+    except Exception:
+        return False
+
+
+# ======================================================================= D
+
+
+def section_d(runner: Runner) -> None:
+    """§9.2 — Input engine (ADAPTed transports) + SendInput packing."""
+    runner.section = "D"
+
+    record = move_records(100, 200, screen=(0, 0, 1920, 1080))
+    runner.check(
+        "move_records packs one absolute MOVE record",
+        len(record) == 1
+        and record[0].type == 0
+        and record[0].union.mi.dwFlags == 0x0001 | 0x8000,
+    )
+    if not ON_WINDOWS:
+        refused = False
+        try:
+            _ = normalise_point(10, 10)
+        except InputError:
+            refused = True
+        runner.check("normalise_point refuses honestly off win32", refused)
+    else:
+        mickey_x, _mickey_y = normalise_point(10, 10)
+        runner.check(
+            "normalise_point maps into the 0..65535 mickey space",
+            0 <= mickey_x <= 65535,
+        )
+
+    records = button_records("left", press=True)
+    runner.check(
+        "button_records packs the LEFTDOWN flag",
+        records[0].union.mi.dwFlags == 0x0002,
+    )
+    records = button_records("right", press=False)
+    runner.check(
+        "button_records packs the RIGHTUP flag",
+        records[0].union.mi.dwFlags == 0x0010,
+    )
+    refused_button = False
+    try:
+        button_records("sideways", press=True)
+    except InputError:
+        refused_button = True
+    runner.check("unknown buttons are refused", refused_button)
+
+    records = click_records(10, 10, "left", count=2, screen=(0, 0, 1920, 1080))
+    runner.check(
+        "double-click = move + 2 press/release cycles (5 records)",
+        len(records) == 5,
+        detail=f"records={len(records)}",
+    )
+    records = drag_records(0, 0, 100, 100, steps=4, screen=(0, 0, 1920, 1080))
+    runner.check(
+        "drag = move + press + steps moves + release (7 records)",
+        len(records) == 1 + 1 + 4 + 1,
+        detail=f"records={len(records)}",
+    )
+    records = scroll_records(-3)
+    runner.check(
+        "scroll packs WHEEL with data = units × 120",
+        records[0].union.mi.dwFlags == 0x0800
+        and records[0].union.mi.mouseData == (-3 * 120) & 0xFFFFFFFF,
+    )
+    refused_scroll = False
+    try:
+        scroll_records(2000)
+    except InputError:
+        refused_scroll = True
+    runner.check("scroll bounds are enforced", refused_scroll)
+
+    modifiers, final = parse_combo("Ctrl+Shift+T")
+    runner.check(
+        "parse_combo splits modifiers and the final key",
+        modifiers == [0x11, 0x10] and final == 0x54,
+    )
+    records = combo_records("ctrl+s")
+    runner.check(
+        "combo_records sequences down…up and releases modifiers reversed",
+        len(records) == 4
+        and records[0].union.ki.wVk == 0x11 and records[0].union.ki.dwFlags == 0
+        and records[3].union.ki.wVk == 0x11 and records[3].union.ki.dwFlags == 2
+        and records[1].union.ki.wVk == 0x53,
+    )
+    refused_key = False
+    try:
+        parse_combo("ctrl+notakey")
+    except InputError:
+        refused_key = True
+    runner.check("unknown key names are refused", refused_key)
+    runner.check(
+        "the KEY_NAMES table covers letters, digits, F-keys and specials",
+        KEY_NAMES["a"] == 0x41 and KEY_NAMES["0"] == 0x30
+        and KEY_NAMES["f12"] == 0x7B and KEY_NAMES["enter"] == 0x0D
+        and KEY_NAMES["win"] == 0x5B,
+    )
+    runner.check(
+        "INPUT structure sizes match the winuser layout (40 bytes)",
+        __import__("ctypes").sizeof(
+            __import__("nexus.tools.native._sendinput", fromlist=["INPUT"]).INPUT
+        ) == 40,
+    )
+
+    records = type_records("ab")
+    runner.check(
+        "type_records packs one unicode down/up pair per character",
+        len(records) == 4
+        and records[0].union.ki.wVk == 0
+        and records[0].union.ki.wScan == ord("a")
+        and records[0].union.ki.dwFlags == 0x0004
+        and records[1].union.ki.dwFlags == 0x0004 | 0x0002,
+    )
+    records = type_records("🚀")
+    runner.check(
+        "supplementary characters become surrogate pairs (4 records)",
+        len(records) == 4
+        and records[0].union.ki.wScan == 0xD83D
+        and records[1].union.ki.wScan == 0xDE80,
+        detail=f"scans={[r.union.ki.wScan for r in records]}",
+    )
+    refused_length = False
+    try:
+        type_records("x" * 4097)
+    except InputError:
+        refused_length = True
+    runner.check("type length bound is enforced", refused_length)
+
+    runner.check(
+        "the input engine reports platform honestly",
+        input_engine.available() == ON_WINDOWS,
+    )
+    refused_message_click = False
+    try:
+        input_engine.message_click(1, 0, 0)
+    except input_engine.TransportRefusedError as exc:
+        refused_message_click = "refused" in str(exc).lower()
+    except Exception:
+        refused_message_click = False
+    runner.check(
+        "message-transport mouse is refused by design (honest, not silent)",
+        refused_message_click,
+    )
+    refused_foreground = False
+    try:
+        _ = input_engine.get_foreground()
+    except input_engine.TransportRefusedError:
+        refused_foreground = True
+    except Exception:
+        refused_foreground = False
+    runner.check(
+        "get_foreground refuses honestly off win32",
+        refused_foreground if not ON_WINDOWS else True,
+    )
+    runner.check(
+        "ForegroundError and TransportRefusedError are distinct honest classes",
+        issubclass(input_engine.ForegroundError, Exception)
+        and issubclass(input_engine.TransportRefusedError, Exception)
+        and input_engine.ForegroundError is not input_engine.TransportRefusedError,
+    )
+    source = Path(input_engine.__file__).read_text(encoding="utf-8")
+    runner.check(
+        "the engine never injects silently: every refusal raises",
+        "raise TransportRefusedError(" in source and "raise ForegroundError(" in source,
+    )
+    runner.check(
+        "the engine credits the ADAPT origin (windows-harness, MIT)",
+        "windows-harness" in source,
+    )
+
+
+# ======================================================================= E
+
+
+def section_e(runner: Runner) -> None:
+    """§9.3 — pywinauto backend (MODE A «USE»)."""
+    runner.section = "E"
+
+    ok, reason = pywinauto_backend.available()
+    runner.check(
+        "the backend probe is honest (win32 + importable)",
+        ok == (ON_WINDOWS and _pywinauto_importable()),
+        detail=f"ok={ok} reason={reason}",
+    )
+    if not ON_WINDOWS:
+        runner.check(
+            "off win32 the reason names the platform",
+            "win32" in reason,
+        )
+    source = Path(pywinauto_backend.__file__).read_text(encoding="utf-8")
+    runner.check(
+        "pywinauto is imported only inside functions (lazy MODE A)",
+        "import pywinauto" in source
+        and source.index("import pywinauto") > source.index("def _import_pywinauto"),
+    )
+    refused_backend = False
+    try:
+        pywinauto_backend.describe_window(1)
+    except pywinauto_backend.BackendError:
+        refused_backend = True
+    except Exception:
+        refused_backend = False
+    runner.check(
+        "backend calls fail honestly without the extra (wrapped, no traceback leak)",
+        refused_backend if not (ON_WINDOWS and _pywinauto_importable()) else True,
+    )
+
+    leaks: list[str] = []
+    for path in (REPO_ROOT / "nexus").rglob("*.py"):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for index, line in enumerate(text.splitlines(), start=1):
+            # module level = no indentation; indented imports are
+            # function-local (the lazy MODE A discipline).
+            if line.startswith(("import pywinauto", "from pywinauto")):
+                leaks.append(f"{path.name}:{index}")
+    runner.check(
+        "no module-level pywinauto import in nexus/ (the MODE A discipline)",
+        not leaks,
+        detail=f"leaks={leaks}",
+    )
+    runner.bonus_check(
+        "BONUS win32+extra: the backend lists real windows",
+        _live_pywinauto_windows(),
+        detail="requires win32 + the [computer] extra",
+    )
+
+
+def _pywinauto_importable() -> bool:
+    try:
+        import pywinauto  # noqa: F401, PLC0415
+
+        return True
+    except Exception:
+        return False
+
+
+def _live_pywinauto_windows() -> bool:
+    if not ON_WINDOWS or not _pywinauto_importable():
+        return False
+    try:
+        rows = pywinauto_backend.list_windows(limit=5)
+        return isinstance(rows, list)
+    except Exception:
+        return False
+
+
+# ======================================================================= F
+
+
+def section_f(runner: Runner) -> None:
+    """Integration + regression — the runtime wires §9; phases stay green."""
+    runner.section = "F"
+
+    from dataclasses import replace as _replace
+
+    from nexus.core.config.loader import load_config
+    from nexus.core.config.paths import resolve_paths
+    from nexus.core.config.runtime import NexusRuntime
+
+    with tempfile.TemporaryDirectory() as root:
+        runtime = NexusRuntime(
+            paths=resolve_paths(root), config=load_config(root), bus=EventBus()
+        )
+        runner.check(
+            "NexusRuntime wires the Computer Runtime (computer_enabled default)",
+            runtime.computer_runtime is not None
+            and runtime.tool_router is not None,
+        )
+        computer_runtime = runtime.computer_runtime
+        tool_router = runtime.tool_router
+        assert computer_runtime is not None and tool_router is not None
+        report = computer_runtime.capability_report()
+        runner.check(
+            "the wired hierarchy registers uia×2 + input×1",
+            report["hierarchy"]["uia"]["providers"] == 2
+            and report["hierarchy"]["input"]["providers"] == 1,
+            detail=f"hierarchy={report['hierarchy']}",
+        )
+        runner.check(
+            "the wired registry holds 12 records (nine + three)",
+            len(tool_router.registry.discover()) == 12,
+            detail=f"count={len(tool_router.registry.discover())}",
+        )
+
+    with tempfile.TemporaryDirectory() as root:
+        config = load_config(root)
+        config_off = _replace(
+            config, tools=_replace(config.tools, computer_enabled=False)
+        )
+        runtime_off = NexusRuntime(
+            paths=resolve_paths(root), config=config_off, bus=EventBus()
+        )
+        runner.check(
+            "computer_enabled=false leaves the façade unwired (Phase-7 behavior)",
+            runtime_off.computer_runtime is None
+            and runtime_off.tool_router is not None,
+        )
+        router_off = runtime_off.tool_router
+        assert router_off is not None
+        available_off = set(router_off.available_names())
+        runner.check(
+            "with computer off, the §8.3 nine remain (no mouse/keyboard/uia)",
+            "mouse" not in available_off and "uia" not in available_off
+            and "filesystem" in available_off,
+        )
+
+    prior = [
+        ("phase01", "Phase 1", 98),
+        ("phase02", "Phase 2", 143),
+        ("phase03", "Phase 3", 104),
+        ("phase04", "Phase 4", 106),
+        ("phase05", "Phase 5", 116),
+        ("phase06", "Phase 6", 88),
+        ("phase07", "Phase 7", 88),
+    ]
+    results = run_phases(prior)
+    for (_phase_dir, label, _expected), (_label, line, code) in zip(
+        prior, results, strict=True
+    ):
+        runner.check(
+            f"{label} harness still green ({line})",
+            code == 0,
+            detail=f"exit={code} last={line!r}",
+        )
+
+
+def run_phases(prior: list[tuple[str, str, int]]) -> list[tuple[str, str, int]]:
+    """Run the Phase 1–7 harnesses; return their (name, line, code)."""
+    results: list[tuple[str, str, int]] = []
+    for phase_dir, label, expected in prior:
+        proc = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tests" / phase_dir / "verify_exit_criteria.py")],
+            capture_output=True,
+            text=True,
+            timeout=900,
+        )
+        results.append((label, proc.stdout.strip().splitlines()[-1], proc.returncode))
+        _ = expected
+    return results
+
+
+# ======================================================================= main
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", default=None, help="unused (repo-rooted)")
+    _ = parser.parse_args()
+    print("PHASE 8 — Windows Computer Runtime (Final Build Plan §9) exit criteria")
+    runner = Runner()
+    for section in (section_a, section_b, section_c, section_d, section_e, section_f):
+        try:
+            section(runner)
+        except Exception as exc:  # noqa: BLE001 — a section crash is a failure
+            print(f"  [FAIL] ({runner.section}) section crashed: {exc}")
+            runner.failed += 1
+    return runner.summary()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

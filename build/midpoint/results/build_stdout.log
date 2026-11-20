@@ -1,0 +1,127 @@
+
+===== 2026-09-13T17:29:35Z $ C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip show pyinstaller
+rc=1
+
+WARNING: Package(s) not found: pyinstaller
+
+
+===== 2026-09-13T17:29:52Z $ C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip install --upgrade pyinstaller
+rc=0
+Collecting pyinstaller
+  Downloading pyinstaller-6.22.3-py3-none-win_amd64.whl.metadata (8.5 kB)
+Collecting altgraph (from pyinstaller)
+  Using cached altgraph-0.17.5-py2.py3-none-any.whl.metadata (7.5 kB)
+Requirement already satisfied: packaging>=22.0 in C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from pyinstaller) (26.2)
+Collecting pefile>=2022.5.30 (from pyinstaller)
+  Using cached pefile-2024.8.26-py3-none-any.whl.metadata (1.4 kB)
+Collecting pyinstaller-hooks-contrib>=2026.7 (from pyinstaller)
+  Downloading pyinstaller_hooks_contrib-2026.7-py3-none-any.whl.metadata (16 kB)
+Requirement already satisfied: pywin32-ctypes>=0.2.1 in C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from pyinstaller) (0.2.3)
+Collecting setuptools>=42.0.0 (from pyinstaller)
+  Using cached setuptools-84.0.0-py3-none-any.whl.metadata (6.6 kB)
+Downloading pyinstaller-6.22.3-py3-none-win_amd64.whl (1.5 MB)
+   ---------------------------------------- 1.5/1.5 MB 4.2 MB/s  0:00:00
+Using cached pefile-2024.8.26-py3-none-any.whl (74 kB)
+Downloading pyinstaller_hooks_contrib-2026.7-py3-none-any.whl (459 kB)
+Using cached setuptools-84.0.0-py3-none-any.whl (818 kB)
+Using cached altgraph-0.17.5-py2.py3-none-any.whl (21 kB)
+Installing collected packages: altgraph, setuptools, pyinstaller-hooks-contrib, pefile, pyinstaller
+
+Successfully installed altgraph-0.17.5 pefile-2024.8.26 pyinstaller-6.22.3 pyinstaller-hooks-contrib-2026.7 setuptools-84.0.0
+
+  WARNING: The scripts pyi-archive_viewer.exe, pyi-bindepend.exe, pyi-grab_version.exe, pyi-makespec.exe, pyi-set_version.exe and pyinstaller.exe are installed in 'C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+
+
+===== 2026-09-13T17:32:03Z $ C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\python.exe -m PyInstaller --noconfirm --clean NEXUS.exe.spec
+rc=0
+
+thoncore-3.14-64\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+105197 INFO: Creating base_library.zip...
+105259 INFO: Looking for dynamic libraries
+C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\PyInstaller\building\build_main.py:227: PendingDeprecationWarning: Please use `import python_multipart` instead.
+  __import__(package)
+111309 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy.libs']
+111309 INFO: Extra DLL search directories (PATH): []
+114194 INFO: Warnings written to M:\NEXUS\build\midpoint\build\NEXUS.exe\warn-NEXUS.exe.txt
+114664 INFO: Graph cross-reference written to M:\NEXUS\build\midpoint\build\NEXUS.exe\xref-NEXUS.exe.html
+114815 INFO: checking PYZ
+114816 INFO: Building PYZ because PYZ-00.toc is non existent
+114816 INFO: Building PYZ (ZlibArchive) M:\NEXUS\build\midpoint\build\NEXUS.exe\PYZ-00.pyz
+116553 INFO: Building PYZ (ZlibArchive) M:\NEXUS\build\midpoint\build\NEXUS.exe\PYZ-00.pyz completed successfully.
+116735 INFO: checking PKG
+116735 INFO: Building PKG because PKG-00.toc is non existent
+116735 INFO: Building PKG (CArchive) NEXUS.pkg
+127691 INFO: Building PKG (CArchive) NEXUS.pkg completed successfully.
+127713 INFO: Bootloader C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+127713 INFO: checking EXE
+127714 INFO: Building EXE because EXE-00.toc is non existent
+127714 INFO: Building EXE from EXE-00.toc
+127714 INFO: Copying bootloader EXE to M:\NEXUS\build\midpoint\dist\NEXUS.exe
+127722 INFO: Copying icon to EXE
+127729 INFO: Copying 0 resources to EXE
+127729 INFO: Embedding manifest in EXE
+127734 INFO: Appending PKG archive to EXE
+127826 INFO: Fixing EXE headers
+129841 INFO: Building EXE from EXE-00.toc completed successfully.
+129870 INFO: Build complete! The results are available in: M:\NEXUS\build\midpoint\dist
+
+
+===== 2026-09-13T17:32:18Z $ M:\NEXUS\build\midpoint\dist\NEXUS.exe --check
+rc=0
+
+
+
+===== 2026-09-13T17:43:59Z $ C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip show pyinstaller
+rc=0
+Name: pyinstaller
+Version: 6.22.3
+Summary: PyInstaller bundles a Python application and all its dependencies into a single package.
+Home-page: https://pyinstaller.org
+Author: Hartmut Goebel, Giovanni Bajo, David Vierra, David Cortesi, Martin Zibricky
+Author-email: 
+License: GPLv2-or-later with a special exception which allows to use PyInstaller to build and distribute non-free programs (including commercial ones)
+Location: C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages
+Requires: altgraph, packaging, pefile, pyinstaller-hooks-contrib, pywin32-ctypes, setuptools
+Required-by: 
+
+
+
+===== 2026-09-13T17:47:11Z $ C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\python.exe -m PyInstaller --noconfirm --clean NEXUS.exe.spec
+rc=0
+
+thoncore-3.14-64\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+156375 INFO: Creating base_library.zip...
+156444 INFO: Looking for dynamic libraries
+C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\PyInstaller\building\build_main.py:227: PendingDeprecationWarning: Please use `import python_multipart` instead.
+  __import__(package)
+164646 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy.libs']
+164646 INFO: Extra DLL search directories (PATH): []
+169326 INFO: Warnings written to M:\NEXUS\build\midpoint\build\NEXUS.exe\warn-NEXUS.exe.txt
+170085 INFO: Graph cross-reference written to M:\NEXUS\build\midpoint\build\NEXUS.exe\xref-NEXUS.exe.html
+170324 INFO: checking PYZ
+170324 INFO: Building PYZ because PYZ-00.toc is non existent
+170324 INFO: Building PYZ (ZlibArchive) M:\NEXUS\build\midpoint\build\NEXUS.exe\PYZ-00.pyz
+173120 INFO: Building PYZ (ZlibArchive) M:\NEXUS\build\midpoint\build\NEXUS.exe\PYZ-00.pyz completed successfully.
+173294 INFO: checking PKG
+173294 INFO: Building PKG because PKG-00.toc is non existent
+173294 INFO: Building PKG (CArchive) NEXUS.pkg
+188250 INFO: Building PKG (CArchive) NEXUS.pkg completed successfully.
+188281 INFO: Bootloader C:\Users\MohandsMohammad\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+188281 INFO: checking EXE
+188282 INFO: Building EXE because EXE-00.toc is non existent
+188282 INFO: Building EXE from EXE-00.toc
+188298 INFO: Copying bootloader EXE to M:\NEXUS\build\midpoint\dist\NEXUS.exe
+188316 INFO: Copying icon to EXE
+188335 INFO: Copying 0 resources to EXE
+188335 INFO: Embedding manifest in EXE
+188345 INFO: Appending PKG archive to EXE
+188486 INFO: Fixing EXE headers
+190975 INFO: Building EXE from EXE-00.toc completed successfully.
+191010 INFO: Build complete! The results are available in: M:\NEXUS\build\midpoint\dist
+
+
+===== 2026-09-13T17:47:30Z $ M:\NEXUS\build\midpoint\dist\NEXUS.exe --check
+rc=0
+
+

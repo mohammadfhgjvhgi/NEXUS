@@ -1,0 +1,308 @@
+"""Typed configuration schema (Final Build Plan §2.1).
+
+Six sections, exactly as the plan's config tree:
+
+    config/
+    ├── system      → SystemConfig
+    ├── models      → ModelsConfig
+    ├── tools       → ToolsConfig
+    ├── agents      → AgentsConfig
+    ├── workspaces  → WorkspacesConfig
+    └── security    → SecurityConfig
+
+Every section is a typed dataclass with defaults. Values coming from files
+or the environment are coerced and validated here; failures raise
+:class:`ConfigError` with a precise ``section.key`` path. Unknown keys are
+ignored but reported as warnings (forward compatibility).
+
+التهيئة المطابقة بالأنواع — ستة أقسام حرفيًا كما في خطة البناء §2.1.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass, field, fields
+from typing import Any, get_type_hints
+
+SECTION_NAMES: tuple[str, ...] = (
+    "system",
+    "models",
+    "tools",
+    "agents",
+    "workspaces",
+    "security",
+)
+
+
+class ConfigError(Exception):
+    """Invalid configuration value, shape or file."""
+
+
+@dataclass(slots=True)
+class SystemConfig:
+    version: str = "1.0"
+    debug: bool = False
+    language: str = "ar"
+    log_level: str = "INFO"
+
+
+@dataclass(slots=True)
+class ModelsConfig:
+    """Model runtime settings (Plan §2.1 + the §5 Phase-4 keys).
+
+    Phase 4 added ``llama_server`` / ``llama_host`` / ``llama_port``
+    (the §5.3 backend location) and ``keep_warm_seconds`` (the §5.4
+    idle TTL) — additive keys with defaults, so the §2.1 tree stays
+    fully backward compatible.
+    """
+
+    default_backend: str = "llama.cpp"
+    context_size: int = 8192
+    gpu_layers: int = 0
+    threads: int = 0  # 0 = auto
+    llama_server: str = "llama-server"  # binary name or absolute path
+    llama_host: str = "127.0.0.1"
+    llama_port: int = 0  # 0 = auto-pick a free port
+    keep_warm_seconds: int = 300  # §5.4 idle TTL
+
+
+@dataclass(slots=True)
+class ToolsConfig:
+    """Tool-system settings (Plan §2.1 + the §8 additive keys).
+
+    Phase 7 adds ``native_enabled`` (the §8.3 nine) and ``mcp_enabled``
+    (the §8.4 interop layer) — additive with defaults, so earlier
+    trees stay fully backward compatible.
+
+    Phase 8 adds ``computer_enabled`` (the §9.1 mechanics records —
+    mouse · keyboard · uia — plus the Computer API façade and the
+    §9.5 fallback hierarchy over the §8.2 router).
+
+    Phase 9 adds ``windows_enabled`` (the §10 Window Manager —
+    registry · ownership · arbitration · monitors · overlay —
+    composed over the §9.1 Computer API; installs the §10.3 input
+    arbitration as a ``pre_tool_call`` veto when the harness runs).
+
+    Phase 10 adds the browser keys: ``browser_enabled`` (the §11.1
+    Playwright record + façade + the §9.5 dom_a11y layer),
+    ``browser_channel`` (the launch ladder preference) and
+    ``browser_headless`` (default false — the operator *sees* the
+    agent browser working in parallel, Spec §55).
+
+    Phase 11 adds the vision keys: ``vision_enabled`` (the §12
+    ``vision`` record (fourteenth, additive) + façade + the §9.5
+    vision rung over the §12.2 provider) and ``vision_ocr_engine``
+    (the §12.5 preference — ``"auto"`` walks the candidate order;
+    the device benchmark's verdict may pin a named engine).
+    """
+
+    allow_network: bool = True
+    confirm_danger_above: int = 2
+    max_batch_size: int = 50
+    native_enabled: bool = True
+    mcp_enabled: bool = True
+    computer_enabled: bool = True
+    windows_enabled: bool = True
+    browser_enabled: bool = True
+    browser_channel: str = "chromium"
+    browser_headless: bool = False
+    vision_enabled: bool = True
+    vision_ocr_engine: str = "auto"
+
+
+@dataclass(slots=True)
+class AgentsConfig:
+    """Agent runtime settings (Plan §2.1 + the §6 + §7 additive keys).
+
+    Phase 5 added ``loop_max_turns`` (the §6.2 Continue bound),
+    ``master_repair_limit`` (the §6.3 bounded repairs) and
+    ``message_log_enabled`` (the §6.5 persisted transcript).
+
+    Phase 6 adds the harness keys: ``harness_enabled`` (the §41
+    assembler on/off), ``checkpoint_retention`` (the §7.3 per-task
+    window) and ``hooks_strict`` (a raising hook kills the loop vs
+    is logged) — additive with defaults, so both earlier trees stay
+    fully backward compatible.
+    """
+
+    max_parallel: int = 3
+    master_agent_enabled: bool = True
+    loop_max_turns: int = 8
+    master_repair_limit: int = 2
+    message_log_enabled: bool = True
+    harness_enabled: bool = True
+    checkpoint_retention: int = 64
+    hooks_strict: bool = False
+
+
+@dataclass(slots=True)
+class WorkspacesConfig:
+    default_workspace: str = "main"
+    isolation: bool = True
+
+
+@dataclass(slots=True)
+class SecurityConfig:
+    redact_secrets: bool = True
+    audit_events: bool = True
+    sandbox_default: bool = False
+
+
+SECTION_TYPES: Mapping[str, type] = {
+    "system": SystemConfig,
+    "models": ModelsConfig,
+    "tools": ToolsConfig,
+    "agents": AgentsConfig,
+    "workspaces": WorkspacesConfig,
+    "security": SecurityConfig,
+}
+
+_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+_LANGUAGES = {"ar", "en", "bilingual"}
+
+_BOOL_TRUE = {"1", "true", "yes", "on"}
+_BOOL_FALSE = {"0", "false", "no", "off"}
+
+#: The §11.1 launch ladder vocabulary (engine falls back in order).
+_BROWSER_CHANNELS = {"chromium", "chrome", "msedge"}
+
+#: The §12.5 OCR preference vocabulary (auto + the candidates).
+_OCR_ENGINES = {"auto", "winrt", "tesseract", "model"}
+
+
+def _fail(origin: str, section: str, key: str, message: str) -> None:
+    raise ConfigError(f"{origin}: {section}.{key} {message}")
+
+
+def _validate(section: str, key: str, value: Any, origin: str) -> None:
+    """Domain validators for keys that have constraints."""
+    if (section, key) == ("system", "version") and not str(value).strip():
+        _fail(origin, section, key, "must be a non-empty string")
+    if (section, key) == ("system", "language") and value not in _LANGUAGES:
+        _fail(origin, section, key, f"must be one of {sorted(_LANGUAGES)}")
+    if (section, key) == ("system", "log_level") and str(value).upper() not in _LOG_LEVELS:
+        _fail(origin, section, key, f"must be one of {sorted(_LOG_LEVELS)}")
+    if (section, key) == ("models", "context_size") and int(value) <= 0:
+        _fail(origin, section, key, "must be a positive integer")
+    if (section, key) in (("models", "gpu_layers"), ("models", "threads")) and int(value) < 0:
+        _fail(origin, section, key, "must be >= 0")
+    if (section, key) == ("models", "llama_server") and not str(value).strip():
+        _fail(origin, section, key, "must be a non-empty string")
+    if (section, key) == ("models", "llama_host") and not str(value).strip():
+        _fail(origin, section, key, "must be a non-empty host")
+    if (section, key) == ("models", "llama_port") and not 0 <= int(value) <= 65535:
+        _fail(origin, section, key, "must be within 0..65535 (0 = auto)")
+    if (section, key) == ("models", "keep_warm_seconds") and int(value) < 0:
+        _fail(origin, section, key, "must be >= 0")
+    if (section, key) == ("tools", "confirm_danger_above") and not 0 <= int(value) <= 4:
+        _fail(origin, section, key, "must be within 0..4")
+    if (section, key) == ("tools", "browser_channel") and str(value) not in _BROWSER_CHANNELS:
+        _fail(origin, section, key, f"must be one of {sorted(_BROWSER_CHANNELS)}")
+    if (section, key) == ("tools", "vision_ocr_engine") and str(value) not in _OCR_ENGINES:
+        _fail(origin, section, key, f"must be one of {sorted(_OCR_ENGINES)}")
+    if (section, key) == ("tools", "max_batch_size") and not 1 <= int(value) <= 1000:
+        _fail(origin, section, key, "must be within 1..1000")
+    if (section, key) == ("agents", "max_parallel") and not 1 <= int(value) <= 64:
+        _fail(origin, section, key, "must be within 1..64")
+    if (section, key) == ("agents", "loop_max_turns") and not 1 <= int(value) <= 256:
+        _fail(origin, section, key, "must be within 1..256")
+    if (section, key) == ("agents", "master_repair_limit") and not 0 <= int(value) <= 16:
+        _fail(origin, section, key, "must be within 0..16")
+    if (section, key) == ("agents", "checkpoint_retention") and not 1 <= int(value) <= 4096:
+        _fail(origin, section, key, "must be within 1..4096")
+    if (section, key) == ("workspaces", "default_workspace") and not str(value).strip():
+        _fail(origin, section, key, "must be a non-empty string")
+
+
+def _coerce(
+    section: str, key: str, annotation: Any, value: Any, origin: str
+) -> Any:
+    """Coerce one raw value to the annotated type or raise ConfigError."""
+    if annotation is bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in _BOOL_TRUE:
+                return True
+            if lowered in _BOOL_FALSE:
+                return False
+        _fail(origin, section, key, f"must be a boolean, got {value!r}")
+    if annotation is int:
+        if isinstance(value, bool):
+            _fail(origin, section, key, "must be an integer, got a boolean")
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float) and float(value).is_integer():
+            return int(value)
+        if isinstance(value, str):
+            text = value.strip()
+            if text.lstrip("+-").isdigit():
+                return int(text)
+        _fail(origin, section, key, f"must be an integer, got {value!r}")
+    if annotation is str:
+        if isinstance(value, str):
+            return value
+        _fail(origin, section, key, f"must be a string, got {value!r}")
+    _fail(origin, section, key, f"has unsupported annotation {annotation!r}")
+
+
+def build_section(
+    section: str, values: Mapping[str, Any] | None, *, origin: str = "config"
+) -> tuple[Any, list[str]]:
+    """Build one typed section; returns (instance, warnings)."""
+    if section not in SECTION_TYPES:
+        raise ConfigError(f"{origin}: unknown section {section!r}")
+    cls = SECTION_TYPES[section]
+    hints = get_type_hints(cls)
+    known_fields = {field.name for field in fields(cls)}
+    warnings: list[str] = []
+    kwargs: dict[str, Any] = {}
+    for key, value in (values or {}).items():
+        if key not in known_fields:
+            warnings.append(f"{origin}: unknown key {section}.{key} ignored")
+            continue
+        coerced = _coerce(section, key, hints[key], value, origin)
+        _validate(section, key, coerced, origin)
+        kwargs[key] = coerced
+    return cls(**kwargs), warnings
+
+
+@dataclass(slots=True)
+class NexusConfig:
+    """Typed, aggregated configuration (Plan §2.1)."""
+
+    system: SystemConfig = field(default_factory=SystemConfig)
+    models: ModelsConfig = field(default_factory=ModelsConfig)
+    tools: ToolsConfig = field(default_factory=ToolsConfig)
+    agents: AgentsConfig = field(default_factory=AgentsConfig)
+    workspaces: WorkspacesConfig = field(default_factory=WorkspacesConfig)
+    security: SecurityConfig = field(default_factory=SecurityConfig)
+    #: "section.key" → "default" | "file" | "env"
+    provenance: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_sections(
+        cls,
+        sections: Mapping[str, Mapping[str, Any]],
+        *,
+        provenance: Mapping[str, str] | None = None,
+        origin: str = "config",
+    ) -> NexusConfig:
+        built: dict[str, Any] = {}
+        warnings: list[str] = []
+        for section in SECTION_NAMES:
+            instance, section_warnings = build_section(
+                section, sections.get(section), origin=origin
+            )
+            built[section] = instance
+            warnings.extend(section_warnings)
+        return cls(
+            **built,
+            provenance=dict(provenance or {}),
+            warnings=warnings,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {name: asdict(getattr(self, name)) for name in SECTION_NAMES}

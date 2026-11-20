@@ -1,0 +1,109 @@
+NEXUS Phase 3 — verification harness (Final Build Plan §4)
+workspace base: C:\Users\MOHAND~1\AppData\Local\Temp\nexus-phase3-ms9tp5e9
+  [PASS] (A/§4.1) twelve §4.1 detection targets, verbatim
+  [PASS] (A/§4.1) profile record carries the twelve categories
+  [PASS] (A/§4.1) scanner kinds labeled (windows/posix/static)
+  [PASS] (A/§4.1) default_scanner selects WindowsScanner on win32
+  [PASS] (A/§4.1) StaticScanner deterministic (same fingerprint)
+  [PASS] (A/§4.1) StaticScanner stamps its kind
+  [PASS] (A/§4.1) StaticScanner never mutates its source
+  [PASS] (A/§4.1) real Windows scan: kind windows
+  [PASS] (A/§4.1) real Windows scan: RAM via GlobalMemoryStatusEx
+  [PASS] (A/§4.1) real Windows scan: volumes enumerated
+  [PASS] (A/§4.1) real Windows scan: Windows version identified
+  [PASS] (A/§4.1) real Windows scan: processes enumerated
+  [PASS] (A/§4.1) real Windows scan: hostname identified
+  [PASS] (B/§4.2) envelope: schema/version/filename
+  [PASS] (B/§4.2) to_dict/from_dict round-trip (fingerprint-equal)
+  [PASS] (B/§4.2) round-trip keeps GPU VRAM + driver
+  [PASS] (B/§4.2) round-trip keeps storage + display resolution
+  [PASS] (B/§4.2) round-trip keeps software set
+  [PASS] (B/§4.2) VRAM helpers: total/max
+  [PASS] (B/§4.2) VRAM helpers: None without GPUs
+  [PASS] (B/§4.2) capacity helpers (cores/RAM/primary storage)
+  [PASS] (B/§4.2) try_load: None when absent (boot stays scan-free)
+  [PASS] (B/§4.2) profile persists under data/ (system data, never model memory)
+  [PASS] (B/§4.2) memory dir untouched by the hardware profile
+  [PASS] (B/§4.2) load round-trip (fingerprint-equal)
+  [PASS] (B/§4.2) record is JSON-clean
+  [PASS] (B/§4.2) corrupt record rejected
+  [PASS] (C/§4.3) §4.3 categories, verbatim labels
+  [PASS] (C/§4.3) identical profiles → no changes
+  [PASS] (C/§4.3) identical profiles → same fingerprint
+  [PASS] (C/§4.3) RAM change detected (major)
+  [PASS] (C/§4.3) GPU change detected (removed + added, major)
+  [PASS] (C/§4.3) VRAM change detected as GPU change (major)
+  [PASS] (C/§4.3) storage volume added detected (major)
+  [PASS] (C/§4.3) storage capacity change detected (major)
+  [PASS] (C/§4.3) display resolution change detected (major)
+  [PASS] (C/§4.3) driver change detected (minor, not capacity)
+  [PASS] (C/§4.3) installed software change detected (runtime)
+  [PASS] (C/§4.3) software-only change keeps the hardware fingerprint
+  [PASS] (C/§4.3) diff carries timestamps + both fingerprints
+  [PASS] (C/§4.3) diff serializes (to_dict)
+  [PASS] (D/§4.4) eight §4.4 tracked resources, verbatim
+  [PASS] (D/§4.4) RAM budget = 75% of profile total
+  [PASS] (D/§4.4) VRAM budget = 90% of largest GPU
+  [PASS] (D/§4.4) concurrency budget = logical cores
+  [PASS] (D/§4.4) disk free floor default 4096 MB
+  [PASS] (D/§4.4) model-memory budget defaults to the RAM budget
+  [PASS] (D/§4.4) explicit budgets win over profile-derived
+  [PASS] (D/§4.4) no profile before refresh (boot loads, never scans)
+  [PASS] (D/§4.4) first refresh persists, empty diff, fingerprint set
+  [PASS] (D/§4.4) profile persisted at the canonical path
+  [PASS] (D/§4.4) re-scan against persisted profile detects RAM change
+  [PASS] (D/§4.4) model memory + VRAM tracked
+  [PASS] (D/§4.4) unload removes the footprint
+  [PASS] (D/§4.4) unload of unknown model returns False
+  [PASS] (D/§4.4) set_model_memory resizes
+  [PASS] (D/§4.4) negative memory rejected
+  [PASS] (D/§4.4) agent registration dedupes
+  [PASS] (D/§4.4) unregister removes
+  [PASS] (D/§4.4) concurrency slots: 8 granted then saturated
+  [PASS] (D/§4.4) release frees a slot
+  [PASS] (D/§4.4) background work tracked, floor at zero
+  [PASS] (D/§4.4) snapshot ratios cover all eight tracked resources
+  [PASS] (D/§4.4) snapshot pressures present for measurable resources
+  [PASS] (D/§4.4) snapshot serializes to JSON
+  [PASS] (D/§4.4) RAM ratio = (models + measured) / budget
+  [PASS] (D/§4.4) RAM pressure MEDIUM at 0.86
+  [PASS] (D/§4.4) over-budget RAM → CRITICAL
+  [PASS] (D/§4.4) VRAM MEDIUM at 0.88 → policy-ready
+  [PASS] (D/§4.4) unknown VRAM capacity → no vram pressure invented
+  [PASS] (D/§4.4) CPU pressure MEDIUM at 7/8 slots
+  [PASS] (D/§4.4) full volume → disk CRITICAL
+  [PASS] (D/§4.4) free below floor → disk HIGH
+  [PASS] (D/§4.4) pressure thresholds: 0.69/0.70/0.85/0.95/1.0/1.01
+  [PASS] (E/§4.5) Spec §92 ladder, verbatim order
+  [PASS] (E/§4.5) no pressure → no actions, full speed
+  [PASS] (E/§4.5) decision always continues (never abandons)
+  [PASS] (E/§4.5) RAM pressure → reduce concurrency
+  [PASS] (E/§4.5) RAM HIGH adds unload model
+  [PASS] (E/§4.5) RAM CRITICAL adds reduce context (ladder step 4)
+  [PASS] (E/§4.5) VRAM pressure → switch model
+  [PASS] (E/§4.5) VRAM HIGH → unload before switch (ladder order)
+  [PASS] (E/§4.5) CPU pressure → reduce background work
+  [PASS] (E/§4.5) disk pressure HIGH → reduce background
+  [PASS] (E/§4.5) model-memory pressure → unload model
+  [PASS] (E/§4.5) combined pressures ordered by the §92 ladder
+  [PASS] (E/§4.5) one recommendation per distinct action (deduped)
+  [PASS] (E/§4.5) LOW pressure → no action yet (early-warning only)
+  [PASS] (E/§4.5) principle text carried verbatim
+  [PASS] (E/§4.5) summary lists the pressured resources
+  [PASS] (E/§4.5) decision serializes (to_dict)
+  [PASS] (F/§4.1–§4.5) runtime wires the ResourceManager
+  [PASS] (F/§4.1–§4.5) system.started payload reports phase >= 3
+  [PASS] (F/§4.1–§4.5) config agents.max_parallel honored as max_agents
+  [PASS] (F/§4.1–§4.5) boot loads but never scans (profile None until refresh)
+  [PASS] (F/§4.1–§4.5) refresh through the runtime persists system data
+  [PASS] (F/§4.1–§4.5) resource file lives in data/, not memory/ (§4.2)
+  [PASS] (F/§4.1–§4.5) runtime evaluation returns a policy decision
+  [PASS] (F/§4.1–§4.5) profile reloads after NEXUS restart (no scan)
+  [PASS] (F/§4.1–§4.5) budgets re-derived from the persisted profile
+  [PASS] (F/§4.1–§4.5) no invented events — everything within the 28 registry
+  [PASS] (F/§4.1–§4.5) phase 1 harness still green (98/98)
+  [PASS] (F/§4.1–§4.5) phase 2 harness still green (143/143)
+
+========================================================================
+PHASE 3 EXIT CRITERIA — 103/103 checks passed (0 failed)
+========================================================================

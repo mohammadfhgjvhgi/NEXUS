@@ -1,0 +1,62 @@
+{
+  "phase": 16,
+  "verdict": "PASS",
+  "rungs_passed": 10,
+  "rungs_failed": 0,
+  "rungs": [
+    {
+      "ok": true,
+      "label": "16.1 status: clean on main",
+      "detail": "main"
+    },
+    {
+      "ok": true,
+      "label": "16.1 diff: untracked file visible",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "16.1 branch: created + checked out",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "16.1 worktree: real linked tree",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "16.1 commit: real sha",
+      "detail": "b4328863c697"
+    },
+    {
+      "ok": true,
+      "label": "16.1 merge: fast-forward",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "16.1 tag: annotated",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "16.1 rollback: HEAD moved + safety branch",
+      "detail": "pre-rollback-5f58119e5c06"
+    },
+    {
+      "ok": true,
+      "label": "16.2 clone: real github.com clone (public)",
+      "detail": "7fd1a60b01f9"
+    },
+    {
+      "ok": true,
+      "label": "16.3 lifecycle: all eight stages OK",
+      "detail": "discover=ok clone=ok index=ok modify=ok test=skipped commit=ok review=ok push=ok"
+    }
+  ],
+  "nexus_version": "0.16.0",
+  "python": "3.14.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "timestamp": "2026-09-09T16:16:06"
+}

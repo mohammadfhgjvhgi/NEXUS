@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F172A">
+<title>NEXUS Remote — تحكم عن بُعد</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="logo">NEXUS</span>
+    <span class="sub">Remote Web · PHASE 28</span>
+  </div>
+  <div id="conn" class="conn off" title="حالة الاتصال">
+    <span class="dot"></span><span id="conn_txt">غير متصل</span>
+  </div>
+</header>
+
+<section id="pair" class="card">
+  <h2>الاقتران — Pairing</h2>
+  <p class="hint">أدخل عنوان البوابة (نفق cloudflared) والتوكن من
+     <code>M:\NEXUS\remote\token.txt</code> — يُحفظان في هاتفك فقط.</p>
+  <label>عنوان البوابة (API)
+    <input id="in_base" type="url" placeholder="https://….trycloudflare.com" dir="ltr">
+  </label>
+  <label>التوكن (Token)
+    <input id="in_token" type="password" placeholder="••••••••" dir="ltr">
+  </label>
+  <button id="btn_pair" class="primary">اتصال</button>
+  <span id="pair_msg" class="hint"></span>
+</section>
+
+<nav>
+  <button data-tab="status" class="on">الحالة</button>
+  <button data-tab="commands">الأوامر</button>
+  <button data-tab="tasks">المهام</button>
+  <button data-tab="files">الملفات</button>
+</nav>
+
+<main>
+  <!-- ======================= الحالة ======================= -->
+  <section id="tab-status" class="tab on">
+    <div class="card">
+      <h2>حالة النظام</h2>
+      <div id="status_body" class="grid2">
+        <div class="k">الحالة</div><div class="v" id="s_conn">…</div>
+        <div class="k">الإيقاف المؤقت</div><div class="v" id="s_paused">…</div>
+        <div class="k">المهام</div><div class="v" id="s_tasks">…</div>
+        <div class="k">النموذج</div><div class="v" id="s_model">…</div>
+        <div class="k">النسخة</div><div class="v" id="s_version">…</div>
+        <div class="k">المنفذ</div><div class="v" id="s_port">…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= الأوامر (28.3) ======================= -->
+  <section id="tab-commands" class="tab">
+    <div class="card">
+      <h2>أزرار التحكم المباشر</h2>
+      <div class="row2">
+        <button id="btn_pause" class="warn">⏸ إيقاف مؤقت</button>
+        <button id="btn_resume" class="ok">▶ استئناف</button>
+      </div>
+      <div class="row2">
+        <button id="btn_checkpoint">💾 نقطة حفظ الآن</button>
+        <button id="btn_refresh">↻ تحديث</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>إرسال أمر للنواة</h2>
+      <label>نص المحادثة (chat)
+        <textarea id="in_chat" rows="2" placeholder="اكتب رسالة للنموذج المحلي…"></textarea>
+      </label>
+      <button id="btn_chat" class="primary">أرسل للمحادثة</button>
+      <label>مهمة جديدة (task — تنفيذ حقيقي عبر محرك المهام)
+        <textarea id="in_task" rows="2" placeholder="الهدف…"></textarea>
+      </label>
+      <button id="btn_task" class="primary">أنشئ مهمة</button>
+    </div>
+    <div class="card">
+      <h2>سجل الأوامر</h2>
+      <div id="cmd_list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- ======================= المهام ======================= -->
+  <section id="tab-tasks" class="tab">
+    <div class="card">
+      <h2>مهام NEXUS الحقيقية (المستودع)</h2>
+      <button id="btn_tasks_refresh">↻ تحديث</button>
+      <div id="tasks_list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- ======================= الملفات (28.4) ======================= -->
+  <section id="tab-files" class="tab">
+    <div class="card">
+      <h2>رفع إلى الجهاز (authorized push)</h2>
+      <input id="in_file" type="file">
+      <button id="btn_push" class="primary">ارفع (حتى 8MB)</button>
+      <span id="push_msg" class="hint"></span>
+    </div>
+    <div class="card">
+      <h2>التنزيل من الجهاز (outbox)</h2>
+      <button id="btn_files_refresh">↻ تحديث</button>
+      <div id="files_list" class="list"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  NEXUS Remote · local-first · evidence or silence · القرص يحكم
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

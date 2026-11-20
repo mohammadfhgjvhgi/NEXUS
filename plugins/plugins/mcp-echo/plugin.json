@@ -1,0 +1,8 @@
+{
+ "name": "mcp-echo",
+ "type": "mcp",
+ "version": "1.0.0",
+ "entry": "mcp_echo_server.py",
+ "description": "Real stdio JSON-RPC MCP server with an echo tool (79)",
+ "permissions": []
+}

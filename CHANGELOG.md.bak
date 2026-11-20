@@ -1,0 +1,382 @@
+# Changelog — NEXUS
+
+All notable changes to the NEXUS project are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to the **Build Plan rule**: no phase is complete
+until *Implemented + Integrated + Tested + Verified + Documented + Committed*.
+
+## [Unreleased]
+
+### Added — 2026-09-08 (PHASE 14 — Code Intelligence, New Plan §14)
+
+The platform reads code. *تمكين NEXUS من فهم المشاريع الكبيرة* —
+scan once, index incrementally, update live on every change, and
+hand the model a budgeted **map** instead of 400k lines.
+
+- **§14.1 File Index** — full-tree scan with ignore rules
+  (node_modules · dist · __pycache__ · hidden dirs · binaries ·
+  minified artifacts); language map; change detection
+  (size+mtime fast path, content sha only on change).
+- **§14.2 Symbol Index** — ten-kind vocabulary, definitions with
+  lines/signatures/containers, kind+file+prefix search, per-file
+  atomic replace.
+- **§14.3 AST** — three engines, one `ParsedFile` contract:
+  **stdlib-ast** (Python, full signatures, zero wheels — the
+  default), **tree-sitter** (§14.9 MODE A), **regex** (the honest
+  JS-family fallback); the lightweight `AstNode` digest.
+- **§14.4 Dependency Graph** — python import resolution (absolute,
+  relative dots, **from-import submodule semantics** — `from pkg
+  import mod` links both `pkg/__init__.py` and `pkg/mod.py`) and JS
+  relative specifiers (`.`/`..` joins); dependents, transitive
+  impact sets, entry points, hotspots.
+- **§14.5 API Graph** — Flask · FastAPI · Express routes (method,
+  path, handler, framework, line) + the route table.
+- **§14.6 Test Graph** — test→target links via imports *and* the
+  naming convention; per-link counts; coverage gaps.
+- **§14.7 Architecture Map** — layers (top-level dirs) with
+  aggregated inter-layer edges.
+- **§14.8 Repository Map** — the Aider §127 methodology, NEXUS-native:
+  weighted **PageRank** (damping 0.85) over the file reference graph,
+  out-degree personalization, token-budgeted rendering, deterministic,
+  `focus` pins the edited file first. *لا نرسل 400k سطر إلى النموذج.*
+- **§14.9 tree-sitter MODE A** — the real runtime behind the
+  `[codeintel]` extra: JS/TS parsing (languages stdlib cannot touch)
+  and the **§14.12 incremental engine** (`tree.edit` → reparse with
+  the old tree). Absent → `engine_status()` says so; stdlib answers.
+- **§14.10 Aider MODE D/C** — methodology only; zero imports (proven
+  by grep + `sys.modules`), pinned `5dc9490` in vendor-staging.
+- **§14.11 Large Project Engine** — the 100k rung live (100,000
+  files: 6.0s generate, 5.5s scan, honest 2,500-parse budget, crawl
+  continuation across restarts, deletion pruning, steady-state
+  rescan reparses **zero**); batched WAL persistence in one
+  `codeintel.db`.
+- **§14.12 Live Index Update** — the verbatim flow: file changed →
+  parse affected region → update symbols → update graph (this file
+  only), every step in the honest `UpdateReport`.
+- **Events** — `index.scan_started` · `index.updated` (stats +
+  seconds) · `index.live_updated` (the §14.12 trace).
+- **Bugs the proof caught** (fixed at the root): the sha-wipe
+  upsert (every rescan reparsed everything), the SQLite reserved
+  word `references`, `language()` called as an attribute, JS
+  relative-path joins, live-update vs disk stat drift.
+- **Proofs** — gate **97/97 +1 bonus** · live CI **21/21**
+  (tree-sitter + 100k + child-process restart) · device proof on
+  the real Windows box (`proofs/phase14_live.json`, NEXUS indexing
+  its own tree) · CI job `codeintel-live` on every push.
+
+### Added — 2026-09-08 (PHASE 13 — Learning System, New Plan §13)
+
+The platform learns. *«يتذكر» is not «يتعلم»* — memory (PHASE 12)
+persists what happened; **learning** turns what happened into
+lessons, decisions and skills that future tasks already know.
+
+- **§13.1 Experience Extractor + six kinds** — `success · failure ·
+  decision · pattern · lesson · skill_candidate`, verbatim vocabulary;
+  one finished TaskResult → audit-grade experiences (task id, honest
+  summary, §12.1 evidence objects, §12.2 containers).
+- **§13.2 Learning Record** — `experience_id · lesson · source_task ·
+  evidence · confidence · scope` verbatim, plus the seams the
+  pipeline needs (status pending→promoted, occurrences, signature,
+  memory_id link). Confidence is capped at 0.95 — a lesson is
+  corrigible by design.
+- **§13.3 Learning Pipeline** — Experience → Candidate lesson →
+  **Evidence check** (an opinion with no evidence is refused but
+  audited) → **Confidence** (pure rule: kind prior + distinct capture
+  methods + repeats) → **Store** (SQLite `learning.db`, merge by
+  signature — the same lesson re-learned is ONE record with rising
+  occurrences) → **Future retrieval** (promotion into the §12 Memory
+  Engine: source `"learning"`, `conflict_key` the lesson signature;
+  `recall()` surfaces promoted + still-pending lessons; the §12.7
+  retrieve of a future task already carries the lesson). The §12.8
+  ladder stays in force — an old lesson never overrides the
+  operator's now.
+- **§13.4 Skill Candidate + WorkflowMiner** — Task A, Task B, Task C
+  with the same steps fold into ONE pattern → skill candidate
+  (occurrences 3, per-task evidence), maximal windows only (a
+  sub-window of a kept workflow is noise); promotion writes a SKILL
+  record into the §12 engine.
+- **References (MODE D, zero imports, Plan §61)** — letta-code
+  `e073938` (persistent identity/skills), prime-agent `bf8894a`
+  (continual harness/goals/heartbeat), dspy `f70d08a` (evaluation-
+  driven refinement — §13.7 deferred with an open seam, DW-5).
+- **Events** — `learning.record.created/promoted/refused` +
+  `learning.skill.found` on the real §2.2 bus, defensively emitted.
+- **Proofs** — 60-check exit gate (A–K, includes Phases 1–12
+  regression), live CI proof (14 checks, real child-process restart,
+  bilingual AR/EN), device live proof on the real Windows box
+  (§13.1/§13.3/§13.4 + restart across a process boundary);
+  `nexus-core 0.13.0`, `NEXUS_PHASE=13`, CI jobs `phase13` +
+  `learning-live`.
+
+### Added — 2026-09-08 (PHASE 12 — Memory System, New Plan §12 / Build Plan §13)
+
+The platform gains its **Memory Engine** — from persistence to a
+real engine: seven verbatim verbs, a twelve-scope hierarchy with
+strict isolation, one SQLite index file that survives restarts, two
+semantic engines behind one contract, a conflict ladder that the
+current prompt wins, audited forgetting, and deterministic
+compression of long conversations.
+
+- **§12.1–§12.3 Contracts** — the five names verbatim
+  (`MemoryProvider · MemoryRecord · MemoryQuery · MemoryScope ·
+  MemoryEvidence`), the twelve §12.2 scopes, the eleven §12.3
+  metadata fields, construct-time validation (bad id/scope/type/
+  ∞ confidence/empty content all refused), evidence provenance
+  (method vocabulary + uri/snippet — no provenance, no evidence).
+- **§12.4 SQLite index** — one file, five tables (records ·
+  evidence · relationships · audit · **vectors as float64 blobs**),
+  WAL + explicit transactions, parameterized statements only; the
+  local semantic layer persists *in the same file*.
+- **§12.5 Semantic layer** — `VectorIndex` (upsert/search/delete/
+  count + payload filters) with **`LocalVectorIndex`** (stdlib
+  cosine, always available) and **`QdrantVectorIndex`** (MODE A
+  over the official `qdrant-client`, `[qdrant]` extra — local
+  persisted mode with **no server**, UUID5 point mapping, the
+  single-instance lock honored via `close()`); `auto|local|qdrant`
+  resolution with the honest `qdrant_probe` (absence reported,
+  never faked). The embedding seam: `HashingEmbedder` (deterministic,
+  Arabic intact) + `ModelEmbedder` (§5.7 routing → §5.1 request →
+  llama-server `/embedding` shape; refuses without a model).
+- **§12.6 Mem0 adapter** — MODE B: `Mem0MemoryProvider` wraps a
+  duck-typed mem0 backend behind our contract; the NEXUS-owned side
+  store keeps ids/scopes/links/audit (Plan §61); the §13.4
+  behaviors adapted: extraction → the deterministic compressor,
+  user/agent/run scoping → our containers (`MEM0_SCOPE_MAP`).
+- **§12.7 Retrieval pipeline** — staged exactly: query → candidate
+  search (vector ∪ lexical, **visibility in every stage**) →
+  ranking (`0.45 semantic + 0.20 lexical + 0.15 recency (14-day
+  half-life) + 0.10 confidence + 0.10 scope-fit`) → conflict
+  resolution → budget-capped context assembly with honest drop
+  counts and per-stage provenance.
+- **§12.8 Conflict ladder** — verbatim priority (current_prompt >
+  current_task > workspace_rules > project_decisions >
+  user_preferences > old_lessons) with §13.7 «الجديد يفوز» as the
+  recency term; **losers documented, never deleted**.
+- **§12.9 Forget** — exact/category/scope tombstones + the audit
+  trail (metadata kept, content dropped), container guards, the
+  GLOBAL two-key wipe guard, expiry swept at every search.
+- **§12.10 Compression** — the five stages verbatim; bilingual
+  AR+EN extraction markers; >50 turns / >24k chars triggers; the
+  compact summary linked `compressed_from` to every extraction.
+- **Repository Round 9** — qdrant/qdrant **6ab21cac MODE A** (via
+  the qdrant-client dist — no source, no server by default) ·
+  mem0ai/mem0 **73e7b876 MODE B** (wheel optional, patterns
+  adapted, zero imports) — full cycle in
+  `docs/REPOSITORY-INTEGRATION.md`.
+- **Bugs the proofs caught**: the vector stage leaked scope
+  (visibility now enforced in *every* stage — task B could be seen
+  from task A's semantic search); float32 vector drift (→ float64);
+  Qdrant local-mode laws (UUID point ids → UUID5 mapping; the
+  single-instance storage lock → `close()` lifecycle).
+- **Exit criteria** — `tests/phase12/verify_exit_criteria.py`:
+  **137/137** (126 section checks + 11 regression lines) with
+  **Phases 1–11 green as subprocesses**; **`live_memory_ci.py` PASS 11/11 on the real
+  Qdrant engine** (bilingual corpus, filtered retrieval, live
+  conflict, forget, restart persistence) — the new CI
+  **memory-live** job; the device proof `live_proof_device.py`
+  deploys through the tunnel (verdict JSON to `M:\NEXUS\proofs\`).
+- **Governance** — `docs/DEFERRED-WORK.md` + `docs/KNOWN-ISSUES.md`
+  created per the New Plan §59/§60 discipline.
+- **Version** — `nexus-core` 0.12.0, `NEXUS_PHASE = 12`, CI jobs
+  "Phases 1–12" + **memory-live**.
+
+### Added — 2026-09-07 (PHASE 11 — Vision + OCR + Screen Understanding, Plan §12)
+
+The platform gains its **visual capability** — the eyes for the applications with no useful UI structure: locate by description, then real input; the image rides the Model Runtime's own request; and the OCR engine is chosen by a benchmark on the operator's device, not by a guess.
+
+- **§12.1 Screen Capture** — `nexus/vision/capture.py`: **full screen · window · region** (verbatim) over one injectable GDI transport — `PrintWindow(PW_RENDERFULLCONTENT)` (DWM/occluded content) with the BitBlt fallback, **DWM extended-frame bounds** over the lying `GetWindowRect`, pure region math (clamp · intersect · refuse), the Phase-7 stdlib PNG encoder (one encoder, no imaging dep), honest refusal off win32.
+- **§12.2 Vision Adapter** — `VisionProvider` = **analyze · locate · classify · compare** (verbatim) + the honest `available()` probe; `ModelVisionProvider` routes through the Phase 4 Model Runtime (`§5.7 required_capability="vision"` → `manager.generate`). **`GenerateRequest.images`** — one additive optional field (default empty: the Phase-4 text-only contract byte-for-byte) — rides llama-server's multimodal **base64 `image_data`**; pure prompt builders + tolerant parsers (prose-wrapped JSON, fences, bare bboxes, and the **UI-TARS action space** as Round 8's single REFERENCE adoption); `parse_classify` never invents a category; every degradation is honest.
+- **§12.5 OCR — the benchmark decides, on the device** («اختيار OCR النهائي يجب أن يتم بالـbenchmark على جهازك»): three candidates — **winrt** (Windows.Media.Ocr, OS-native, offline) · **tesseract** (`[ocr]` extra) · **model** (the local VLM via §12.2) — all with honest probes; `character_error_rate` (Levenshtein) as the metric; the corpus is the four requirements **verbatim** (English · numbers · UI labels · documents), **drawn by the OS itself** (GDI `DrawTextW`; Pillow on CI so the machinery proves live); the winner policy is strict — lowest CER, ties → fastest, **one engine is no contest**, a >0.30-CER leader wins nothing, failures count 1.0 — the verdict is JSON for `M:\NEXUS\proofs\`.
+- **The §9.5 chain gains its vision rung (4th of 5)** — `VisionLayer`: inspect → analyze; click/invoke → locate → the real router mouse click at the located center; type → locate → click → keyboard; not-found raises `LayerError` so the chain degrades to input, never silently.
+- **The 14th §8.1 record** (`native:vision`, risk 1): `capture · analyze · locate · classify · compare · ocr` behind the §8.2 router; the only mutation is the path-scoped capture PNG; verification contracts bind to always-emitted keys (`path_size · report · found · category · same · text`) — the Phase-10 lesson from line one; **per-family capability honesty** (capture / inference / ocr probe separately — on Linux+tesseract the tool serves ocr while capture refuses at execute as data).
+- **Integration** — `tools.vision_enabled` (additive, default true) + `tools.vision_ocr_engine` (validated: auto/winrt/tesseract/model); the runtime wires the façade + the rung + `provider_state` (shutdown unwires); `vision_enabled=false` → the Phase-10 runtime byte for byte.
+- **Repository Round 8** — bytedance/UI-TARS **582f3a7 REFERENCE/BENCHMARK** (the plan's explicit ruling — never the primary model; the single adoption is the action-space parse tolerance) · xlang-ai/OpenCUA **dfc91ba RESEARCH** (studied, shelved) · simular-ai/Agent-S **3aa272d RESEARCH** (a bookmark for Plan §15) — zero imports, `nexus/vision/` is 100% stdlib-owned.
+- **Bugs the proofs caught**: the discovery stage refused every vision op on Linux because the capability probe folded the surface into the GDI gate (fixed: per-family honesty — any serving family makes the tool available, a refused family fails at execute as data); the Phase-4 GenerateRequest field-set equality and the Phase-10 13/12 record counts relaxed to floors — now a house law: exact-set assertions belong to the owning phase.
+- **Exit criteria** — `tests/phase11/verify_exit_criteria.py`: **118/118** (A=20 · B=30 · C=21 · D=9 · E=31 · F=17) + Phases 1–10 green as subprocesses; **+ live proofs on real pixels**: the corpus rendered (Pillow), the real tesseract race **CER 0.0** across all four categories, a full §8.2-router `ocr` roundtrip — `live_vision_ci.py` **PASS 11/11** locally and as the new CI **vision-live** job; the **device §12.5 decision run** is staged (`live_proof_device.py` + `deploy_phase11_bearer.py`) behind the bridge's trust gate (the Task-55 R4<R3 quarantine — documented, waiting, not silently skipped).
+- **Version** — `nexus-core` 0.11.0, `NEXUS_PHASE = 11`, CI job "Phases 1–11" + **vision-live**.
+
+### Added — 2026-09-07 (PHASE 10 — Browser Runtime, Plan §11)
+
+The platform gains its **browser capability**: Playwright behind the §8.2 router (the thirteenth §8.1 record), user/agent sessions isolated by construction, and secrets that never cross the tool interface.
+
+- **§11.1 Playwright — MODE A «USE»** (`[browser]` extra, lazy): **navigation · DOM · forms · upload · download · tabs · browser states · automation** as 26 operations through the full pipeline; the **channel ladder** (chromium → chrome → msedge) drives the operator's installed Chrome with the agent's own profile — capability with zero download tax; transfers are path-scoped; the sync API serialized behind one lock.
+- **§11.2 browser-use — ADAPT, zero imports** (Round 7): the two-layer BrowserSession split, BrowserProfile → `launch_persistent_context` (persistent workflows — cookies/localStorage survive in the isolated agent profile), and the action-registry surface; the pinned-dependency audit (aiohttp · pydantic · posthog …) is the documented reason MODE A was refused.
+- **§11.3 browser-harness — ADAPT** (Round 5 continued): `selfheal.py` — the selector fallback ladder (css → role → text → test_id), every attempt in a ledger, all-fail raises `SelfHealError` **carrying the ledger**, bounded retries; the editable-helpers seam maps onto the Phase-6 skills.
+- **§11.4 Browser Sessions** — isolation by construction: the agent profile root is fixed and **user-profile paths are refused structurally** (the §55 guard); the user session is CDP attach behind **explicit consent + explicit URL** — no discovery, no default, never mixed; session ids ride calls and events.
+- **§11.5 Authentication — the never-crossing secret**: `BrowserVault` (DPAPI `CryptProtectData` via **pure ctypes** — off win32 storing *refuses*, no plaintext downgrade); secrets enter via a **file path or env name** (the path rides events, the content never does); forms are typed via `vault_ref` — the plaintext goes into the page **only**; every output passes the vault scrubber (defense in depth).
+- **The §9.5 chain gains its dom_a11y rung** — `BrowserDomLayer` (the third of five layers): click · type · set_value · inspect with a selector now resolve through the browser before vision/input; the chain stays router clients — no second gate.
+- **Integration** — `tools.browser_enabled/browser_channel/browser_headless` (validated, headless default **false** — the operator sees the agent browser in parallel); the runtime wires the façade + the rung + engine shutdown; `browser_enabled=false` → Phase-9 byte for byte; the phase-8 "12 records" assertion re-expressed as forward-tolerant (nine + three present).
+- **Bugs the proofs caught**: the §8.2 Verify stage flipped our own successes (contracts named keys the handler never emitted — now bound to always-present keys and exercised live); `download` file:// (request API is http-only — honest local copy + a real local-http download in the proof); a leading-/ strip broke absolute file paths; the §55 consent flag was unreachable from wiring (`set_engine_defaults(user_consent=…)`, still default false).
+- **Exit criteria** — `tests/phase10/verify_exit_criteria.py`: **70/70** with Phases 1–9 as subprocesses (98 · 143 · 104 · 106 · 116 · 88 · 88 · 80 · 84); **+ `live_browser_ci.py` PASS 15/15 on a real Chromium** (navigate · DOM · fill · click · effect readback · upload · download file://+http · tabs · new/select/close · snapshot · screenshot · close — all through the router); **+ the device proof PASS**: channel=chrome, real internet navigation, two isolated sessions over CDP, the DPAPI round-trip, **14 events scanned secret-free**, and the agent Chrome window claimed as NEXUS (`win-29034352 · "NEXUS Agent Session"`).
+- **Repository Round 7** — playwright USE (dist 1.62.0) · browser-use ADAPT (e25ab65) · browser-harness ADAPT (eba1021) — full §0.2 cycle in `docs/REPOSITORY-INTEGRATION.md`.
+- **Version** — `nexus-core` 0.10.0, `NEXUS_PHASE = 10`, CI jobs "Phases 1–10" + **browser-live**.
+
+### Added — 2026-09-07 (PHASE 9 — Window Manager + Human Parallelism, Plan §10)
+
+The platform gains its **human-parallelism**: you use your machine while NEXUS works somewhere else on it. Ownership is per window — never per mouse-move (Spec §62) — and a transparent overlay with real Pause/Resume buttons watches every Computer Use.
+
+- **§10.1 Window Registry** — `nexus.windows.registry`: the **nine fields verbatim** (`window_id · application · task_id · workspace · agent · position · size · visibility · input_owner` + documented bridge fields `hwnd · title`); `ingest()` reconciles the live `windows.list_windows` rows (now carrying **pid · process · rect · minimized** — process names via QueryFullProcessImageNameW, pure ctypes) — open/update/close diffing; **NEXUS decisions survive geometry refreshes** while machine-owned fields refuse direct writes; **the canonical `window.opened` / `window.closed` events get their first real publisher** (they have sat in the 28-event §2.2 registry since Phase 1 — still zero invented names).
+- **§10.2 Window Ownership** — `nexus.windows.ownership`: **USER · NEXUS · SHARED**; assignment → best rule (process/title, priority-ordered) → **default USER** (an unclaimed window is the human's — NEXUS never assumes input it was not given); the Spec §61 example ships as the demo ruleset (War Thunder → USER · Chrome A → USER · Chrome B → NEXUS · PowerPoint → NEXUS); `claim()` stakes a window with the full task binding (`task_id · workspace · agent`).
+- **§10.3 Human/AI Input Arbitration** — `nexus.windows.arbitration`: per-window verdicts with reasons (USER → **deny**, NEXUS → allow, SHARED → allow+coordinated, unknown → **deny by default**, relaxable `unknown_policy`); `as_hook()` installs the arbitrator on the Phase-6 `pre_tool_call` veto seam (only input tools: mouse · keyboard · uia · windows; target from `hwnd` else `x`/`y` via `WindowFromPoint`); the runtime wires it automatically when the harness runs — the §8.2 router stays the only gate for effects.
+- **§10.4 Multiple Monitors** — `nexus.windows.monitors` + additive tool ops: `screen.monitors` (EnumDisplayMonitors + GetMonitorInfoW/MONITORINFOEXW — **risk 1, read-only**) and `windows.geometry/move` (GetWindowRect · MonitorFromWindow · IsIconic · SetWindowPos with SWP_NOZORDER — `move` is a mutating op for the §8.2 Scope stage); `MonitorLayout`: `snapshot() · monitor_for_window() · place()` with **pure placement math** (center/top-left/bottom-right, work-area clamping, never the taskbar — CI-testable anywhere); negative virtual-desktop coordinates honored (a portrait monitor left/right of primary).
+- **§10.5 Overlay** — `nexus.windows.overlay`: the Spec §63/§154 box verbatim — "NEXUS is working" + `[Pause] [Resume]`, **شفاف وبسيط**: a real Win32 window in **pure ctypes** (`CreateWindowExW`, WS_EX_LAYERED|WS_EX_TOPMOST|WS_EX_TOOLWINDOW, alpha 235, GDI paint with a state bar, two real BUTTON children); message loop in a daemon thread, cross-thread pokes via `PostMessage`; the controller is the platform-neutral machine **IDLE → WORKING ⇄ PAUSED** (illegal transitions raise `OverlayError`), audits every transition (from/to/origin) and fires `on_pause/on_resume` **only on the human button path** (the §155 emergency surface); honest headless backend off win32; a dismissed overlay can be born again (thread handle reset).
+- **Two real bugs the device caught** (the Phase-8 pointer lesson repeated): (1) `DefWindowProcW` without `argtypes` overflows on pointer-sized LPARAM (WM_NCCREATE's CREATESTRUCT*) → the swallowed exception returns 0 → **the window dies at birth silently** — fixed with explicit argtypes/restype for DefWindowProcW · PostMessageW · CreateWindowExW · FindWindowW; (2) `place()` read the geometry rect's (right, bottom) as (w, h) and resized instead of moving — `_current_geometry()` now returns computed (l, t, w, h).
+- **Integration seams (real, proven)** — `ToolsConfig.windows_enabled` (additive, default true; `false` or computer off → the Phase-8 runtime **byte for byte**); `NexusRuntime.window_manager` built over the live ComputerRuntime at wiring time (§0.4 lazy import); the §10.3 veto registered on the harness hooks; shutdown dismisses the overlay first; **no 13th tool record** — the manager is policy, the `windows`/`screen` records grew *operations* additively (12 records still).
+- **Repository Round 6 — NEXUS-native by plan**: §10 names no external repositories (user32/GDI/messaging are OS-native); the hook seam (Round 3) and input-transport lessons (Round 5) were already absorbed — zero imports, zero staging clones.
+- **Exit criteria** — `tests/phase09/verify_exit_criteria.py`: **84/84 checks** (A=17 · B=12 · C=15 · D=13 · E=13 · F=14) with Phases 1–8 re-run as subprocesses (98 · 143 · 104 · 106 · 116 · 88 · 88 · 80); **+ live proofs on the operator's box** (`tests/phase09/live_proof.py` — **PASS**): 16–17 real windows with real process names (War Thunder itself on screen), both arbitration verdicts + a live hook veto, **two real monitors** (1680×1050 primary + 1050×1680 portrait at (1680,−379)), a real SetWindowPos placement verified inside the work area, and the native overlay **appearing, repainting on pause, and dismissing** — evidence PNGs + JSON under `M:\NEXUS\proofs\`.
+- **Version** — `nexus-core` 0.9.0, `NEXUS_PHASE = 9`, CI job "Phases 1–9".
+
+### Added — 2026-09-07 (PHASE 8 — Windows Computer Runtime, Plan §9)
+
+The platform gains its **computer hands**: the §9.1 Computer API (eight domains, every one a thin router client — the §8.2 pipeline is the only choke point), the §9.5 fallback hierarchy (Application API → UIA → DOM/a11y → Vision → Mouse/Keyboard, every attempt recorded), and three mechanics tools (mouse · keyboard · uia) registered additively beside the §8.3 nine.
+
+- **§9.1 Computer API** — `nexus.computer.api.ComputerRuntime`: **screens · windows · focus · mouse · keyboard · clipboard · uia · processes** verbatim; each domain method routes through `ToolRouter.route(...)` (policy → confirmation → scope → resources → execute → normalise → verify) — **no second choke point, zero new event names**; `capability_report()` probes all eight domains + the hierarchy; the convenience `act("invoke:131074")` string form parses or refuses.
+- **§9.5 Fallback Hierarchy** — `nexus.computer.hierarchy`: the five layers **verbatim and ordered**; unregistered layers degrade honestly (that *is* the design); `None` = unsupported → fall through; `LayerError` = tried-and-failed → fall through; first success wins and is stamped with its layer; all-fail → `HierarchyError` carrying the **full attempt ledger**; DOM/a11y and Vision honestly unavailable until their phases ship.
+- **§9.4 Native UIA client** — `nexus.computer.uia_native`: pure **ctypes COM** (no comtypes, no pywin32): `IUIAutomation` root/ElementFromHandle/GetFocusedElement/CreateTrueCondition→FindAll (bounded BFS: depth ≤ 8, nodes ≤ 500); element properties (ProcessId · ControlType · Name · IsEnabled · ClassName · BoundingRectangle via VARIANT r8 SAFEARRAY); **Invoke** and **Value** patterns; every HRESULT checked and raised in hex; BSTRs freed, SAFEARRAYs destroyed, AddRefs Released, COM apartment inits **owned-paired** per thread; off win32 every probe refuses honestly.
+- **§9.2 Input transports (ADAPT from windows-harness 46a37cf, MIT, zero imports)** — `nexus.computer.input_engine`: the **foreground** transport (SetForegroundWindow + AttachThreadInput assist + input nudge, then real SendInput) and the **background** message transport (`WM_CHAR` per UTF-16 unit, never activates); **message-transport mouse refused by design** (Chromium/WPF/UWP discard posted clicks — no silent no-ops); `ForegroundError` ≠ `TransportRefusedError` — the error never lies about which failure happened.
+- **SendInput packing leaf** — `nexus.tools.native._sendinput`: INPUT/MOUSEINPUT/KEYBDINPUT with **explicit-width fields** (`c_int32`/`c_uint32`/`c_size_t` — a real bug caught on linux: naive `c_long` gives sizeof(INPUT)=56, the winuser truth is 40); absolute mickey normalisation over the **virtual** screen (injectable for purity); hotkey combos (down…up, modifiers released reversed); unicode typing with surrogate pairs as *adjacent downs then ups*; wheel data = units×120; honest `InputError` bounds everywhere (4096 chars, ±1000 units, 256 drag steps).
+- **§9.1 mechanics tools** — `nexus.tools.native.mouse` (move · click · double/right/middle · drag · scroll — **risk 3**, `input.inject` permission), `keyboard` (press combo · type unicode — **risk 3**), `uia` (inspect · element · focused · invoke · set_value · focus — **risk 2**, `uia.read`/`uia.control`); platform-honest probes; strict `ToolArgError` coercion.
+- **§9.3 pywinauto backend — MODE A «USE»** — `nexus.computer.adapters.pywinauto_backend` (BSD-3-Clause, pinned 18d2a95, optional **`[computer]` extra**): deep UIA control matching, `type_keys` into a specific control, window listing — imported **lazily per method** (the harness source-verifies no module-level pywinauto import in `nexus/`), honest probe, every failure wrapped in `BackendError`.
+- **Integration seams (real, proven)** — `build_tool_system(computer=True)` registers the three records **additively** (default stays Phase-7 nine-only for direct callers); `NexusRuntime` wires `ComputerRuntime` over the live router when `tools.computer_enabled` (new additive key, default true; `false` → the Phase-7 runtime byte for byte); the §7.1 `pre_tool_call` veto still guards every computer effect.
+- **Repository Round 5** — `browser-use/windows-harness` (ADAPT, 46a37cf — the transport contract + honest-refusal policy rewritten, zero imports) · `pywinauto/pywinauto` (MODE A, 18d2a95) — full §0.2 cycle in `docs/REPOSITORY-INTEGRATION.md`.
+- **Exit criteria** — `tests/phase08/verify_exit_criteria.py`: **80/80 checks** (A=14 · B=12 · C=12 · D=17 · E=5 · F=20), crash-injection fallback, platform-honesty sweeps, structure byte-exactness, and Phases 1–7 re-run as subprocesses (98 · 143 · 104 · 106 · 116 · 88 · 88); **+ live Windows proofs on the operator's box** (focused element via the native client, the full harness run ON the device, live domain evidence) — see `docs/PHASE-8-REPORT.md`.
+- **Version** — `nexus-core` 0.8.0, `NEXUS_PHASE = 8`, CI job "Phases 1–8" (installs `pywinauto` for pyright).
+
+### Added — 2026-09-07 (PHASE 7 — Tool System, Plan §8 / Spec §71)
+
+The platform gains its **tool spine**: every capability — native or MCP — enters as one §8.1 record behind one §8.2 choke point: gated, scoped, resourced, executed, normalized and **verified**. The Phase-5 `ToolSink` aperture is finally filled; the Phase-6 `pre_tool_call` veto still guards it.
+
+- **§8.1 Tool Registry** — `nexus.tools.registry` + `nexus.tools.models`: the **nine fields verbatim** (id · name · description · input_schema · output_schema · permissions · scope_requirements · risk · verification · version); risk rides the 0..4 danger scale and **level 4 is refused at registration**; strict `X.Y.Z` versions with upgrade-only replacement (no silent replaces); freezable; discovery filters (permission tag · scope dimension · capability availability); honest `CapabilityReport` probes per platform.
+- **§8.2 Tool Router** — `nexus.tools.router`: the **verbatim seven-stage pipeline** (discovery → permission → scope → resource → execute → normalize → verify) with an **ordered proof trace on every call**; the §8.1 risk gate is config-level (policy-independent: above `tools.confirm_danger_above` a human confirms, always); all gate confirmations fold into ONE request (approve/deny/no-hook — a missing hook refuses honestly); the Phase-2 PolicyEngine composes permission+scope (blocked tools · OBSERVE/SUGGEST autonomy · §3.4 escalate-never-wall on out-of-scope paths · network host gates); the Phase-3 ResourceManager supplies the concurrency resource gate (released in `finally`, exhausted → honest refusal); the **Verify stage runs the §8.1 contract and flips lying outcomes** (path_exists · path_size · output_nonempty · exit_zero · text_contains · json_field · none); canonical `tool.called/completed/failed` events on direct routes while the §6.2 loop keeps ownership on its path — **zero duplicates, zero new event names**.
+- **§8.3 Native Tools (nine, stdlib)** — `nexus.tools.native`: **filesystem** (10 ops, per-op verification, 2 MiB read bound, workspace-root resolution) · **terminal** (list-argv only — never a shell string; hard timeout 1..300s; honest 124/127; risk 3) · **process** (list/info/kill with the psutil→/proc degradation ladder) · **hardware** (snapshot/cpu/disk — ctypes GlobalMemoryStatusEx on Windows, /proc on Linux; risk 0) · **windows** (user32 window control via ctypes — no pywin32) · **clipboard** (win32 ctypes / xclip / wl-clipboard ladder) · **screen** (GDI capture + a **stdlib PNG encoder** — zlib+struct IHDR/IDAT/IEND) · **git** (six list-argv ops over a scope-checked repo) · **github** (REST via urllib; offline-provable `build_request`; token from `NEXUS_GITHUB_TOKEN`, never echoed). Platform-honest everywhere: unavailable ≠ faked.
+- **§8.4 MCP — the official SDK, USE'd behind the router** — `nexus.tools.mcp.adapter`: the **official Python SDK v2 stable line** (`mcp>=2.0,<3` @ 2.1.1, MIT, MODE A optional extra `[mcp]`): one session thread per server (asyncio loop + `run_coroutine_threadsafe` bridging, per-server call timeout), `initialize` → `tools/list` → each MCP tool registered as a §8.1 record (`mcp.<server>.<tool>`) with the server's risk-ceiling clamp and verification `none` (§71: an external server's claim is not evidence); `tools/call` normalized; **honest failure & recovery** — a crashed session fails that call (no silent retry that could double-apply a mutation) and the *next* call respawns the transport. v2 API deltas recorded: `FastMCP`→`MCPServer`, `isError`→`is_error`.
+- **§8.5 MCP Servers — five, gated before any stdio byte** — `config/tools/mcp.toml`: filesystem · git · fetch · memory · database (sqlite), each with `risk_ceiling`, `allowed_tools`/`blocked_tools` (a blocked tool **never even registers**) and `scope_paths` (path arguments the Scope stage checks); all disabled by default (per-machine opt-in — "clone only what the task needs"); per-server honest failure (a broken server never breaks the boot). **Bonus proof: the official TypeScript filesystem server via npx — write through MCP → read back through the native tool (cross-SDK roundtrip).**
+- **Integration seams (real, proven)** — `RoutedToolSink(ToolRouter)` fills the §6.2 `ToolSink` aperture (the loop dispatches `call_tool` decisions through the full pipeline; the verification note rides the output); `NexusRuntime` wires registry + router + sink into the Master Agent (`tools.native_enabled/mcp_enabled` additive config keys; disabled → the Phase-6 runtime byte for byte); shutdown closes MCP sessions before models/repository.
+- **Repository Round 4** — `modelcontextprotocol/python-sdk` (MODE A, dist 2.1.1 + clone 08a3bc8) · `modelcontextprotocol/servers` (d73f99e — MIT→Apache-2.0 transition documented per-file) · `modelcontextprotocol/servers-archived` (9be4674, the sqlite server) — full §0.2 cycle in `docs/REPOSITORY-INTEGRATION.md`.
+- **Exit criteria** — `tests/phase07/verify_exit_criteria.py`: **88/88 checks** (A=16 · B=20 · C=22 · D=16 · E=8 · F=6) **+1 bonus**, including crash-injection recovery, blocked-before-stdio gates, the cross-SDK roundtrip, the loop/veto integration, and Phases 1–6 re-run as subprocesses (98 · 143 · 104 · 106 · 116 · 88). Fixture: `tests/phase07/mcp_echo_server.py` (a real v2 `MCPServer` with echo/add/boom/die tools).
+- **Version** — `nexus-core` 0.7.0, `NEXUS_PHASE = 7`, CI job "Phases 1–7" (installs `mcp>=2.0,<3` for the Phase-7 step).
+
+### Added — 2026-09-07 (PHASE 6 — Harness Integration, Plan §7 / Spec §41)
+
+The platform gains its **harness layer** — the §41 contract that gives the model context, tools, memory, task state, rules, skills and observations and reads back action, tool_call, delegation, decision. Five ecosystems studied, **zero imports** (the §275 Super-Harness rule), stdlib-only, and **no new event names** (`checkpoint.created` was already canonical).
+
+- **§7.1 Skills (ECC pattern, MODE B)** — `nexus.harness.skills`: the `Skill` record (6 fields) + `SkillLibrary` loading SKILL.md files from `<root>/skills` (directory + flat forms, YAML-ish frontmatter: name/description/origin/enabled + instruction body); keyword matching curates candidates per directive; malformed files skip with a warning (a bad skill never breaks boot).
+- **§7.1 Rules (ECC pattern, MODE B)** — `nexus.harness.rules`: the `Rule` record (priority 0–100 clamped, scope tags, enabled) + `RuleSet` compiling the binding section ordered by priority; the `security` scope subset is the curation hook; rules load from `<root>/rules`.
+- **§7.1/§7.2 Hooks (ECC + Cline pattern, MODE B)** — `nexus.harness.hooks`: the **eight-point registry** (session_start/end · task_start/end · agent_start/end · pre/post_tool_call); handlers fire synchronously, **only `pre_tool_call` may veto** (a `False` return blocks the tool — the sink never sees it); bus-driven points bind to canonical §2.2 events; a raising handler is logged (or propagates under `hooks_strict`).
+- **§7.2 Sessions (Cline pattern, MODE B)** — `nexus.harness.session`: the five-state machine CREATED→ACTIVE⇄PAUSED→RESUMED→CLOSED (CLOSED terminal; illegal transitions raise), atomic `harness/sessions.json` ledger with sequence-seeded ids, `latest_open` as the resume target; the master fires session_start/session_end around `handle()`.
+- **§7.3 Checkpoints (LangGraph pattern, MODE B — USE rejected on the record)** — `nexus.harness.checkpoint`: `Durability` NONE/MEMORY/DISK; the `Checkpoint` record (6 fields); per-task retention pruning; atomic JSONL append; **event-driven auto-checkpoint on every task lifecycle transition**, publishing the canonical `checkpoint.created`; `resume(task)` answers the last state (None → cold start). A literal langgraph USE would break stdlib-only + §0.5 — documented decision.
+- **§7.4 Goals + Heartbeats (Prime pattern, MODE D+B)** — `nexus.harness.goals`: the `Goal` record (4-state lifecycle + append-only progress log) + `GoalStore` (atomic, reboot-persistent, goals outlive tasks and ride the context) + `Heartbeat` (record/last/stalled — unknown ≠ stalled). The full heartbeat system stays Plan §23.
+- **§41 Contract** — `nexus.harness.context`: `HarnessInputs` (**seven fields verbatim**: context tools memory task_state rules skills observations) · `HarnessOutputs` (**four verbatim**: action tool_call delegation decision) · the `Harness` assembler (rules always bind; skills match; goals ride; the memory snapshot is the honest §6.1 policy view) + `parse_outputs` mapping the §6.2 decision into the §41 outputs.
+- **Integration seams (real, proven)** — `AgentLoop` takes an optional `harness` (context section in the CONTEXT phase; pre/post tool hooks at the dispatch seam) — the harness section is **in the recorded model prompt**; `MasterAgent` passes the harness to every worker loop and fires the session lifecycle; `NexusRuntime` wires the full stack (7 accessors) and `harness_enabled=false` unwires everything — the Phase-5 runtime, byte for byte.
+- **Config** — `AgentsConfig` additive keys `harness_enabled` / `checkpoint_retention` (1..4096) / `hooks_strict`, documented in `config/agents/agents.toml`; §2.1/§6 trees fully backward compatible.
+- **Repository Round 3** — five fresh pins in `vendor-staging/` (ecc e04ea0b · cline c21b172 · langgraph 81bf17b · prime-agent 2ce4431 · deepagents 07d2952), each with the full §0.2 cycle in `docs/REPOSITORY-INTEGRATION.md`; `rg "from (ecc|cline|langgraph|prime|deepagents)" nexus/` → zero hits.
+- **Governance** — `CONTRIBUTING.md` now carries the **mandatory 18-step sub-phase cycle** (operator directive, effective Phase 6+).
+- **Exit criteria** — `tests/phase06/verify_exit_criteria.py`: **88/88 checks** (A=11, B=7, C=12, D=14, E=11, F=33) including the veto proof, the prompt-reach proof, the event-driven checkpoint proof, the disabled-runtime proof, the event-name guard (⊆ 28), and Phases 1–5 re-run as subprocesses (**98/98 · 143/143 · 104/104 · 106/106 · 116/116**).
+- **Version** — `nexus-core` 0.6.0, `NEXUS_PHASE = 6`.
+
+
+### Added — 2026-09-07 (PHASE 5 — Agent Runtime, Plan §6)
+
+The model becomes an agent — **stdlib-only, the Master Agent and Agent Registry wholly NEXUS-owned (§0.5), and no new event names** (agent/tool/verification/task events all come from the §2.2 registry of 28).
+
+- **§6.1 Agent Abstraction** — `nexus.agents.agent`: the `Agent` record with the **eight fields verbatim** (`id role instructions capabilities tools memory_policy model_policy verification`) + the three typed policies NEXUS owns: `MemoryPolicy` (read/write namespaces, retention on the §2.3 ladder task/conversation/user), `ModelPolicy` (explicit registry id or §5.7 routing inputs + generation limits), `VerificationPolicy` (required flag, named criteria, bounded repairs). Fixed master identity `ag_master0000` + `ag_`+12hex ids.
+- **§6.2 Agent Loop** — `nexus.agents.loop`: the cycle **verbatim, seven phases, traced per turn** (`LOOP_PHASES`: observe → context → decide → act → observe → verify → continue — a `LoopStep` audit trail proves the order). Strict decision contract (`parse_decision`, pure): one balanced JSON object, action enum `respond/call_tool/delegate/done/failed`, per-action required keys, confidence clamped 0..1 — a violation gets **one corrective retry**, then honest failure. `ToolSink`/`InlineToolSink` is the seam the Tool-Router phases plug into; tool acts are bounded by the agent's own tool list; the verify gate runs every turn (act integrity) and in full (verifier callable or structural policy check) when the agent decides `done`, with bounded repairs. Events: `agent.started/completed/failed` + `tool.called/completed/failed`.
+- **§6.3 Master Agent** — `nexus.agents.master`: the **seven behaviors verbatim** (user-facing entry · understand · distribute · follow · receive · decide continuation · decide reaching Verification), driving the §2.4 machine through the injected `TaskEngine`: CREATED→ANALYZING→PLANNING→EXECUTING→VERIFYING→COMPLETED with bounded REPAIRING; subtasks land on the §2.5 `task.plan.steps` (PlanStep records); the model verdict lands on `task.verification` (VerificationCheck list); `task.agents` records everyone who worked; agent slots honor `agents.max_parallel` via the Phase-3 ResourceManager. Three strict model contracts (understanding/plan/verdict) with the same one-retry discipline. Honest failure everywhere: early model failure → legal CANCELLED + recorded error (`master.understanding_failure` / `master.planning_failure`); exhausted verification repairs → COMPLETED with `success=False` — never a fake pass.
+- **§6.4 Agent Registry** — `nexus.agents.registry`: the **four verbs verbatim** (registerAgent/unregisterAgent/discoverAgents/getCapabilities, snake_case per codebase convention), atomic persistence (`agents.registry.json` under `NexusPaths.data`, temp+`os.replace`+`fsync`), reboot reload, **open roster** (register/drop freely), master record seeded idempotently and protected from unregistration, corrupt files degrade to an empty start (never a dead boot).
+- **§6.5 Agent Communication** — `nexus.agents.messages`: the `AgentMessage` record with the **eight fields verbatim** (`task_id sender receiver type status data evidence confidence`) + closed type vocabulary (task/progress/result/question/coordination/error), delivery lifecycle sent→delivered→read, per-agent mailboxes, broadcast `*`, `Evidence` items (kind/source/detail), confidence clamped 0..1, a structured per-task log, and an append-only JSONL transcript (`tasks/<task_id>.messages.jsonl`) next to the task record when `agents.message_log_enabled`.
+- **§6.6 Agent Ownership** — `nexus.agents.ownership`: the record is **`resource` + `owner`, verbatim**; `acquire` is idempotent per owner and raises `ResourceOwnedError` carrying the current holder for anyone else — the loop converts that into a `coordination` message and a re-decide (bounded by the turn budget): **coordination instead of collision, never a silent overwrite**. `release_owner` at loop teardown, `clear()` at runtime shutdown. In-process by documented scope (the engine is single-threaded by Phase-1 design); cross-process locking joins the tool phases on the same §6.6 contract.
+- **Integration** — `NexusRuntime` wires `agent_registry` / `communicator` / `ownership` / `master_agent` (None when `agents.master_agent_enabled=false`); boot payload `phase: 5`; shutdown releases every ownership entry before unloading models; `AgentsConfig` gains the additive keys `loop_max_turns` (1..256) / `master_repair_limit` (0..16) / `message_log_enabled` (defaults — §2.1 tree backward compatible, 98/98 proves it). Import-order safety documented in `master.py` (lazy core vocabulary — no partially-initialized-module cycle when `nexus.agents` imports first).
+- **Repository Round 2 (MODE D references)** — `vendor-staging/` gains the Phase-5 reference clones (langchain-ai/langgraph · microsoft/autogen · langchain-ai/deepagents) studied for the loop/registry/delegation **patterns**; zero imports from their code (§0.4/§0.5 + the pre-written watchlist). Pins and the §0.2 cycle records in `docs/REPOSITORY-INTEGRATION.md`.
+- **Exit criteria** — `tests/phase05/verify_exit_criteria.py`: **116/116 checks** (A=13, B=29, C=24, D=12, E=16, F=22) — trace-order proof of the seven phases, the strict parsers, the conflict→coordination path, the full master choreography + repair ladder + honest failures, registry persistence/reboot, the message lifecycle + transcript, ownership semantics, the runtime wiring, the event-name guard (⊆ the 28), and Phases 1–4 re-run as subprocesses (**98/98 · 143/143 · 104/104 · 106/106**).
+- **Fixed** — `.github/workflows/ci.yml` carried a byte-level corruption since PHASE 0 (`branches: ain, develop]` instead of `[main, develop]` in both triggers); repaired, and the python-quality job now runs the Phase-5 harness ("Phases 1–5").
+- **Version** — `nexus-core` 0.5.0, `NEXUS_PHASE = 5`.
+
+### Added — 2026-09-07 (Repository Integration Round 1 — Plan §0.2/§0.3)
+
+The «الباقي من المستودعات» principle gets its first full §0.2 intake cycle: battle-tested engines enter **under NEXUS-owned interfaces** (§0.4), with licenses audited, versions pinned, and a live proof against the real thing. Permanent record: `docs/REPOSITORY-INTEGRATION.md`.
+
+- **ggml-org/llama.cpp — MODE B (ADAPT), pinned b10829 / commit 5fdfa628** — the audited shallow clone lives in `vendor-staging/` (gitignored); MIT license recorded. The adapter's wire contract was verified against the **real llama-server binary** (official release asset, ubuntu-x64): `/health` → `{"status":"ok"}`, `/completion` → `content` + `timings` (`prompt_n/prompt_ms/predicted_n/predicted_ms`), SSE `data:{json}` deltas ending in a `stop:true` event with empty `content`. Windows deployment path documented (win-cpu / win-vulkan / win-cuda release assets).
+- **Live integration proof** — `tests/phase04/integration_llama_server.py` (opt-in; CI keeps the fake chain): **26/26 checks** against the real server with **Qwen3-0.6B-Q8_0.gguf** (first-pool member, Apache-2.0, 639 MB) — load/health/generate/stream/benchmark/manager-cycle/unload, with a measured profile (147.5 tok/s prompt · 29.7 tok/s generation · **1588 MB real RSS** · stability 1.0).
+- **Fixed (live-proof catch): the port disagreement bug** — `load()` built the argv with `--port 0` while `LlamaServerProcess` polled a different self-chosen port: the real server bound an unknowable ephemeral port and the adapter waited forever (alive-but-unreachable). `LlamaServerProcess._resolve_port()` now guarantees argv and endpoint agree (explicit `--port>0` wins; otherwise the chosen port is written back into the argv). Fake-server tests structurally cannot catch this — the live proof can, and did.
+- **giampaolo/psutil — MODE A (DIRECT USE), pinned 7.2.2 / commit 9eea97d** — BSD-3-Clause, optional dependency `nexus-core[hardware]` (`psutil>=7.2,<8`), lazily imported, stdlib floor preserved (CI runs without it):
+  - `resident_memory_mb()` — new concrete-base member on `ModelProvider` (like `loaded_ids`, not one of the §5.1 seven): the llama-server process's real RSS, duck-typed so fakes report honest `None`;
+  - **§5.4 load now corrects estimate → observed reality** (Spec §135 «نتائج الجهاز الحقيقي بدل التخمين»): the budget gate still runs on the registry estimate (§91/§92), and the `LoadedModel` record + ResourceManager accounting carry the real footprint after load — proven live (1588 MB vs the 700 MB estimate);
+  - `process_rss_mb()` cross-platform (Windows previously returned `None`); POSIX scanner `max_clock_mhz` no longer `None`.
+- **Windows companions documented** — `pyproject.toml [project.optional-dependencies].windows` with platform markers: `pywin32` / `wmi` / `pynvml` (installable and testable only on the user's box).
+- **vendor-staging/README.md** — the staging dir's intake rules + exact re-clone commands for every pin.
+- **Gates** — ruff clean · pyright 0 errors · **98/98 · 143/143 · 104/104 · 106/106** regressions · **26/26 live**.
+
+### Added — 2026-09-06 (PHASE 4 — Local Model Runtime, Plan §5)
+
+Local intelligence enters the machine — **stdlib-only, the manager independent of any backend, and no new event names** (only the four §2.2 model events are published; the 28 registry stays the single authority).
+
+- **§5.1 Model Abstraction** — `nexus.models.provider`: the `ModelProvider` interface with the **seven members verbatim** (`load unload generate stream health capabilities benchmark`) plus the NEXUS Model API contracts: `GenerateRequest` (system · prompt · sampling · stop · seed · auto-load), `GenerateResult` (text + prompt/generation token & second accounting), `StreamChunk` (deltas; the final chunk carries the stats), `ProviderHealth`, `LoadInfo`, and the `ProviderError` hierarchy. Spec §137's chain is literal: NEXUS Model API → llama.cpp Adapter → llama-server → Model.
+- **§5.2 Model Registry** — `nexus.models.registry`: the `Model` record with the **twelve fields verbatim** (`id name format backend size context capabilities ram vram language benchmark status` + RAM/VRAM in MB · size in bytes) and two documented auxiliary fields (`path`, bounded `benchmark_history`); `ModelRegistry` with atomic persistence (`models.registry.json` under `NexusPaths.models`), the `ModelStatus` lifecycle, and an **open pool** — register and drop freely.
+- **§5.3 llama.cpp Integration** — `nexus.models.llamacpp`: the Adapter over **ggml-org/llama.cpp** `llama-server`: argv builder (`-m -c --host --port -ngl -t` + KV-Q4 `-ctk/-ctv` from the §88 device learnings + explicit extras), process driver (Windows `CREATE_NO_WINDOW`, OS free-port pick, `/health` ready-poll, terminate→wait→kill), stdlib HTTP (`/completion` + SSE), pure encode/parse functions, and a clear `ProviderError` when the binary is absent — the core imports and boots without llama.cpp.
+- **§5.4 Dynamic Loading** — `nexus.models.manager`: the five verbs verbatim — `select` (router with live budgets) · `load` (predictive budget gate → LRU idle eviction → provider load → allocation → events; refusal only when hosting is impossible — Spec §91/§92) · `run` (`generate`/`stream` with auto-load) · `keep_warm` (per-model TTL + `unload_idle`) · `unload` (provider + allocation release). `apply_pressure` reacts to the §92 ladder; `shutdown` releases everything.
+- **§5.5 Model Benchmarking** — `nexus.models.benchmark`: the **seven fields verbatim** (`warmup prompt_speed generation_speed context ram vram stability`) + provenance; `run_benchmark` follows the **Spec §135 order verbatim** (Load → Warm-up → Prompt → Generation → Context → Memory → Stability → Register profile), and the manager wraps it in the §5.4 resource discipline.
+- **§5.6 MiMo Edge Profile** — `nexus.models.mimo`: the five models verbatim (Qwen2.5-Coder-1.5B · LFM2.5-1.2B · Qwen3-0.6B · DS-Coder-1.3B · Yi-Coder-1.5B) seeded with **the user's measured results** (9.57 · 7.54 · 11.66 · 29.14 tok/s @ ctx 8192 — Spec §88; Yi honestly awaits its on-device run). Idempotent seeding, never fixed: «هي أول Model Pool فقط».
+- **§5.7 Model Router** — `nexus.models.router`: the **six inputs verbatim** (task type · complexity · required capability · RAM · VRAM · current workload) → **selected model id**; Spec §87 filters then the **Spec §178 score verbatim** (task fit + capabilities + RAM + VRAM + latency + context + observed reliability); complexity blends depth-over-cheapness; unbenchmarked models never outrank measured ones (Spec §135's «بدل التخمين»); §136 examples proven; no vision/speech model → honest `None` + reason.
+- **Reference backend** — `nexus.models.simulated.SimulatedProvider`: deterministic in-process provider — the whole §5 stack runs CI-green without llama.cpp.
+- **Integration** — `NexusRuntime.boot(model_provider=…)` wires the ModelManager (llama-server only ever starts on an explicit load); first boot seeds the §5.6 pool once and the registry persists across reboots; shutdown unloads every resident model; payload `phase: 4`; `ModelsConfig` gains the additive keys `llama_server` / `llama_host` / `llama_port` / `keep_warm_seconds` (defaults — the §2.1 six-section tree stays backward compatible, 98/98 regression proves it).
+- **Exit criteria** — `tests/phase04/verify_exit_criteria.py`: **106/106 checks** (A=12, B=17, C=16, D=22, E=8, F=31) including the full fake-llama-server chain, the §135 order audit, the §92 pressure reactions, two-boot persistence, the event-name guard, and Phases 1–3 re-run as subprocesses (**98/98 · 143/143 · 104/104**).
+- **Version** — `nexus-core` 0.4.0, `NEXUS_PHASE = 4`.
+
+### Added — 2026-09-06 (PHASE 3 — Hardware Intelligence + Resource Manager, Plan §4)
+
+The machine now knows itself: **stdlib-only, Windows system libraries per §4.6, no agent framework, and no new event names** (the §2.2 registry of 28 stays the single authority).
+
+- **§4.1 Hardware Scanner** — `nexus.resources.scanner`: the twelve detection targets verbatim (`CPU GPU VRAM RAM Storage Displays Resolution Windows Network Devices Installed software Processes`). `WindowsScanner` via ctypes (GlobalMemoryStatusEx · GetLogicalDrives/GetDriveTypeW · screen metrics), winreg (CPU name · 64-bit GPU VRAM `qwMemorySize` · edition · uninstall hives ×3), PowerShell CIM (processor/GPU+current resolutions/network adapters/PnP devices) and `tasklist` processes; `PosixScanner` (procfs/sysfs); `StaticScanner` for harnesses; `default_scanner()` platform pick. Every probe best-effort — a failing category degrades to empty, never an exception.
+- **§4.2 Hardware Profile** — `nexus.resources.profile`: typed profile + 10 entry models, persisted as `hardware_profile.json` under `NexusPaths.data` with the §2.5 atomic discipline (temp + `os.replace` + `fsync`), envelope `nexus.hardware.profile` v1. **System data — never model memory.**
+- **§4.3 Change Detection** — `nexus.resources.changes`: previous-vs-current diff (RAM/GPU/Storage/display major · drivers/OS-release/software-set minor, "where detectable"), hardware fingerprint that deliberately excludes volatile categories.
+- **§4.4 Resource Manager** — `nexus.resources.manager`: tracks the **eight §4.4 items verbatim** (cpu · ram · gpu · vram · disk · concurrency · model_memory · agent_count) — capacities from the profile, exact allocations (per-model memory/VRAM, agents, concurrency slots, background units), injectable best-effort utilization samplers, budgets (75% RAM · 90% VRAM · cores · 4096 MB disk floor · `agents.max_parallel` from the §2.1 config), pressure thresholds LOW 0.70 / MEDIUM 0.85 / HIGH 0.95 / CRITICAL >1.0, JSON snapshots.
+- **§4.5 Resource Policies** — `nexus.resources.policies`: the plan's mappings verbatim (RAM → reduce concurrency · VRAM → unload/switch · CPU → reduce background) running on the **Spec §92 ladder verbatim**: reduce concurrency → unload idle model → switch smaller model → reduce context → **continue**. One deduped recommendation per action; no abort action exists — نُبطئ، لا نُفقد المهمة.
+- **Integration** — `NexusRuntime.boot(hardware_scanner=…)` wires the ResourceManager; boot loads the persisted profile but never scans (explicit `refresh_profile()` = scan → diff → persist); payload `phase: 3`; `agents.max_parallel` honored as `max_agents`.
+- **Exit criteria** — `tests/phase03/verify_exit_criteria.py`: **104/104 checks** (A=14, B=14, C=14, D=33, E=17, F=12) including a **real platform scan** (six live WindowsScanner proofs activate on the Windows box) and the Phase 1–2 harnesses re-run as subprocesses (**98/98 · 143/143**).
+- **Version** — `nexus-core` 0.3.0, `NEXUS_PHASE = 3`.
+
+### Added — 2026-09-06 (PHASE 2 — Workspace + Scope + Policy, Plan §3)
+
+The concept is locked: **Full Control within Task Scope** — stdlib-only, zero new dependencies, and **no new event names** (the §2.2 registry of 28 stays the single authority).
+
+- **§3.1 Workspace Manager** — `nexus.core.workspace`: `Workspace` with the seven fields verbatim (`id name path project memory_namespace git_repository settings`), `wsp_` identities, unique names, atomic JSON registry (`nexus.workspaces.registry` v1 under `NexusPaths.workspaces`, temp + `os.replace` + `fsync`), longest-root path resolution, synthetic default honoring `config.workspaces.default_workspace`.
+- **§3.2 Scope Engine** — `nexus.core.scope.models`: `Scope` with the six dimensions verbatim (`filesystem_paths applications browser_sessions network_permissions tools repositories`), coverage checks (paths, wildcard hosts, tools/apps/sessions/repos), merge algebra, and the `Task.scope` mapping bridge (`to_scope_map`/`from_scope_map`).
+- **§3.3 Scope Resolution** — `nexus.core.scope.engine`: natural-language resolution with recorded confidence — path token (1.0) → workspace name, word-boundary matched (0.8) → project label (0.7) → default (0.3). The plan example **"اشتغل على M:\Client" → workspace Client, filesystem scope M:\Client** is proven verbatim in the harness.
+- **§3.4 Cross-workspace Access** — never an absolute block: `request_cross_workspace` grants access by design, carves a keyword-matched sub-scope (with or without a path lister), returns an audit `CrossWorkspaceAccess`, never merges histories (Spec §21); unregistered targets are nonexistence, not denial.
+- **§3.5 Policy Engine** — `nexus.core.policy`: `TaskPolicy` with the nine components verbatim (`autonomy_level time_policy network_policy tool_policy workspace_scope app_scope git_policy external_ai_policy resource_policy`), `AutonomyLevel` OBSERVE/SUGGEST/ACT_CONFIRMED/FULL, dotted-path overrides, workspace-seeded policies, full serialization; `PolicyEngine.decide` → allow / confirm / deny with explicit-negative-only denials (blocked tools/hosts, offline, git/external-AI/app-launch disabled, OBSERVE mutations) and confirmation — never a wall — for out-of-scope and cross-workspace work.
+- **Integration** — `NexusRuntime.boot()` wires workspace manager + scope engine + policy engine (payload `phase: 2`); the registry persists across NEXUS restarts; `Task.scope` now carries the six §3.2 canonical keys.
+- **Exit criteria** — `tests/phase02/verify_exit_criteria.py`: **143/143 checks** (A=32, B=19, C=14, D=15, E=21, F=42), including the full decision matrix, restart persistence, the §2.3 bridge, and the **Phase 1 harness re-run as a subprocess — still 98/98**.
+- **Version** — `nexus-core` 0.2.0, `NEXUS_PHASE = 2`.
+
+### Fixed — 2026-09-06 (Phase 1 audit corrections)
+
+- **§2.2 documentation drift** — the canonical event count is **28, not 27**: the `EventName` enum and the harness's `PLAN_EVENTS` reference list were always correct (28/28, verbatim); six docstrings, one harness label and four report rows carried a stale “27” from an early draft — all corrected.
+- **Harness §D regression guards (95 → 98 checks)** — added: `completed_at` must be populated on completion; a cancel issued **from PAUSED** must land `CANCELLED` and publish `task.updated` — never `task.resumed` (permanently guards the post-review engine fix).
+- **Report numbers realigned** — per-section counts in `docs/PHASE-1-REPORT.md` now match the real harness output (A=15, B=14, C=14, D=18, E=19, F=18).
+
+### Added — 2026-09-06 (PHASE 1 — NEXUS Core Foundation, Plan §2)
+
+The Core is alive — **stdlib-only, zero external dependencies** (no agent framework, Plan §2 goal; adapters only from §0.4 onward).
+
+- **§2.1 Core Configuration** — `config/` six typed TOML sections (`system/ models/ tools/ agents/ workspaces/ security/`) + `nexus.core.config`: typed dataclass schema with validation & provenance, environment resolution (`NEXUS_<SECTION>__<KEY>` wins over files, files win over defaults), local paths (Spec §245 layout, per-dir env overrides, `NEXUS_HOME`), runtime configuration (`NexusRuntime.boot()` → publishes `system.started`).
+- **§2.2 Event Bus** — `nexus.events`: central thread-safe pub/sub, the 28 canonical events verbatim, exact/`prefix.*`/`*` patterns, handler isolation (raising subscribers never break dispatch), bounded history + strict-names mode.
+- **§2.3 Session System** — `nexus.core.session`: strict `User → Conversation → Task → Session` hierarchy, distinct `usr_/conv_/task_/sess_` identities, one active session per task, no overlap, restored-task registration.
+- **§2.4 Task Engine** — `nexus.core.engine`: the 13-state machine verbatim (`CREATED…CANCELLED`), documented transition table, completion only via `VERIFYING` (verification-first), pause/resume with pre-pause memory, audit trail + canonical transition events.
+- **§2.5 Task Persistence** — `nexus.core.persistence`: atomic JSON records (`temp + os.replace + fsync`) with envelope/version, exactly the 11 fields, self-healing index, strict id validation (no path traversal).
+- **§2.6 Exit Criteria** — `tests/phase01/verify_exit_criteria.py`: **98/98 checks**, including the full lifecycle **create → save → close NEXUS → open NEXUS → retrieve → continue state** across two restart cycles.
+- **Packaging** — `pyproject.toml` (`nexus-core` 0.1.0, requires-python ≥ 3.11, `py.typed`); CI: Python quality gate activated (ruff + pyright, pinned) **and** runs the §2.6 harness on every push; packaging job now builds the wheel and verifies the Phase 1 modules ship.
+
+### Added — 2026-09-06 (PHASE 0 — Machine & Repository Preparation, Plan §1)
+- **Governance pack**: `LICENSE` (MIT), `CONTRIBUTING.md`, `SECURITY.md`, `ARCHITECTURE.md`, this `CHANGELOG.md`.
+- **Branch model**: `main` (protected baseline) + `develop` (integration branch) *(Plan §1.1)*.
+- **CI pipeline** (`.github/workflows/ci.yml`): docs & governance integrity, §0.5 ownership-skeleton validation, conditional Python lint/type jobs, packaging placeholder *(Plan §1.4)*.
+- **Code skeleton** `nexus/` with all 28 modules *(Plan §1.3)* mapped to the 24 NEXUS-owned components *(Plan §0.5)* — see `nexus/README.md`.
+- **Workspace staging layout** in `.gitignore` for `vendor-staging/`, `external/`, `runtime/` *(Plan §1.2 / §45)*.
+- Fixed `.gitignore` path scoping so `nexus/models/` **source code** can never be shadowed by the root `models/` binary-dir rule.
+
+### Previously
+- `6017d87` — **NEXUS Final Build Plan v1.0** (109 sections) archived as the second canonical document.
+- `48d5dec` — Legendary bilingual (AR/EN) engineering README.
+- `a98a4fe` — **NEXUS Master Technical Specification v1.0** (375 sections) + initial engineering README + `.gitignore`.
+
+[Unreleased]: https://github.com/PS-COMMUNITY/NEXUS/compare/main...develop

@@ -1,0 +1,8 @@
+{
+ "name": "model-local-8080",
+ "type": "model",
+ "version": "1.1.0",
+ "entry": "model_local.py",
+ "description": "OpenAI-compatible ladder discovery (8080/1234/11434)",
+ "permissions": []
+}

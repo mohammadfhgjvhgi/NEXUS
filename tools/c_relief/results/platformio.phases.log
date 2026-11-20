@@ -1,0 +1,10 @@
+{"utc": "2026-09-13T16:45:27Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:45:33Z", "phase": "detached:copy_done", "detail": "exit=0"}
+{"utc": "2026-09-13T16:45:33Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:45:36Z", "phase": "detached:verify_walk_done", "detail": "src=24747f/2708084168B dst=24747f/2708084168B"}
+{"utc": "2026-09-13T16:45:40Z", "phase": "detached:sha_file", "detail": "1 .cache\\downloads\\02802867c8d4c819398b73958aa2d17c1c33ff72"}
+{"utc": "2026-09-13T16:45:42Z", "phase": "detached:sha_file", "detail": "2 .cache\\downloads\\f846714e8d1adcb102d7e1e6ffce243dc2034b54"}
+{"utc": "2026-09-13T16:45:42Z", "phase": "detached:sha_done", "detail": "checked=2 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:45:42Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:45:45Z", "phase": "detached:purge_begin", "detail": "files_to_delete=24747"}
+{"utc": "2026-09-13T16:46:28Z", "phase": "detached:purge_done", "detail": "exit=2"}

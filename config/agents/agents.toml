@@ -1,0 +1,26 @@
+# NEXUS Core Configuration — section: agents (Final Build Plan §2.1)
+# قسم الوكلاء — تعداد الوكلاء المتوازيين تحت الـMaster Agent.
+#
+# Phase 5 (Plan §6) — Agent Runtime keys (additive, all defaulted):
+#   loop_max_turns      → §6.2 «Continue» bound per agent run
+#   master_repair_limit → §6.3 bounded repair rounds (steps + verification)
+#   message_log_enabled → §6.5 per-task JSONL transcript next to the task record
+
+[agents]
+max_parallel = 3
+master_agent_enabled = true
+loop_max_turns = 8
+master_repair_limit = 2
+message_log_enabled = true
+#
+# Phase 6 (Plan §7) — Harness keys (additive, all defaulted):
+#   harness_enabled       → §41 assembler + all §7 components on/off
+#                           (false = the Phase-5 runtime, byte for byte)
+#   checkpoint_retention  → §7.3 per-task checkpoint window (LangGraph
+#                           durability pattern; DISK mode, atomic JSONL)
+#   hooks_strict          → a raising hook kills the loop (true) or is
+#                           logged and skipped (false)
+
+harness_enabled = true
+checkpoint_retention = 64
+hooks_strict = false

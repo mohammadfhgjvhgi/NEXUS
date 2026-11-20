@@ -1,0 +1,14 @@
+{
+ "name": "cache",
+ "src": "C:\\Users\\MohandsMohammad\\.cache",
+ "dst": "M:\\C-RELIEF\\mohands\\.cache",
+ "status": "moved",
+ "robocopy_exit": 1,
+ "src_files": 84,
+ "src_bytes": 1996010914,
+ "dst_files": 84,
+ "dst_bytes": 1996010914,
+ "sha_checked": 2,
+ "sha_bad": [],
+ "seconds": 43.3
+}

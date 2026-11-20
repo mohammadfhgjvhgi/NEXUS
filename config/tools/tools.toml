@@ -1,0 +1,19 @@
+# NEXUS Core Configuration — section: tools (Final Build Plan §2.1 + §8)
+# قسم الأدوات — بوابة التأكيد لمستويات الخطر (0..4) + مفاتيح المرحلة 7.
+
+[tools]
+allow_network = true
+# 0..4 — confirmation required above this danger level
+confirm_danger_above = 2
+max_batch_size = 50
+# §8.3 — the nine native tools (filesystem · terminal · process ·
+# hardware · windows · clipboard · screen · git · github)
+native_enabled = true
+# §8.4/§8.5 — the official MCP SDK behind the Tool Router; server
+# declarations live in config/tools/mcp.toml (enabled per server)
+mcp_enabled = true
+# §9.1 — the Windows Computer Runtime: mouse · keyboard · uia
+# mechanics records + the Computer API façade + the §9.5 fallback
+# hierarchy (application API → UIA → DOM/a11y → vision → input),
+# everything behind the §8.2 router
+computer_enabled = true

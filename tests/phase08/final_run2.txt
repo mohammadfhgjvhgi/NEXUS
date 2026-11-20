@@ -1,0 +1,69 @@
+PHASE 8 — Windows Computer Runtime (Final Build Plan §9) exit criteria
+  [PASS] (A) the §9.1 domain list is verbatim (eight, exact order)
+  [PASS] (A) the three mechanics records are mouse · keyboard · uia
+  [PASS] (A) registration is additive — the §8.3 nine stay untouched (12 records)
+  [PASS] (A) mouse is risk 3, keyboard is risk 3, uia is risk 2
+  [PASS] (A) the mechanics records use the native: id scheme
+  [PASS] (A) capability probes are platform-honest (never faked)
+  [PASS] (A) the mouse/keyboard records declare input.inject permission
+  [PASS] (A) the uia record declares uia.read/uia.control permissions
+  [PASS] (A) a domain call routes through the §8.2 pipeline (ToolOutcome shape)
+  [PASS] (A) domain calls publish the canonical tool events (called+completed)
+  [PASS] (A) unknown domain ops surface the router's honest refusal
+  [PASS] (A) no §9.1 domain invented a record outside the registry
+  [PASS] (A) the capability report covers all eight domains + the hierarchy
+  [PASS] (A) the focus domain validates handles
+  [PASS] (B) the §9.5 layer list is verbatim and ordered
+  [PASS] (B) unknown layers are refused at registration
+  [PASS] (B) an empty chain raises with the full trace (5 attempts, all unavailable)
+  [PASS] (B) the first succeeding layer wins (uia before input)
+  [PASS] (B) a failing layer falls through to the primitive layer
+  [PASS] (B) describe() reports providers and availability per layer
+  [PASS] (B) providers within one layer try in registration order
+  [PASS] (B) the runtime chain wires uia (2 providers) and input (1)
+  [PASS] (B) application_api / dom_a11y / vision report unavailable until their phases ship
+  [PASS] (B) an unservable chain degrades to HierarchyError with a trace
+  [PASS] (B) the convenience string target parses (invoke:hwnd)
+  [PASS] (B) unknown action literals are refused
+  [PASS] (C) the native client imports nothing beyond stdlib (source-clean)
+  [PASS] (C) the pattern/scope constants are the documented ones
+  [PASS] (C) the CONTROL_TYPE table covers the standard series (button..table)
+  [PASS] (C) unknown control types render as 'unknown' (honest, not guessed)
+  [PASS] (C) available() is platform-honest
+  [PASS] (C) root_element() refuses honestly off win32 (no fake element)
+  [PASS] (C) element_from_handle refuses off win32
+  [PASS] (C) focused_element refuses off win32
+  [PASS] (C) tree bounds are enforced (depth 0 rejected)
+  [PASS] (C) tree bounds are enforced (max_nodes 0 rejected)
+  [PASS] (C) the uia tool record carries the §8.1 fields with risk 2
+  [PASS] (C) the uia tool ops are the six documented ones
+  [PASS] (C) the uia tool handler refuses off win32 / without hwnd
+  [PASS] (C) COM apartment bookkeeping is owned-paired (release_com exists)
+  [BONUS] (C) BONUS win32: the native client reads the focused element
+  [PASS] (D) move_records packs one absolute MOVE record
+  [PASS] (D) normalise_point maps into the 0..65535 mickey space
+  [PASS] (D) button_records packs the LEFTDOWN flag
+  [PASS] (D) button_records packs the RIGHTUP flag
+  [PASS] (D) unknown buttons are refused
+  [PASS] (D) double-click = move + 2 press/release cycles (5 records)
+  [PASS] (D) drag = move + press + steps moves + release (7 records)
+  [PASS] (D) scroll packs WHEEL with data = units × 120
+  [PASS] (D) scroll bounds are enforced
+  [PASS] (D) parse_combo splits modifiers and the final key
+  [PASS] (D) combo_records sequences down…up and releases modifiers reversed
+  [PASS] (D) unknown key names are refused
+  [PASS] (D) the KEY_NAMES table covers letters, digits, F-keys and specials
+  [PASS] (D) INPUT structure sizes match the winuser layout (40 bytes)
+  [PASS] (D) type_records packs one unicode down/up pair per character
+  [PASS] (D) supplementary characters become surrogate pairs (4 records)
+  [PASS] (D) type length bound is enforced
+  [PASS] (D) the input engine reports platform honestly
+  [PASS] (D) message-transport mouse is refused by design (honest, not silent)
+  [PASS] (D) get_foreground refuses honestly off win32
+  [PASS] (D) ForegroundError and TransportRefusedError are distinct honest classes
+  [PASS] (D) the engine never injects silently: every refusal raises
+  [PASS] (D) the engine credits the ADAPT origin (windows-harness, MIT)
+  [PASS] (E) the backend probe is honest (win32 + importable)
+  [PASS] (E) pywinauto is imported only inside functions (lazy MODE A)
+  [PASS] (E) backend calls fail honestly without the extra (wrapped, no traceback leak)
+  [PASS] (E) no module-level pywinauto import in nexus/ (the MODE A discipline)

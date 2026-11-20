@@ -1,0 +1,30 @@
+{
+ "verdict": "PASS",
+ "title": "NEXUS 0.25.0 — PHASE 26 · Desktop UI Production",
+ "tasks_count": 1,
+ "model": "offline",
+ "screenshot": {
+  "method": "ctypes GDI BitBlt → GetDIBits → zlib PNG",
+  "path": "M:\\NEXUS\\proofs\\midpoint_ui.png",
+  "width": 1680,
+  "height": 1050,
+  "getdibits_lines": 1050,
+  "pixel_checksum": 665253,
+  "size_bytes": 81975,
+  "ok": true
+ },
+ "cap_seed_check": "ok",
+ "caps_cards": 7,
+ "cap_clicks": 1,
+ "core_ok": 37,
+ "sections_ok": true,
+ "runtime_ok": true,
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "gate6-desktop-ui",
+ "pid": 17968,
+ "python": "3.14.5",
+ "toolkit": "tkinter (stdlib)",
+ "utc": "2026-10-24T14:59:25Z",
+ "phase26": true
+}

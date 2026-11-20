@@ -1,0 +1,19 @@
+# NEXUS Core Configuration — section: models (Final Build Plan §2.1 + §5)
+# قسم النماذج — الذكاء المحلي (llama.cpp المرحلة 4).
+
+[models]
+default_backend = "llama.cpp"
+context_size = 8192
+gpu_layers = 0
+# 0 = auto
+threads = 0
+# Phase 4 (Plan §5) — the llama.cpp adapter + dynamic-loading knobs:
+# llama-server binary (PATH name or absolute path to the llama.cpp build)
+llama_server = "llama-server"
+# localhost binding for every spawned llama-server
+llama_host = "127.0.0.1"
+# 0 = auto-pick a free port per server
+llama_port = 0
+# §5.4 keep-warm TTL: idle resident models are unloaded after this many
+# seconds (pressure can unload them earlier — Spec §92)
+keep_warm_seconds = 300

@@ -1,0 +1,30 @@
+PHASE 6 — HARNESS INTEGRATION · COMPLETE ON THIS MACHINE
+==========================================================
+
+repo commit : a34f7cb (develop == main)
+phase       : 6 / Plan §7 — Harness Integration (Spec §41)
+exit proof  : 88/88 local (tests\phase06\verify_exit_criteria.py)
+              + regressions 98/143/104/106/116 re-run inside §F
+              (A=11, B=7, C=12, D=14, E=11, F=33)
+CI          : NEXUS CI on 9589802 (job "Phases 1-6")
+deploy      : 25/25 files written + SHA-verified via bridge (Bearer)
+
+What landed (nexus\harness\, 8 modules):
+  §7.1 skills.py    — ECC SKILL.md discipline (loader + matcher)
+  §7.1 rules.py     — ECC rules (priority + scopes + compiled section)
+  §7.1 hooks.py     — 8-point registry, pre_tool_call veto
+  §7.2 session.py   — Cline session lifecycle (5-state machine)
+  §7.3 checkpoint.py— LangGraph durability (NONE/MEMORY/DISK)
+  §7.4 goals.py     — Prime goals + heartbeats ledgers
+  §41  context.py   — the contract (7 inputs / 4 outputs, verbatim)
+
+On this machine:
+  python tests\phase06\verify_exit_criteria.py   (88/88 + regressions)
+
+Repository Round 3 (reference clones — optional, for study):
+  git clone --depth 1 https://github.com/affaan-m/ecc.git
+  git clone --depth 1 https://github.com/cline/cline.git
+  git clone --depth 1 https://github.com/langchain-ai/langgraph.git
+  git clone --depth 1 https://github.com/PrimeIntellect-ai/prime-agent.git
+  git clone --depth 1 https://github.com/langchain-ai/deepagents.git
+(pins: e04ea0b / c21b172 / 81bf17b / 2ce4431 / 07d2952)

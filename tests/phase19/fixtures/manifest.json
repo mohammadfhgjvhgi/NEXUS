@@ -1,0 +1,89 @@
+{
+  "phase": 19,
+  "purpose": "Real speech fixtures for the §19.3 benchmark — Arabic, Arabic-technical, English, mixed Arabic-English, fast speech, noise. Condition values use the §19.3 vocabulary verbatim. Storage is base64 text (.wav.b64) so the tunnel's text-mode writes (LF->CRLF) stay safe; fixtures.py decodes to PCM bytes.",
+  "audio_format": {
+    "codec": "pcm_s16le",
+    "sample_rate_hz": 16000,
+    "channels": 1
+  },
+  "fixtures": [
+    {
+      "id": "ar_basic",
+      "file": "audio/ar_basic.wav.b64",
+      "language": "ar",
+      "expected_text": "افتح المتصفح الآن",
+      "expected_intent": "open_app",
+      "condition": "arabic",
+      "generator": "edge-tts ar-SA-HamedNeural",
+      "sample_rate_hz": 16000,
+      "duration_s": 2.808,
+      "whisper_tiny_reference_transcript": "افتح المطصر في حلان",
+      "whisper_tiny_detected_lang": "ar"
+    },
+    {
+      "id": "ar_tech",
+      "file": "audio/ar_tech.wav.b64",
+      "language": "ar",
+      "expected_text": "شغل خدمة قاعدة البيانات المحلية وسجل الأحداث",
+      "expected_intent": "run_command",
+      "condition": "arabic-technical",
+      "generator": "edge-tts ar-SA-HamedNeural",
+      "sample_rate_hz": 16000,
+      "duration_s": 5.136,
+      "whisper_tiny_reference_transcript": "شغل خدمت قعدة البيانات المخلية والسجل الأحدث.",
+      "whisper_tiny_detected_lang": "ar"
+    },
+    {
+      "id": "en_basic",
+      "file": "audio/en_basic.wav.b64",
+      "language": "en",
+      "expected_text": "Open the browser and run the tests",
+      "expected_intent": "open_app",
+      "condition": "english",
+      "generator": "z-ai tts tongtong",
+      "sample_rate_hz": 16000,
+      "duration_s": 3.1,
+      "whisper_tiny_reference_transcript": "Open the browser and run the tests.",
+      "whisper_tiny_detected_lang": "en"
+    },
+    {
+      "id": "mixed",
+      "file": "audio/mixed.wav.b64",
+      "language": "mixed",
+      "expected_text": "افتح الـ terminal وشغل npm test",
+      "expected_intent": "open_app",
+      "condition": "mixed-arabic-english",
+      "generator": "edge-tts ar-SA-HamedNeural",
+      "sample_rate_hz": 16000,
+      "duration_s": 3.336,
+      "whisper_tiny_reference_transcript": "افتح التمين الوشارين بيامتست",
+      "whisper_tiny_detected_lang": "ar"
+    },
+    {
+      "id": "fast",
+      "file": "audio/fast.wav.b64",
+      "language": "en",
+      "expected_text": "Run the full system check now",
+      "expected_intent": "run_command",
+      "condition": "fast-speech",
+      "generator": "edge-tts en-US-GuyNeural rate=+45%",
+      "sample_rate_hz": 16000,
+      "duration_s": 1.92,
+      "whisper_tiny_reference_transcript": "Run the full system check now.",
+      "whisper_tiny_detected_lang": "en"
+    },
+    {
+      "id": "noise",
+      "file": "audio/noise.wav.b64",
+      "language": "en",
+      "expected_text": "Open the settings menu",
+      "expected_intent": "open_app",
+      "condition": "noise",
+      "generator": "z-ai tts + white noise SNR 5dB",
+      "sample_rate_hz": 16000,
+      "duration_s": 1.86,
+      "whisper_tiny_reference_transcript": "오을 사랑해 드",
+      "whisper_tiny_detected_lang": "ko"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "gate8-overlay",
+ "utc": "2026-09-13T20:22:55Z",
+ "pid": 8828,
+ "toolkit": "tkinter Toplevel topmost+alpha (stdlib)",
+ "topmost": true,
+ "alpha": 0.88,
+ "pause_worked": true,
+ "resume_worked": true,
+ "pump_frames": [
+  25,
+  25,
+  25
+ ],
+ "label_after_pause": "NEXUS paused — نكسس متوقف مؤقتاً",
+ "screenshot": {
+  "method": "ctypes GDI BitBlt → GetDIBits → zlib PNG",
+  "path": "M:\\NEXUS\\proofs\\midpoint_overlay.png",
+  "width": 1680,
+  "height": 1050,
+  "getdibits_lines": 1050,
+  "pixel_checksum": 413408,
+  "size_bytes": 60617,
+  "ok": true
+ },
+ "verdict": "PASS",
+ "seconds": 8.02,
+ "error": null
+}

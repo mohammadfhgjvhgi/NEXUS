@@ -1,0 +1,11 @@
+# NEXUS Core Configuration — section: system (Final Build Plan §2.1)
+# قسم النظام — القيم هنا تتغلب على الافتراضي المدمج،
+# ومتغير البيئة NEXUS_SYSTEM__* يتغلب على هذا الملف.
+
+[system]
+version = "1.0"
+debug = false
+# ar | en | bilingual
+language = "ar"
+# DEBUG | INFO | WARNING | ERROR | CRITICAL
+log_level = "INFO"

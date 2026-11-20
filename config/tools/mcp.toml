@@ -1,0 +1,60 @@
+# NEXUS MCP server declarations (Final Build Plan §8.5) —
+# كل خادم خلف صلاحية ونطاق NEXUS (Spec §71).
+#
+# Clone only what the task/capability needs — the five §8.5 names
+# ship as audited defaults (modelcontextprotocol/servers @ pinned
+# commits; see docs/REPOSITORY-INTEGRATION.md Round 4). Each entry
+# is DISABLED by default: flip `enabled` per machine after the
+# runtime (npx/uvx/python) is present — a broken server never
+# breaks the boot (per-server honest failure).
+#
+# risk_ceiling clamps every tool of the server (0..3);
+# scope_paths are argument names the §8.2 Scope stage checks;
+# blocked_tools are refused BEFORE any stdio write.
+
+# --- filesystem (official TS server, pinned clone @ d73f99e) -----
+[[servers]]
+name = "filesystem"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "."]
+enabled = false
+risk_ceiling = 2
+scope_paths = ["path"]
+blocked_tools = []
+
+# --- git (official Python server, pinned clone @ d73f99e) --------
+[[servers]]
+name = "git"
+command = "uvx"
+args = ["mcp-server-git", "--repository", "."]
+enabled = false
+risk_ceiling = 2
+scope_paths = ["repo_path"]
+blocked_tools = []
+
+# --- fetch (official Python server, pinned clone @ d73f99e) ------
+[[servers]]
+name = "fetch"
+command = "uvx"
+args = ["mcp-server-fetch"]
+enabled = false
+risk_ceiling = 2
+blocked_tools = []
+
+# --- memory (official TS server, pinned clone @ d73f99e) ---------
+[[servers]]
+name = "memory"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-memory"]
+enabled = false
+risk_ceiling = 1
+blocked_tools = []
+
+# --- database (archived sqlite server, pinned clone @ 9be4674) ---
+[[servers]]
+name = "database"
+command = "uvx"
+args = ["mcp-server-sqlite", "--db-path", "nexus-mcp.db"]
+enabled = false
+risk_ceiling = 2
+blocked_tools = []

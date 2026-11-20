@@ -1,0 +1,78 @@
+/* NEXUS Remote — PHASE 28 · dark NEXUS palette · mobile-first · RTL */
+:root {
+  --bg: #0F172A; --panel: #111C31; --panel2: #0B1220;
+  --fg: #E2E8F0; --dim: #94A3B8; --accent: #14B8A6;
+  --accent2: #F59E0B; --danger: #F87171; --ok: #34D399;
+  --entry: #1E293B; --line: #1F2A44;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+  font-family: "Segoe UI", Tahoma, sans-serif; min-height: 100vh; }
+body { display: flex; flex-direction: column; }
+
+header { display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--panel2); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 5; }
+.brand { display: flex; flex-direction: column; }
+.logo { font-weight: 800; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+.sub { font-size: 10px; color: var(--dim); }
+.conn { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--dim); }
+.conn .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
+  display: inline-block; }
+.conn.on .dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.conn.on { color: var(--fg); }
+
+nav { display: flex; background: var(--panel2); border-bottom: 1px solid var(--line); }
+nav button { flex: 1; padding: 12px 4px; background: none; border: none;
+  color: var(--dim); font-family: inherit; font-size: 14px; cursor: pointer;
+  border-bottom: 2px solid transparent; min-height: 44px; }
+nav button.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+main { flex: 1; padding: 10px; max-width: 760px; width: 100%; margin: 0 auto; }
+.tab { display: none; }
+.tab.on { display: block; }
+
+.card { background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+.card h2 { margin: 0 0 10px; font-size: 15px; color: var(--accent); }
+label { display: block; font-size: 12px; color: var(--dim); margin: 8px 0 4px; }
+input, textarea { width: 100%; background: var(--entry); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+  font-family: inherit; font-size: 14px; }
+textarea { resize: vertical; }
+button { background: var(--panel2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 11px 14px; font-family: inherit; font-size: 14px;
+  cursor: pointer; min-height: 44px; margin: 4px 0; width: 100%; }
+button:active { transform: scale(0.98); }
+button.primary { background: var(--accent); color: #06281F; font-weight: 700;
+  border-color: var(--accent); }
+button.warn { background: var(--accent2); color: #3B2200; font-weight: 700;
+  border-color: var(--accent2); }
+button.ok { background: var(--ok); color: #052e1b; font-weight: 700;
+  border-color: var(--ok); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; }
+.grid2 .k { color: var(--dim); }
+.grid2 .v { color: var(--fg); text-align: left; direction: ltr; }
+.hint { font-size: 11px; color: var(--dim); }
+.list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh;
+  overflow-y: auto; }
+.item { background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+.item .t { color: var(--dim); font-size: 10px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; }
+.badge.done { background: rgba(52,211,153,.15); color: var(--ok); }
+.badge.queued, .badge.running { background: rgba(245,158,11,.15); color: var(--accent2); }
+.badge.failed { background: rgba(248,113,113,.15); color: var(--danger); }
+code { background: var(--entry); padding: 1px 6px; border-radius: 5px;
+  font-size: 11px; direction: ltr; display: inline-block; }
+
+footer { text-align: center; padding: 12px; font-size: 10px; color: var(--dim);
+  border-top: 1px solid var(--line); background: var(--panel2);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+@media (min-width: 640px) {
+  main { padding: 16px; }
+  .card { padding: 18px; }
+}

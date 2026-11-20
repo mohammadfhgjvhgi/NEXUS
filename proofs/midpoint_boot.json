@@ -1,0 +1,61 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "utc": "2026-11-19T22:36:28Z",
+ "pid": 19372,
+ "python": "3.14.5",
+ "package_root": "ok",
+ "core_probes": {
+  "ok": [
+   "nexus.core.config",
+   "nexus.events",
+   "nexus.core.session",
+   "nexus.core.engine",
+   "nexus.core.persistence",
+   "nexus.core.workspace",
+   "nexus.core.scope",
+   "nexus.core.policy",
+   "nexus.resources",
+   "nexus.models",
+   "nexus.agents",
+   "nexus.harness",
+   "nexus.tools",
+   "nexus.computer",
+   "nexus.windows",
+   "nexus.browser",
+   "nexus.vision",
+   "nexus.verification",
+   "nexus.recovery",
+   "nexus.health",
+   "nexus.horizon",
+   "nexus.orchestration",
+   "nexus.security",
+   "nexus.memory",
+   "nexus.learning",
+   "nexus.research",
+   "nexus.documents",
+   "nexus.speech",
+   "nexus.codeintel",
+   "nexus.coding",
+   "nexus.git",
+   "nexus.github",
+   "nexus.remote",
+   "nexus.skills",
+   "nexus.plugins",
+   "nexus.ui",
+   "nexus.workspace"
+  ],
+  "err": {}
+ },
+ "core_summary": {
+  "ok": 37,
+  "err": 0
+ },
+ "model_runtime": {
+  "up": false,
+  "base": "http://127.0.0.1:8080",
+  "error": "URLError: <urlopen error timed out>"
+ },
+ "boot_seconds": 2.94,
+ "verdict": "PASS"
+}

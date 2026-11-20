@@ -1,0 +1,41 @@
+PHASE 13 — LEARNING SYSTEM · COMPLETE ON THIS MACHINE
+=====================================================
+
+phase       : 13 / New Plan §13 — Learning System
+identity    : «يتذكر» is not «يتعلم» — the Experience
+              Extractor (six kinds), the Learning Record,
+              the six-stage pipeline (Experience → Candidate
+              lesson → Evidence check → Confidence → Store →
+              Future retrieval), the SkillCandidate miner
+              (Task A+B+C → pattern → skill), promoted
+              lessons landing in the §12 Memory Engine
+deploy      : 16/16 files written + SHA-verified via bridge
+              (Bearer) + the .gitkeep scaffold removed
+
+What landed (nexus\learning\, 5 modules):
+  contracts.py  — §13.1 the six kinds · §13.2 the record ·
+                  §13.4 the skill candidate · the confidence
+                  rule (never 1.0 — corrigible by design)
+  extractor.py  — §13.1 TaskResult → six kinds, evidence kept
+  store.py      — learning.db: experiences audit + records +
+                  task sequences + skill candidates (WAL)
+  pipeline.py   — §13.3 absorb/recall/stats + events + the
+                  promotion seam into the §12 engine
+  skills.py     — §13.4 WorkflowMiner (maximal windows only)
+
+Repository Round 10 (audited pins — REPOSITORY-INTEGRATION.md):
+  letta-ai/letta-code        e073938 (Apache-2.0, MODE D)
+  PrimeIntellect-ai/prime-…  bf8894a (MIT, MODE D)
+  stanfordnlp/dspy           f70d08a (MIT, MODE D, §13.7
+                              deferred — DW-5, seam open)
+
+The device proof (this machine is the judge):
+  cd /d M:\NEXUS
+  python -X utf8 tests\phase13\live_proof_device.py
+  → real learning.db + memory.db under data\learning-proof,
+    bilingual lessons, evidence refusal, skill folding,
+    future-task retrieval, restart across a fresh process
+    → proofs\phase13_live.json
+
+Next: at the operator's command (New Plan tracks — PHASE 14
+Code Intelligence or the parallel tracks).

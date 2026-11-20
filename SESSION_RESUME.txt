@@ -1,0 +1,74 @@
+NEXUS — SESSION RESUME CARD (GATEWAY MEMORY)
+=============================================
+Written : 2026-09-07 (session close — operator going to sleep)
+Purpose : Everything an agent needs to resume NEXUS work in a fresh sandbox.
+
+STATE SNAPSHOT
+--------------
+- Phases 0-7 : ALL COMPLETE (Implemented + Tested + CI + Deployed here).
+- Repo       : github.com/PS-COMMUNITY/NEXUS  (public)
+- main == develop @ 8338c90  (NEXUS CI green, job "Phases 1-7")
+- This device (M:\NEXUS) : 33/33 phase-7 files SHA-verified + PHASE7_COMPLETE.txt
+- Sandbox worklog         : tasks 0-49 logged (Task 49 = Phase 7 close)
+
+NEXT STEP (when operator commands)
+----------------------------------
+PHASE 8 — Windows Computer Runtime (Build Plan §9: Computer API).
+Entry point: the tool layer now on this machine (nexus\tools\ router §8.2).
+MANDATORY from Phase 6 onward: the 18-step sub-phase loop per sub-phase
+(define -> discover -> audit -> strategy -> pull -> inspect -> license ->
+security -> extract -> integrate -> adapters -> unit -> integration ->
+real-windows -> failure/recovery -> CI -> docs -> commit+checkpoint),
+recorded in CONTRIBUTING.md of the repo.
+
+SANDBOX RECOVERY PROCEDURE (if sandbox was rebuilt)
+--------------------------------------------------
+1. Operator gives new tunnel URLs (they change on device reboot) + same
+   Bearer dev_token flow (trust full, dl 0/1/2 usable).
+2. Decode the PAT:  M:\NEXUS\.recovery\pat.b64  (base64; see
+   M:\NEXUS\.recovery\README.txt) -> save to .credentials/github.pat (600).
+3. git clone https://<PAT>@github.com/PS-COMMUNITY/NEXUS repo-stage/nexus
+   (remove the remote URL right after cloning).
+4. python3 tests/phase07/verify_exit_criteria.py -> expect 88/88 (+1 bonus).
+5. Recreate worklog.md from this card + repo docs (docs/PHASE-*-REPORT.md).
+
+GITHUB PAT
+----------
+Not inlined here (bridge DLP-masks plaintext tokens on read).
+Canonical verified copy: M:\NEXUS\.recovery\pat.b64
+Rotate anytime at github.com/settings/tokens if compromised.
+
+OPERATIONAL KNOWLEDGE (hard-won, do not relearn)
+-----------------------------------------------
+- Bridge base URL : the current tunnel (ask operator after reboot; today:
+    t1 word-reports-earning-bristol . trycloudflare . com
+    t2 describing-minority-oasis-principles . trycloudflare . com)
+- Auth header     : Authorization: Bearer ps1-stable-token-2026
+- GET  /health            -> 200 JSON (service almoutmag-v9, ~95k tools)
+- POST /execute { "tool": ..., "args": ..., "confirmed": true }
+- POST /batch  { "calls": [ {tool,args,confirmed}, ... ] }   <-- "calls",
+  NOT "operations" (that returns 400). Batch limit 50; use 12-file chunks.
+- Write files : tool=code_write_file {path, content} (LF only, CRLF gets
+  normalized on verify). Response: result.bytes_written + _dlp_masked flag.
+- Read files  : tool=file_read {path, max_bytes}; result may be str or
+  {content|text} — handle both. Secrets are DLP-masked as [REDACTED].
+- Real tools on this box: sys_os_info, ps_get_process, dir_list, file_exists,
+  git_status, desktop_get_screen_size, cu_list_windows ...
+- Machine: DESKTOP-46N9B2S · Windows 10.0.19045 · Intel F6/M58 · 1680x1050.
+
+KEY ARCHITECTURE DECISIONS (still binding)
+------------------------------------------
+- Python stdlib only inside nexus/ (§0.5). LangGraph USE was REJECTED.
+- Zero imports from vendor repos; pins + audit rounds in
+  docs/REPOSITORY-INTEGRATION.md (rounds 1-4) + vendor-staging/README.md.
+- Tool risk levels 0..4, level 4 always refused; MCP servers disabled by
+  default (opt-in via config/tools/mcp.toml).
+- 28 canonical events only (nexus/core/events.py).
+
+PERMANENT RECORDS
+-----------------
+- Everything engineering: the GitHub repo itself (docs/, CHANGELOG,
+  tests/phase0X/verify_exit_criteria.py per phase).
+- This card: M:\NEXUS\SESSION_RESUME.txt (survives sandbox rebuilds).
+- PAT: M:\NEXUS\.recovery\pat.b64 (roundtrip-verified).
+- Sandbox worklog: tasks 0-49 (rebuildable from this card if lost).

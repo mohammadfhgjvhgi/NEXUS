@@ -1,0 +1,5 @@
+msg 0x81 hwnd=590512 wp=0 lp=401338648800
+msg 0x82 hwnd=590512 wp=0 lp=0
+run() returned (thread exiting)
+alive=False hwnd=0 thread_alive=False
+find=0

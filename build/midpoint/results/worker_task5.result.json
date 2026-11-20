@@ -1,0 +1,81 @@
+{
+ "worker": "worker_task5",
+ "utc": "2026-09-13T19:24:09Z",
+ "pid": 13708,
+ "goal": "اعمل مجلد داخل M:\\NEXUS-Test وضع داخله ملف نصي",
+ "build": {
+  "rc": 0,
+  "seconds": 216.2,
+  "tail": "se EXE-00.toc is non existent\r\n211790 INFO: Building EXE from EXE-00.toc\r\n211812 INFO: Copying bootloader EXE to M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe\r\n211828 INFO: Copying icon to EXE\r\n211844 INFO: Copying 0 resources to EXE\r\n211845 INFO: Embedding manifest in EXE\r\n211867 INFO: Appending PKG archive to EXE\r\n212055 INFO: Fixing EXE headers\r\n214237 INFO: Building EXE from EXE-00.toc completed successfully.\r\n214265 INFO: Build complete! The results are available in: M:\\NEXUS\\build\\midpoint\\dist\r\n"
+ },
+ "exe": {
+  "size": 87595415,
+  "sha256": "0f78f73895e4ffa537332f3a206f89a8ee9d354f82300341d3039cb2006221ab"
+ },
+ "check": {
+  "cmd": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe …",
+  "rc": 0,
+  "out_tail": "==========================================================\r\n  NEXUS 0.25.0  ·  NEXUS Windows Product v0.1 (MIDPOINT)\r\n  Your computer. With a mind of its own.\r\n  local-first  ·  stdlib core  ·  evidence or silence\r\n==========================================================\r\ncore packages : 37 ok / 0 err (of 37)\r\nmodel runtime : offline at http://127.0.0.1:8080\r\nverdict       : PASS  (3.74s)\r\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\r\n",
+  "err_tail": "",
+  "seconds": 19.3
+ },
+ "task": {
+  "cmd": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe …",
+  "rc": 0,
+  "out_tail": "certificate: M:\\NEXUS\\proofs\\midpoint_task.json\r\n{\"verdict\": \"PASS\", \"task_id\": \"task_b9b28770d20f44e4bffdba9376c604e1\", \"task_dir\": \"M:\\\\NEXUS-Test\", \"artifacts\": {\"folder\": \"M:\\\\NEXUS-Test\\\\مهمة-أولى\", \"file\": \"M:\\\\NEXUS-Test\\\\مهمة-أولى\\\\nexus_task_note.txt\", \"record\": \"M:\\\\NEXUS\\\\tasks\\\\task_b9b28770d20f44e4bffdba9376c604e1.json\", \"record_sha256\": \"c5f21fa9279379751092097ade3352a772ade3c15eed63ecd51a07e9451c3add\"}}\r\n",
+  "err_tail": "",
+  "seconds": 7.4
+ },
+ "certificate": {
+  "path": "M:\\NEXUS\\proofs\\midpoint_task.json",
+  "verdict": "PASS",
+  "task_id": "task_b9b28770d20f44e4bffdba9376c604e1",
+  "task_dir": "M:\\NEXUS-Test",
+  "artifacts": {
+   "folder": "M:\\NEXUS-Test\\مهمة-أولى",
+   "file": "M:\\NEXUS-Test\\مهمة-أولى\\nexus_task_note.txt",
+   "record": "M:\\NEXUS\\tasks\\task_b9b28770d20f44e4bffdba9376c604e1.json",
+   "record_sha256": "c5f21fa9279379751092097ade3352a772ade3c15eed63ecd51a07e9451c3add"
+  },
+  "transitions": [
+   {
+    "from": "CREATED",
+    "to": "ANALYZING",
+    "reason": "gate5 task started"
+   },
+   {
+    "from": "ANALYZING",
+    "to": "PLANNING",
+    "reason": "plan of 3 steps"
+   },
+   {
+    "from": "PLANNING",
+    "to": "EXECUTING",
+    "reason": "executing via filesystem tool"
+   },
+   {
+    "from": "EXECUTING",
+    "to": "VERIFYING",
+    "reason": "artifacts claimed on disk"
+   },
+   {
+    "from": "VERIFYING",
+    "to": "COMPLETED",
+    "reason": "verification passed"
+   }
+  ],
+  "error": null
+ },
+ "disk_proof": {
+  "folder": "M:\\NEXUS-Test\\مهمة-أولى",
+  "ok": true,
+  "file_size": 351
+ },
+ "gate": {
+  "updated": true,
+  "old": "| 5 | أول مهمة حقيقية عبر محرك المهام (Task State Machine) | مهمة منشأة + حالة مسجلة | ⬜ |",
+  "row_new": "| 5 | أول مهمة حقيقية عبر محرك المهام (Task State Machine) | مهمة `task_b9b28770d20f44e4bffdba9376c604e1` COMPLETED + سجل محفوظ | ✅ **منفذ** — NEXUS.exe --task · filesystem عبر Router · persistence ro"
+ },
+ "verdict": "PASS",
+ "finished_utc": "2026-09-13T19:28:13Z"
+}

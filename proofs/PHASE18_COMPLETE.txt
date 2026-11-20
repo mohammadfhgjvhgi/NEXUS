@@ -1,0 +1,8 @@
+PHASE 18 — Document Intelligence COMPLETE
+commit: ffd2541 (main == develop) — CI 12/12 green (runs #89 + #90)
+code: 2480e9e (impl, 28 files: 10 documents modules + 12 test/gate/proof + CI + README + CHANGELOG + report + pyproject + identity) · 894aed2 (real-Windows fix: close the mkstemp fd — the open handle kept the temp file locked) · ffd2541 (gate law: os is stdlib)
+files: 28 deployed + on-disk sha256 verified (file_hash, CRLF-aware) — docling.py redeployed after the fix
+tests: 80/80 on this box (contracts 10 · docx 14 · pptx 13 · pdf 13 · docling 6 · pipeline 8 · memory 6 · engine 10)
+live proof: 7/7 rungs on this box — real DOCX roundtrip + edit/format + PPTX (3 slides + real PNG + sources + verify) + PDF five verbs + file-backed SQLite index answering *where* + honest docling probe + §12 memory with provenance (proofs/phase18_live.json · python 3.14.5 · Windows-10-10.0.19045)
+real-Windows lesson: mkstemp opens an OS handle — close it before use; an open handle keeps the file locked (the WinError-32 family, twice now)
+nexus-core 0.18.0 · NEXUS_PHASE=18

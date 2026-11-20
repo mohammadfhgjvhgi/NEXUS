@@ -1,0 +1,6 @@
+# NEXUS Core Configuration — section: workspaces (Final Build Plan §2.1)
+# قسم مساحات العمل — الافتراضي والعزل (محرك Scope الكامل في المرحلة 2).
+
+[workspaces]
+default_workspace = "main"
+isolation = true

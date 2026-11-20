@@ -1,0 +1,27 @@
+PHASE 20 — Verification Engine — COMPLETE
+=========================================
+Date (UTC): 2026-09-09T23:45:52Z
+Version   : nexus-core 0.20.0
+NEXUS_PHASE: 20
+Plan      : New Plan v3 §20 (75 sections — binding reference)
+
+Closed A–F:
+  Implemented : nexus/verification/ (6 files, stdlib only) — Verifier · Evidence ·
+                Criterion · Result · the nine domains · sha256-sealed evidence ·
+                the Repair Loop Fail→Diagnose→Fix→Retest→Verify
+  Integrated  : engine + report + store wired; version bump 0.20.0; pyproject;
+                CI gate step + verification-live job
+  Tested      : sandbox 57/57 · gate 26/26 · regression 15–19 = 396/396
+  Verified    : live 10/10 (sandbox) · device 54/54 (+1 POSIX-only skip) ·
+                device live 10/10 — verdict M:\NEXUS\proofs\phase20_live.json
+  Documented  : docs/PHASE-20-REPORT.md · README matrix + summaries · CHANGELOG ·
+                knowledge 28 · worklog Task 12
+  Committed   : 02ae95e → 6931555 → 8fbed55 → dc7bcc8 (main == develop)
+
+Device discoveries closed in-phase:
+  8. path extraction keeps the Windows drive letter (C:\...)
+  9. git HEAD probe honestly skips on a deployed non-repo tree
+  10. the proof wrapper keeps its PROOF constant (CI does not lint tests/)
+
+SKIP is an honest refusal — never a fake PASS.
+لا يكفي أن NEXUS يعمل — يجب أن يثبت أنه يعمل.

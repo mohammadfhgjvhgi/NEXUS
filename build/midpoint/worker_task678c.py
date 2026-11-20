@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+r"""GATE #6/#7/#8 worker v2 — detached; survives MCP death.
+
+Adds a spec-patch stage before rebuild:
+  - ensures hiddenimports contains 'nexus_ui' + 'tkinter' + submodules
+    (the first run bundled nexus_ui but NOT tkinter — the exe died
+     silently on the missing Tcl/Tk)
+  - ensures pathex covers the midpoint dir
+Then: rebuild → --check → the three selftests (fuller output capture)
+→ gate rows #6/#7/#8 per real PASS only.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import traceback
+from pathlib import Path
+
+MID = Path(r"M:\NEXUS\build\midpoint")
+DIST = MID / "dist" / "NEXUS.exe"
+PROOFS = Path(r"M:\NEXUS\proofs")
+RESULTS = MID / "results"
+HB = RESULTS / "worker_task678.hb.json"
+OUT = RESULTS / "worker_task678.result.json"
+GATE_MD = MID / "MIDPOINT-GATE.md"
+SPEC = MID / "NEXUS.exe.spec"
+PY = sys.executable
+
+MODES = [
+    ("ui", "--ui-selftest", "midpoint_ui.json", "midpoint_ui.png", 360),
+    ("tray", "--tray-selftest", "midpoint_tray.json", "midpoint_tray.png", 180),
+    ("overlay", "--overlay-selftest", "midpoint_overlay.json", "midpoint_overlay.png", 240),
+]
+
+GATE_ROWS = {
+    6: ("| 6 |", "| 6 | UI سطح مكتب أولي (نافذة محادثة) | نافذة حقيقية + قائمة مهام حقيقية + لقطة | "
+         "✅ **منفذ** — tkinter · sidebar tasks من المستودع · لقطة GDI `proofs\\midpoint_ui.png` · "
+         "`proofs\\midpoint_ui.json` |"),
+    7: ("| 7 |", "| 7 | أيقونة صينية Tray + قائمة | لقطة tray | "
+         "✅ **منفذ** — Shell_NotifyIconW NIM_ADD/MODIFY/DELETE = TRUE · قائمة 4 بنود مبنية · "
+         "لقطة سطح مكتب `proofs\\midpoint_tray.png` (الأيقونة قد تكون في overflow) |"),
+    8: ("| 8 |", "| 8 | Overlay فوق التطبيقات | لقطة overlay | "
+         "✅ **منفذ** — Toplevel topmost+alpha · Pause/Resume يعملان فعلاً · "
+         "لقطة `proofs\\midpoint_overlay.png` · `proofs\\midpoint_overlay.json` |"),
+}
+
+
+def _hb(stage: str, **extra) -> None:
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        HB.write_text(
+            json.dumps({"stage": stage,
+                        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "pid": os.getpid(), **extra}, ensure_ascii=False, indent=1),
+            encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _sha(p: Path) -> str:
+    h = hashlib.sha256()
+    with p.open("rb") as fh:
+        for c in iter(lambda: fh.read(1 << 16), b""):
+            h.update(c)
+    return h.hexdigest()
+
+
+def _run(cmd, timeout, env=None) -> dict:
+    t0 = time.time()
+    proc = subprocess.run(cmd, capture_output=True, timeout=timeout,
+                          cwd=str(MID), env=env)
+    out = (proc.stdout or b"").decode("utf-8", "replace")
+    err = (proc.stderr or b"").decode("utf-8", "replace")
+    return {"rc": proc.returncode, "out_head": out[:700],
+            "out_tail": out[-1100:], "err_head": err[:700],
+            "err_tail": err[-700:], "seconds": round(time.time() - t0, 1)}
+
+
+def _out(res: dict, verdict: str) -> int:
+    res["verdict"] = verdict
+    res["finished_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        OUT.write_text(json.dumps(res, ensure_ascii=False, indent=1),
+                       encoding="utf-8")
+    except OSError:
+        pass
+    _hb("done", verdict=verdict)
+    return 0 if verdict == "PASS" else 1
+
+
+def _patch_spec(res: dict) -> bool:
+    """Dump the spec into the result, then patch hiddenimports flexibly."""
+    try:
+        txt = SPEC.read_text(encoding="utf-8")
+    except OSError as exc:
+        res["spec_patch"] = {"changed": False, "error": f"read: {exc}"}
+        return False
+    res["spec_text_head"] = txt[:5200]
+    res["spec_len"] = len(txt)
+    orig = txt
+    additions = []
+    m = re.search(r"hiddenimports\s*=\s*\[", txt, re.IGNORECASE)
+    if m:
+        if "'nexus_ui'" not in txt:
+            additions.append("'nexus_ui'")
+        if "'tkinter'" not in txt:
+            additions.extend(["'tkinter'", "'tkinter.scrolledtext'",
+                              "'tkinter.filedialog'"])
+        if additions:
+            ins = ", ".join(additions)
+            txt = txt[:m.end()] + f"\n    {ins}," + txt[m.end():]
+    else:
+        # no hiddenimports key at all — insert one into the first Analysis(
+        m2 = re.search(r"Analysis\(", txt)
+        if m2:
+            close = txt.find(")", m2.end())
+            insert_at = close if close != -1 else m2.end()
+            txt = (txt[:insert_at]
+                   + ", hiddenimports=['nexus_ui', 'tkinter', 'tkinter.scrolledtext', 'tkinter.filedialog']"
+                   + txt[insert_at:])
+            additions.append("Analysis-hiddenimports-insert")
+    if txt != orig:
+        try:
+            (MID / "NEXUS.exe.spec.pre-ui.bak").write_text(orig, encoding="utf-8")
+            SPEC.write_text(txt, encoding="utf-8")
+        except OSError as exc:
+            res["spec_patch"] = {"changed": False, "error": f"write: {exc}",
+                                 "added": additions}
+            return False
+        res["spec_patch"] = {"changed": True, "added": additions,
+                             "backup": "NEXUS.exe.spec.pre-ui.bak"}
+    else:
+        res["spec_patch"] = {"changed": False, "note": "no change applied"}
+    return True
+
+
+def _set_gate_row(no: int) -> dict:
+    marker, new_row = GATE_ROWS[no]
+    try:
+        txt = GATE_MD.read_text(encoding="utf-8")
+        old = [ln for ln in txt.splitlines() if ln.startswith(marker)]
+        if not old:
+            return {"updated": False, "note": f"row #{no} not found"}
+        GATE_MD.write_text(txt.replace(old[0], new_row), encoding="utf-8")
+        return {"updated": True}
+    except OSError as exc:
+        return {"updated": False, "error": str(exc)[:120]}
+
+
+def main() -> int:
+    _hb("start")
+    res: dict = {"worker": "worker_task678 v3",
+                 "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                 "pid": os.getpid()}
+    all_green = True
+    try:
+        # 0) spec patch — tkinter must be IN the bundle
+        _hb("spec-patch")
+        ok_spec = _patch_spec(res)
+        if not ok_spec:
+            res["error"] = "spec patch failed — refusing to rebuild blind"
+            return _out(res, "FAIL")
+
+        # 1) rebuild
+        _hb("rebuild")
+        build = _run([PY, "-m", "PyInstaller", "NEXUS.exe.spec", "--noconfirm",
+                      "--distpath", "dist", "--workpath", "build", "--clean"], 1800)
+        res["build"] = {"rc": build["rc"], "seconds": build["seconds"],
+                        "err_tail": build["err_tail"][-400:]}
+        if build["rc"] != 0 or not DIST.is_file():
+            res["error"] = "pyinstaller failed"
+            return _out(res, "FAIL")
+        res["exe"] = {"size": DIST.stat().st_size, "sha256": _sha(DIST)}
+
+        # 2) --check
+        _hb("check")
+        env = dict(os.environ)
+        env["PYTHONUTF8"] = "1"
+        res["check"] = _run([str(DIST), "--check"], 300, env=env)
+        if res["check"]["rc"] != 0:
+            res["error"] = "--check failed"
+            return _out(res, "FAIL")
+
+        # 3) the three UI modes
+        for name, flag, cert_name, png_name, tmo in MODES:
+            _hb(name)
+            run = _run([str(DIST), flag], tmo, env=env)
+            cert_path = PROOFS / cert_name
+            try:
+                cert = json.loads(cert_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                cert = {"verdict": "FAIL", "error": f"unreadable: {exc}"}
+            png = PROOFS / png_name
+            entry = {
+                "run_rc": run["rc"], "seconds": run["seconds"],
+                "out_head": run["out_head"], "err_head": run["err_head"],
+                "out_tail": run["out_tail"][-600:], "err_tail": run["err_tail"][-400:],
+                "cert_verdict": cert.get("verdict"),
+                "cert_error": cert.get("error"),
+                "png_exists": png.is_file(),
+                "png_size": (png.stat().st_size if png.is_file() else None),
+            }
+            passed = (run["rc"] == 0 and cert.get("verdict") == "PASS"
+                      and entry["png_exists"] and (entry["png_size"] or 0) > 8000)
+            entry["passed"] = passed
+            res[name] = entry
+            if passed:
+                res[f"gate_{name}"] = _set_gate_row(
+                    {"ui": 6, "tray": 7, "overlay": 8}[name])
+            else:
+                all_green = False
+                res[f"gate_{name}"] = {"updated": False,
+                                       "note": "honest FAIL — row stays ⬜"}
+
+        return _out(res, "PASS" if all_green else "PARTIAL")
+    except subprocess.TimeoutExpired as exc:
+        res["error"] = f"timeout: {exc}"
+        return _out(res, "FAIL")
+    except BaseException:
+        res["error"] = traceback.format_exc()[-1200:]
+        return _out(res, "FAIL")
+
+
+if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
+    raise SystemExit(main())

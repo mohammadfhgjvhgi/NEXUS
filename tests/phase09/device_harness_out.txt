@@ -1,0 +1,80 @@
+PHASE 9 — Window Manager + Human Parallelism (Final Build Plan §10) exit criteria
+  [PASS] (A) the §10.1 fields are nine, verbatim, in order
+  [PASS] (A) window_id is the stable win-<hwnd> key
+  [PASS] (A) ingest opens four windows (id/title/process/rect/minimized honored)
+  [PASS] (A) the record carries application · title · geometry from the row
+  [PASS] (A) window.opened published 4× (the first real publisher of the §2.2 pair)
+  [PASS] (A) geometry refresh updates in place (one updated, none reopened)
+  [PASS] (A) task binding and ownership survive a geometry refresh
+  [PASS] (A) update() refuses machine-owned fields (position/size/visibility)
+  [PASS] (A) vanished windows close and publish window.closed (2×)
+  [PASS] (A) update() on an unknown window_id raises KeyError
+  [PASS] (A) input_owner outside USER|NEXUS|SHARED is refused
+  [PASS] (A) snapshot() is a serializable count+windows shape
+  [PASS] (B) the ownership vocabulary is exactly USER · NEXUS · SHARED
+  [PASS] (B) the Spec §61 example ships as demo rules (War Thunder → USER, Chrome A → USER, Chrome B → NEXUS, PowerPoint → NEXUS)
+  [PASS] (B) resolution over the live-example rows: USER · USER · NEXUS · NEXUS
+  [PASS] (B) unmatched windows default to USER (the safe posture)
+  [PASS] (B) an explicit assignment beats the pattern rules
+  [PASS] (B) release() returns to pattern resolution
+  [PASS] (B) higher priority wins over declaration order
+  [PASS] (B) apply() stamps input_owner without touching other fields
+  [PASS] (B) rule kinds are validated (process|title only)
+  [PASS] (B) summary() exposes rules · assignments · default_owner
+  [PASS] (C) a USER-owned window is denied — with the reason
+  [PASS] (C) a NEXUS-owned window is allowed
+  [PASS] (C) a SHARED window is allowed *with coordination* (Spec §62)
+  [PASS] (C) an unknown window is denied by default (never assume)
+  [PASS] (C) unknown_policy=allow documents the operator-accepted risk
+  [PASS] (C) unknown_policy is validated (deny|allow)
+  [PASS] (C) the hook vetoes input into the human's window
+  [PASS] (C) the hook passes input into the NEXUS-owned window
+  [PASS] (C) non-input tools pass untouched (filesystem et al.)
+  [PASS] (C) input calls with no window target pass (not our seam)
+  [PASS] (C) INPUT_TOOLS is exactly mouse · keyboard · uia · windows
+  [PASS] (C) the arbitration log records the verdicts
+  [PASS] (D) snapshot() enumerates the monitor list via screens.monitors
+  [PASS] (D) each record carries resolution · position · primary · device
+  [PASS] (D) negative virtual-desktop coordinates survive parsing (mon-1 left of primary)
+  [PASS] (D) monitor_for_window maps hwnd → monitor via windows.geometry
+  [PASS] (D) the probes route through the Computer API (no user32 here)
+  [PASS] (D) placement math: centered inside the work area
+  [PASS] (D) bottom-right anchor lands margin-exact in the corner
+  [PASS] (D) oversized windows clamp to the work area (never the taskbar)
+  [PASS] (D) placement anchors are validated
+  [PASS] (D) place() routes windows.move with the computed rect
+  [PASS] (D) place() refuses an unknown monitor_id
+  [PASS] (D) summary() reports the topology
+  [PASS] (D) MonitorRecord is a frozen value object with a serializable form
+  [PASS] (D) MonitorRecord exposes width/height accessors
+  [PASS] (E) the §10.5 status line is verbatim
+  [PASS] (E) off win32 the controller degrades to the honest headless backend
+  [PASS] (E) a fresh controller is IDLE
+  [PASS] (E) begin() → WORKING and the status line says so
+  [PASS] (E) illegal transitions raise OverlayError (IDLE ↛ PAUSED)
+  [PASS] (E) pause() → PAUSED with the paused status line
+  [PASS] (E) resume() → WORKING again
+  [PASS] (E) programmatic pause/resume does NOT fire the callbacks
+  [PASS] (E) button-origin pause/resume fire the callbacks (the §155 surface)
+  [PASS] (E) end() returns to IDLE and clears the label
+  [PASS] (E) every transition is audited with from/to/origin
+  [PASS] (E) shutdown() is idempotent and settles at IDLE
+  [SKIP]  (E) BONUS: the native ctypes overlay window exists (FindWindow) — CreateWindowExW + WM_APP poke
+  [SKIP]  (E) BONUS: state poke flips the overlay to PAUSED — 
+  [BONUS] (E) BONUS: end() dismisses the native overlay
+  [PASS] (F) NexusRuntime wires the Window Manager (windows_enabled default)
+  [PASS] (F) the manager composes the five §10 modules
+  [PASS] (F) the §10.3 veto is installed on the harness pre_tool_call seam
+  [PASS] (F) the manager snapshot carries the five §10 views
+  [PASS] (F) shutdown dismisses the overlay cleanly
+  [PASS] (F) windows_enabled=false leaves the manager unwired (Phase-8 behavior, byte for byte)
+  [PASS] (F) with the manager off, no arbitration veto sits on the hooks
+  [PASS] (F) §10 composes over §9.1: no Computer Runtime → no manager
+  [PASS] (F) no new tool records — the manager is policy, not a 13th record
+  [PASS] (F) the windows tool gained geometry · move (additive)
+  [PASS] (F) the screen tool gained monitors (additive, risk stays 1)
+  [PASS] (F) move is a mutating op for the §8.2 scope stage; monitors is not
+  [PASS] (F) the operation tuples carry the new ops in source truth
+  [PASS] (F) sync() ingests the live rows and resolves ownership in one call
+  [PASS] (F) claim() stakes the window with the full task binding
+  [PASS] (F) release() drops the claim and the binding (patterns take over)

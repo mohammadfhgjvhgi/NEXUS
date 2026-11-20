@@ -1,0 +1,36 @@
+{
+ "worker": "phase26",
+ "stages": {
+  "verify": {
+   "expected": "fbc4bf7ad4c4485b",
+   "got": "fbc4bf7ad4c4485b",
+   "ok": true
+  },
+  "backup": "nexus_ui.py.pre26.bak",
+  "compile": "ok",
+  "rebuild": {
+   "rc": 0,
+   "exe_bytes": 90789889,
+   "exe_sha256": "8411a8cad285793fb108f35679e4ed13fdf609c7d73b7c3cb5b57ba1eca1f12a"
+  },
+  "check": {
+   "rc": 0,
+   "tail": "a mind of its own.\n  local-first  ·  stdlib core  ·  evidence or silence\n==========================================================\ncore packages : 37 ok / 0 err (of 37)\nmodel runtime : offline at http://127.0.0.1:8080\nverdict       : PASS  (4.28s)\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\n"
+  },
+  "selftest": {
+   "rc": 0,
+   "verdict": "PASS",
+   "sections_ok": true,
+   "runtime_ok": true,
+   "seconds": 72.02
+  },
+  "certify": {
+   "status_md": "M:\\NEXUS\\build\\midpoint\\PHASE-26-STATUS.md",
+   "cards_cert_verdict": "PASS"
+  }
+ },
+ "utc_start": "2026-10-24T14:55:20Z",
+ "verdict": "PASS",
+ "seconds": 320.9,
+ "utc_end": "2026-10-24T15:00:41Z"
+}

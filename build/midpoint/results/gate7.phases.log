@@ -1,0 +1,8 @@
+{"utc": "2026-09-13T18:22:27Z", "phase": "worker_gate5_start", "detail": "pid=13216"}
+{"utc": "2026-09-13T18:22:29Z", "phase": "ollama_serve_begin", "detail": ""}
+{"utc": "2026-09-13T18:22:33Z", "phase": "ollama_up", "detail": "spawned"}
+{"utc": "2026-09-13T18:22:42Z", "phase": "model_ready", "detail": "qwen3:0.6b"}
+{"utc": "2026-09-13T18:22:42Z", "phase": "chat_begin", "detail": "NEXUS.exe --chat --ollama-model qwen3:0.6b"}
+{"utc": "2026-09-13T18:24:06Z", "phase": "chat_done", "detail": "reply_chars=217"}
+{"utc": "2026-09-13T18:24:06Z", "phase": "done", "detail": "verdict=PASS"}
+{"utc": "2026-09-13T18:24:06Z", "phase": "ollama_stopped", "detail": ""}

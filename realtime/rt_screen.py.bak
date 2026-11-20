@@ -1,0 +1,322 @@
+# -*- coding: utf-8 -*-
+"""NEXUS Realtime Remote — PHASE 29 — SCREEN channel (port 9413).
+
+Dual-engine capture, zero third-party deps:
+
+  engine "gdi"  — IN-PROCESS ctypes GDI (GetDC/BitBlt/GetDIBits) + a
+                  stdlib PNG encoder (zlib + struct). No subprocess, no
+                  console, no PATH dependence. 64-bit-safe prototypes
+                  everywhere (PHASE 27 lesson: default restype c_int
+                  truncates ASLR-based handles).
+  engine "ps"   — PowerShell CopyFromScreen fallback subprocess.
+                  DIAGNOSIS 2026-11-19: PS works perfectly in the pytest
+                  session (OK 3360x1050, PNG 422,713 B) but is a silent
+                  no-op (rc=0, empty streams) inside the DETACHED worker —
+                  kept as fallback only, never trusted blindly.
+
+Routes (all Bearer-token protected):
+  GET  /screen/status    capture dir, count, last capture metadata
+  POST /screen/capture   capture now -> PNG metadata (+ optional base64)
+  GET  /screen/latest    last PNG as base64 (capped)
+"""
+from __future__ import annotations
+
+import base64
+import json
+import struct
+import subprocess
+import sys
+import time
+import zlib
+from pathlib import Path
+
+from rt_common import (PHASE, VERSION, ChannelContext, atomic_json,
+                       serve_forever_standalone, sha256_bytes, sha256_file)
+
+_t0 = time.time()
+PS_SCRIPT_TEMPLATE = (
+    "Add-Type -AssemblyName System.Windows.Forms;"
+    "Add-Type -AssemblyName System.Drawing;"
+    "$b=[System.Windows.Forms.SystemInformation]::VirtualScreen;"
+    "$bmp=New-Object System.Drawing.Bitmap $b.Width,$b.Height;"
+    "$g=[System.Drawing.Graphics]::FromImage($bmp);"
+    "$g.CopyFromScreen($b.X,$b.Y,0,0,$bmp.Size);"
+    "$bmp.Save('{out}',[System.Drawing.Imaging.ImageFormat]::Png);"
+    "Write-Output ('OK ' + $b.Width + 'x' + $b.Height)"
+)
+
+
+def _ps_script(out_path: Path) -> str:
+    out = str(out_path).replace("'", "''")
+    return PS_SCRIPT_TEMPLATE.replace("{out}", out)
+
+
+# ----------------------------------------------------------- GDI engine
+def _png_encode(w: int, h: int, bgra: bytes) -> bytes:
+    """Minimal stdlib PNG encoder: BGRA scanlines -> RGBA, filter 0."""
+    stride = w * 4
+    raw = bytearray()
+    ff = b"\xff" * w
+    for row in range(h):
+        line = bgra[row * stride:(row + 1) * stride]
+        ba = bytearray(line)
+        ba[0::4] = line[2::4]        # R
+        ba[2::4] = line[0::4]        # B
+        ba[3::4] = ff                # opaque alpha
+        raw.append(0)                # filter type None
+        raw += ba
+
+    def chunk(typ: bytes, data: bytes) -> bytes:
+        return (struct.pack(">I", len(data)) + typ + data +
+                struct.pack(">I", zlib.crc32(typ + data) & 0xFFFFFFFF))
+
+    ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)   # RGBA/8bit
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) +
+            chunk(b"IDAT", zlib.compress(bytes(raw), 6)) + chunk(b"IEND", b""))
+
+
+def _capture_gdi(out_path: Path) -> dict:
+    t0 = time.perf_counter()
+    if sys.platform != "win32":
+        return {"ok": False, "engine": "gdi",
+                "reason": "non_windows_platform"}
+    try:
+        import ctypes
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
+        # 64-bit-safe prototypes — ASLR lesson from PHASE 27
+        user32.GetSystemMetrics.restype = ctypes.c_int
+        user32.GetSystemMetrics.argtypes = [ctypes.c_int]
+        user32.GetDC.restype = ctypes.c_void_p
+        user32.GetDC.argtypes = [ctypes.c_void_p]
+        user32.ReleaseDC.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        gdi32.CreateCompatibleDC.restype = ctypes.c_void_p
+        gdi32.CreateCompatibleDC.argtypes = [ctypes.c_void_p]
+        gdi32.DeleteDC.argtypes = [ctypes.c_void_p]
+        gdi32.CreateCompatibleBitmap.restype = ctypes.c_void_p
+        gdi32.CreateCompatibleBitmap.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_int, ctypes.c_int]
+        gdi32.DeleteObject.argtypes = [ctypes.c_void_p]
+        gdi32.SelectObject.restype = ctypes.c_void_p
+        gdi32.SelectObject.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        gdi32.BitBlt.restype = ctypes.c_int
+        gdi32.BitBlt.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int,
+                                 ctypes.c_int, ctypes.c_int,
+                                 ctypes.c_void_p, ctypes.c_int, ctypes.c_int,
+                                 ctypes.c_uint]
+        gdi32.GetDIBits.restype = ctypes.c_int
+        gdi32.GetDIBits.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
+                                    ctypes.c_uint, ctypes.c_uint,
+                                    ctypes.c_void_p, ctypes.c_void_p,
+                                    ctypes.c_uint]
+
+        class _BIH(ctypes.Structure):
+            _fields_ = [("biSize", ctypes.c_uint32),
+                        ("biWidth", ctypes.c_int32),
+                        ("biHeight", ctypes.c_int32),
+                        ("biPlanes", ctypes.c_uint16),
+                        ("biBitCount", ctypes.c_uint16),
+                        ("biCompression", ctypes.c_uint32),
+                        ("biSizeImage", ctypes.c_uint32),
+                        ("biXPelsPerMeter", ctypes.c_int32),
+                        ("biYPelsPerMeter", ctypes.c_int32),
+                        ("biClrUsed", ctypes.c_uint32),
+                        ("biClrImportant", ctypes.c_uint32)]
+
+        class _BI(ctypes.Structure):
+            _fields_ = [("header", _BIH),
+                        ("colors", ctypes.c_uint32 * 3)]
+
+        x = user32.GetSystemMetrics(76)
+        y = user32.GetSystemMetrics(77)
+        w = user32.GetSystemMetrics(78)
+        h = user32.GetSystemMetrics(79)
+        if w <= 0 or h <= 0:
+            return {"ok": False, "engine": "gdi",
+                    "reason": "no_virtual_screen_metrics"}
+        hdc = user32.GetDC(None)
+        if not hdc:
+            return {"ok": False, "engine": "gdi",
+                    "reason": "getdc_null_no_interactive_desktop"}
+        mem = bmp = old = None
+        try:
+            mem = gdi32.CreateCompatibleDC(hdc)
+            bmp = gdi32.CreateCompatibleBitmap(hdc, w, h)
+            if not mem or not bmp:
+                return {"ok": False, "engine": "gdi",
+                        "reason": "compat_dc_or_bitmap_null"}
+            old = gdi32.SelectObject(mem, bmp)
+            blt = gdi32.BitBlt(mem, 0, 0, w, h, hdc, x, y, 0x40CC0020)
+            if not blt:
+                return {"ok": False, "engine": "gdi",
+                        "reason": f"bitblt_failed_err{ctypes.get_last_error()}"}
+            gdi32.SelectObject(mem, old)   # unselect before GetDIBits (MSDN)
+            old = None
+            bi = _BI()
+            bi.header.biSize = ctypes.sizeof(_BIH)
+            bi.header.biWidth = w
+            bi.header.biHeight = -h        # top-down
+            bi.header.biPlanes = 1
+            bi.header.biBitCount = 32
+            bi.header.biCompression = 0    # BI_RGB
+            buf = ctypes.create_string_buffer(w * h * 4)
+            lines = gdi32.GetDIBits(mem, bmp, 0, h, buf, ctypes.byref(bi), 0)
+            if lines != h:
+                return {"ok": False, "engine": "gdi",
+                        "reason": f"getdibits_lines_{lines}_of_{h}"}
+            png = _png_encode(w, h, buf.raw)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, "wb") as fh:
+                fh.write(png)
+                fh.flush()
+            dur = round((time.perf_counter() - t0) * 1000, 1)
+            return {"ok": True, "engine": "gdi", "w": w, "h": h,
+                    "size": out_path.stat().st_size,
+                    "sha256": sha256_file(out_path),
+                    "duration_ms": dur}
+        finally:
+            if old and mem:
+                gdi32.SelectObject(mem, old)
+            if bmp:
+                gdi32.DeleteObject(bmp)
+            if mem:
+                gdi32.DeleteDC(mem)
+            if hdc:
+                user32.ReleaseDC(None, hdc)
+    except BaseException as exc:  # noqa: BLE001
+        return {"ok": False, "engine": "gdi",
+                "reason": f"{type(exc).__name__}: {exc}"[:300],
+                "duration_ms": round((time.perf_counter() - t0) * 1000, 1)}
+
+
+def _capture_ps(out_path: Path) -> dict:
+    """PowerShell fallback — honest result either way."""
+    t0 = time.perf_counter()
+    script = _ps_script(out_path)
+    try:
+        proc = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-STA",
+             "-Command", script],
+            capture_output=True, timeout=45,
+            creationflags=0x00000008 if sys.platform == "win32" else 0)
+        out = proc.stdout.decode("utf-8", "replace").strip()
+        err = proc.stderr.decode("utf-8", "replace").strip()[-500:]
+    except BaseException as exc:  # noqa: BLE001
+        return {"ok": False, "engine": "ps",
+                "reason": f"{type(exc).__name__}: {exc}"[:300],
+                "duration_ms": round((time.perf_counter() - t0) * 1000, 1)}
+    dur_ms = round((time.perf_counter() - t0) * 1000, 1)
+    if proc.returncode != 0 or not out.startswith("OK"):
+        return {"ok": False, "engine": "ps", "rc": proc.returncode,
+                "reason": (err or out or "no_OK_marker")[:300],
+                "stdout": out[:200], "stderr": err[:200],
+                "duration_ms": dur_ms}
+    try:
+        dims = out.split(None, 1)[1].strip()
+        w, h = (int(x) for x in dims.lower().split("x", 1))
+    except BaseException:
+        w = h = None
+    if not out_path.is_file() or out_path.stat().st_size == 0:
+        return {"ok": False, "engine": "ps", "reason": "png_not_written",
+                "duration_ms": dur_ms}
+    size = out_path.stat().st_size
+    return {"ok": True, "engine": "ps", "path": str(out_path), "w": w,
+            "h": h, "size": size, "sha256": sha256_file(out_path),
+            "duration_ms": dur_ms}
+
+
+def _cap_dir(ctx: ChannelContext) -> Path:
+    d = ctx.rtdir / "captures"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _last_pointer(ctx: ChannelContext):
+    p = ctx.rtdir / "captures" / "latest.json"
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except BaseException:
+        return None
+
+
+def _capture(ctx: ChannelContext, out_path: Path) -> dict:
+    """Dual-engine capture: GDI in-process first, PowerShell fallback."""
+    res = _capture_gdi(out_path)
+    if res.get("ok"):
+        return res
+    ps = _capture_ps(out_path)
+    res["fallback_ps"] = ps
+    if ps.get("ok"):
+        ps["primary_failure"] = res.get("reason")
+        return ps
+    return res
+
+
+def _status(ctx: ChannelContext, body, qs, handler):
+    d = _cap_dir(ctx)
+    pngs = sorted(d.glob("cap_*.png"))
+    return 200, {"ok": True, "channel": "screen", "phase": PHASE,
+                 "version": VERSION, "capture_dir": str(d),
+                 "count": len(pngs), "last": _last_pointer(ctx),
+                 "uptime_s": round(time.time() - _t0, 1)}
+
+
+def _capture_route(ctx: ChannelContext, body, qs, handler):
+    body = body or {}
+    stamp = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+    out = _cap_dir(ctx) / f"cap_{stamp}.png"
+    res = _capture(ctx, out)
+    if not res.get("ok"):
+        ctx.audit.write("screen", "capture_failed",
+                        {"reason": res.get("reason"),
+                         "fallback_ps": res.get("fallback_ps", {}).get("reason")})
+        ctx.publish("screen.capture_failed",
+                    {"reason": res.get("reason"),
+                     "fallback_ps": res.get("fallback_ps", {}).get("reason")})
+        return 503, {"ok": False, "capture": res,
+                     "note": "honest degradation (session/desktop state)"}
+    pointer = {"file": out.name, "path": str(out_path), "w": res["w"],
+               "h": res["h"], "size": res["size"], "sha256": res["sha256"],
+               "engine": res.get("engine"),
+               "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    atomic_json(ctx.rtdir / "captures" / "latest.json", pointer)
+    ctx.audit.write("screen", "capture",
+                    {"file": out.name, "engine": res.get("engine"),
+                     "size": res["size"], "sha256": res["sha256"][:16],
+                     "w": res["w"], "h": res["h"],
+                     "duration_ms": res["duration_ms"]})
+    ctx.publish("screen.captured", {"file": out.name, "size": res["size"],
+                                    "w": res["w"], "h": res["h"],
+                                    "engine": res.get("engine")})
+    payload = {"ok": True, "capture": pointer}
+    if body.get("include_b64") and res["size"] <= 6 * 1024 * 1024:
+        payload["base64"] = base64.b64encode(out.read_bytes()).decode("ascii")
+    return 200, payload
+
+
+def _latest(ctx: ChannelContext, body, qs, handler):
+    ptr = _last_pointer(ctx)
+    if not ptr:
+        return 404, {"ok": False, "error": "no_capture_yet"}
+    p = Path(ptr["path"])
+    if not p.is_file():
+        return 404, {"ok": False, "error": "capture_file_missing"}
+    if p.stat().st_size > 8 * 1024 * 1024:
+        return 200, {"ok": True, "meta": ptr,
+                     "note": "too_large_for_b64", "size": p.stat().st_size}
+    data = p.read_bytes()
+    return 200, {"ok": True, "meta": ptr,
+                 "sha256": sha256_bytes(data), "size": len(data),
+                 "base64": base64.b64encode(data).decode("ascii")}
+
+
+def routes() -> dict:
+    return {
+        ("GET", "/screen/status"): _status,
+        ("POST", "/screen/capture"): _capture_route,
+        ("GET", "/screen/latest"): _latest,
+    }
+
+
+if __name__ == "__main__":
+    serve_forever_standalone("screen", routes)

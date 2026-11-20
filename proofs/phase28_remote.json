@@ -1,0 +1,118 @@
+{
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "check": "phase28-remote-web",
+ "utc": "2026-11-19T22:36:37Z",
+ "pid": 15940,
+ "python": "3.14.5",
+ "sections": {
+  "health": {
+   "ok": true,
+   "status": 200,
+   "body": {
+    "ok": true,
+    "service": "nexus-remote",
+    "version": "0.25.0"
+   }
+  },
+  "auth": {
+   "ok": true,
+   "no_token_status": 401,
+   "wrong_token_status": 401,
+   "note": "401 both — the API is closed without pairing"
+  },
+  "status": {
+   "ok": true,
+   "status": 200,
+   "body": {
+    "paused": false,
+    "tasks_count": 1,
+    "model": "…",
+    "port": 8899,
+    "version": "0.25.0"
+   }
+  },
+  "pause": {
+   "ok": true,
+   "command_state": "done",
+   "state_on_disk": {
+    "paused": true,
+    "utc": "2026-11-19T22:36:42Z",
+    "by": "remote"
+   }
+  },
+  "resume": {
+   "ok": true,
+   "command_state": "done",
+   "state_on_disk": {
+    "paused": false,
+    "utc": "2026-11-19T22:36:43Z",
+    "by": "remote"
+   }
+  },
+  "checkpoint": {
+   "ok": true,
+   "command_state": "done",
+   "result": {
+    "checkpoint": "remote_cp_20261120_003645",
+    "count": 4,
+    "dir": "M:\\NEXUS\\checkpoints\\remote_cp_20261120_003645"
+   },
+   "new_checkpoint": [
+    "remote_cp_20261120_003645"
+   ]
+  },
+  "task": {
+   "ok": true,
+   "command_state": "done",
+   "task_id": "task_4d27a1ac1eb84591b618a519a60d7e53",
+   "rc": 0,
+   "verdict": "PASS",
+   "listed_in_api": true,
+   "tasks_count": 2
+  },
+  "chat": {
+   "ok": true,
+   "command_state": "done",
+   "model": "offline",
+   "honest": "النموذج المحلي غير مشغّل الآن",
+   "reply_len": 0
+  },
+  "files_push": {
+   "ok": true,
+   "status": 201,
+   "api_sha": "f2c24b238157fbd6af86",
+   "disk_sha_match": true
+  },
+  "files_pull": {
+   "ok": true,
+   "status": 200,
+   "size": 50,
+   "sha_match": true
+  },
+  "security": {
+   "ok": true,
+   "traversal_pull": 400,
+   "traversal_push": 400,
+   "name_probe_outside_outbox": 404,
+   "note": "traversal rejected 400; outbox-only reads"
+  },
+  "static": {
+   "ok": true,
+   "html_has_title": true,
+   "js_bytes": 7920,
+   "css_bytes": 4219,
+   "html_bytes": 4210
+  },
+  "cors": {
+   "ok": true,
+   "allow_origin": "*",
+   "options_allow_origin": "*"
+  }
+ },
+ "port": 8899,
+ "sections_ok": true,
+ "verdict": "PASS",
+ "seconds": 16.04,
+ "error": null
+}

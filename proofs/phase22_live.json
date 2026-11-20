@@ -1,0 +1,26 @@
+{
+  "phase": 22,
+  "section": "Recovery + Checkpoints (New Plan \u00a722)",
+  "verdict": "PASS",
+  "rungs": 10,
+  "passed": 10,
+  "labels": [
+    "1 \u00b7 \u00a722 vocabulary verbatim",
+    "2 \u00b7 \u00a722.1 real PROJECT checkpoint (digests + blobs)",
+    "3 \u00b7 \u00a722.1 four scopes captured and listed from disk",
+    "4 \u00b7 \u00a722.2 six triggers, periodic gated",
+    "5 \u00b7 \u00a722.3 the clean chain ends in a verified resume",
+    "6 \u00b7 \u00a722.4 files: edit blocks, repair re-earns the resume",
+    "7 \u00b7 \u00a722.4 git: a diverged head holds the wall",
+    "8 \u00b7 \u00a722.4 a real process death blocks the resume",
+    "9 \u00b7 \u00a722.4 task state: tamper blocked, restore re-earns",
+    "10 \u00b7 identity \u2265 0.22.0 / phase \u2265 22"
+  ],
+  "host": {
+    "system": "Windows",
+    "release": "10",
+    "version": "10.0.19045",
+    "machine": "AMD64",
+    "python": "3.14.5"
+  }
+}

@@ -1,0 +1,615 @@
+"""llama.cpp integration (Final Build Plan §5.3 / Spec §93, §137, §253).
+
+Repository: **ggml-org/llama.cpp** — the primary local inference
+backend. The plan fixes the chain::
+
+    NEXUS Model API      →  :class:`~nexus.models.provider.ModelProvider`
+    llama.cpp Adapter    →  :class:`LlamaCppProvider` (this module)
+    llama-server         →  the spawned HTTP server process
+    Model                →  the GGUF weights on disk
+
+The adapter owns execution only: argv construction, the llama-server
+subprocess, and the HTTP transport (``/completion``, ``/health``,
+SSE streaming). Registry, routing, budgets, keep-warm and events stay
+with the Model Manager (§5.4) — Spec §93: «Model Manager يبقى
+مستقلًا عنه».
+
+Swapping the runtime later means one new adapter; nothing else moves
+(Spec §137).
+
+Nothing here requires llama.cpp at import time: a missing binary
+raises a clear :class:`ProviderError` only when a model is actually
+loaded. Tests inject a fake server factory, so the whole chain runs
+CI-green without any inference backend.
+
+Notes carried from Spec §88 (the user's device):
+
+* KV-Q4 (``-ctk q4_0 -ctv q4_0``) — ~4× KV-memory reduction;
+* Flash Attention was *not* suitable for the AVX-only host, so it is
+  off by default;
+* unsupported ngram/router flags are never assumed — only explicit
+  ``extra_args`` pass them through.
+
+Wire compatibility is **pinned against the real llama-server**
+(release ``b10829``, commit ``5fdfa628``): ``/health`` → ``{"status":
+"ok"}`` when ready, ``/completion`` → ``content`` + ``timings``
+(``prompt_n``/``prompt_ms``/``predicted_n``/``predicted_ms``), SSE →
+``data: {json}`` token deltas ending with a ``stop: true`` event
+whose ``content`` is empty (the text lives in the accumulated
+ deltas). The opt-in live proof lives in
+``tests/phase04/integration_llama_server.py`` (needs the binary + a
+GGUF; CI runs the fake-server chain instead).
+
+محوّل llama.cpp — التنفيذ فقط: بناء الوسائط، عملية الخادم، وHTTP
+(بالـstdlib وحدها)؛ الذاكرة المقيمة تُقرأ عبر psutil الاختياري
+(MODE A) لتحديث الميزانية الحقيقية بدل التقدير.
+
+Stdlib only (psutil optional, lazily).
+"""
+
+from __future__ import annotations
+
+import base64
+import json
+import os
+import shutil
+import socket
+import subprocess
+import time
+import urllib.error
+import urllib.request
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import Any, Protocol
+
+from .benchmark import BenchmarkSpec, ModelBenchmark, run_benchmark
+from .provider import (
+    GenerateRequest,
+    GenerateResult,
+    LoadInfo,
+    ModelNotLoadedError,
+    ModelProvider,
+    ProviderError,
+    ProviderHealth,
+    StreamChunk,
+    UnsupportedModelError,
+)
+from .registry import Model
+
+#: 1 MiB — RSS reporting unit (memory observation, MODE A psutil).
+_MB = 1024 * 1024
+
+#: Default llama-server binary name (PATH lookup, or set an absolute path).
+DEFAULT_BINARY = "llama-server"
+
+#: KV-cache quantization carried from Spec §88 (KV-Q4 ≈ 4× reduction).
+KV_QUANT_Q4_0 = "q4_0"
+
+_HEALTH_TIMEOUT = 2.0
+
+
+def build_server_args(
+    *,
+    model_path: str,
+    context: int,
+    host: str,
+    port: int,
+    gpu_layers: int = 0,
+    threads: int = 0,
+    kv_quant: str | None = None,
+    extra_args: Sequence[str] = (),
+    binary: str = DEFAULT_BINARY,
+) -> list[str]:
+    """Build the llama-server argv (pure — unit-checked without a GPU).
+
+    ``-t 0`` / ``-ngl 0`` mean "auto"/"CPU-only" and are passed through
+    (the §2.1 ``models`` config documents 0 = auto).
+    """
+    argv = [
+        binary,
+        "-m",
+        model_path,
+        "-c",
+        str(context),
+        "--host",
+        host,
+        "--port",
+        str(port),
+    ]
+    if gpu_layers:
+        argv += ["-ngl", str(gpu_layers)]
+    else:
+        argv += ["-ngl", "0"]
+    if threads:
+        argv += ["-t", str(threads)]
+    if kv_quant:
+        # Spec §88: KV-Q4 shrank KV memory ~4x with a tg gain.
+        argv += ["-ctk", kv_quant, "-ctv", kv_quant]
+    argv += list(extra_args)
+    return argv
+
+
+def encode_completion_request(request: GenerateRequest, *, stream: bool) -> str:
+    """Encode one llama-server ``/completion`` JSON body (pure).
+
+    The system prompt is prepended with a blank-line separator (the
+    raw ``/completion`` endpoint takes a single prompt string).
+
+    Phase 11 (Plan §12.2): non-empty ``request.images`` ride the body
+    as base64 ``image_data`` — the llama-server multimodal field
+    (served when the model runs with an mmproj). Text-only requests
+    emit the exact Phase-4 body, byte for byte.
+    """
+    prompt = request.prompt
+    if request.system:
+        prompt = f"{request.system}\n\n{request.prompt}"
+    body: dict[str, Any] = {
+        "prompt": prompt,
+        "n_predict": request.max_tokens,
+        "temperature": request.temperature,
+        "top_p": request.top_p,
+        "stream": stream,
+    }
+    if request.stop:
+        body["stop"] = list(request.stop)
+    if request.seed is not None:
+        body["seed"] = request.seed
+    if request.images:
+        body["image_data"] = [
+            base64.b64encode(bytes(image)).decode("ascii")
+            for image in request.images
+        ]
+    return json.dumps(body)
+
+
+def parse_completion_response(payload: Mapping[str, Any], model_id: str) -> GenerateResult:
+    """Map a llama-server response onto the NEXUS result contract."""
+    timings = payload.get("timings") or {}
+    prompt_ms = _as_float(timings.get("prompt_ms"))
+    predicted_ms = _as_float(timings.get("predicted_ms"))
+    return GenerateResult(
+        model_id=model_id,
+        backend="llama.cpp",
+        text=str(payload.get("content", "")),
+        prompt_tokens=int(timings.get("prompt_n", 0) or 0),
+        generation_tokens=int(timings.get("predicted_n", 0) or 0),
+        prompt_seconds=(prompt_ms / 1000.0) if prompt_ms is not None else None,
+        generation_seconds=(predicted_ms / 1000.0) if predicted_ms is not None else None,
+    )
+
+
+def parse_sse_event(event: Mapping[str, Any], model_id: str) -> StreamChunk:
+    """Map one SSE event from streaming ``/completion``."""
+    done = bool(event.get("stop") or event.get("stop_type"))
+    result = None
+    if done:
+        result = parse_completion_response(event, model_id)
+    return StreamChunk(
+        model_id=model_id,
+        delta=str(event.get("content", "")),
+        done=done,
+        result=result,
+    )
+
+
+def _as_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def resolve_binary(binary: str) -> str:
+    """Resolve the llama-server executable; raise a clear error when
+    absent (the core still imports and runs without llama.cpp)."""
+    if binary and (
+        binary.startswith("/")
+        or binary.startswith("\\")
+        or binary.startswith(".")
+        or (len(binary) > 2 and binary[1] == ":")
+    ):
+        # Looks like a path (absolute/relative/Windows drive) — use it verbatim.
+        if not os.path.isfile(binary):
+            raise ProviderError(
+                f"llama-server binary not found at {binary!r} — set "
+                "models.llama_server in the config to the llama.cpp build"
+            )
+        return binary
+    found = shutil.which(binary)
+    if found is None:
+        raise ProviderError(
+            f"llama-server binary {binary!r} not found on PATH — install "
+            "ggml-org/llama.cpp or set models.llama_server to its path"
+        )
+    return found
+
+
+def free_port(host: str = "127.0.0.1") -> int:
+    """Ask the OS for a currently-free TCP port (best-effort; the tiny
+    race window is acceptable for a localhost server)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((host, 0))
+        return int(sock.getsockname()[1])
+
+
+class LlamaServerLike(Protocol):
+    """What the adapter needs from one running llama-server."""
+
+    endpoint: str
+
+    def get_json(self, path: str) -> Any: ...
+
+    def post_json(self, path: str, payload: Mapping[str, Any]) -> Any: ...
+
+    def stream_sse(self, path: str, payload: Mapping[str, Any]) -> Iterator[Mapping[str, Any]]: ...
+
+    def alive(self) -> bool: ...
+
+    def stop(self) -> None: ...
+
+
+class LlamaServerProcess:
+    """One spawned llama-server: process + HTTP + SSE, stdlib only."""
+
+    def __init__(
+        self,
+        argv: Sequence[str],
+        *,
+        host: str = "127.0.0.1",
+        port: int = 0,
+        ready_timeout: float = 30.0,
+    ) -> None:
+        self._argv = list(argv)
+        self._host = host
+        self._port = self._resolve_port(port)
+        self.endpoint = f"http://{host}:{self._port}"
+        creationflags = 0
+        if hasattr(subprocess, "CREATE_NO_WINDOW"):  # win32: no console popup
+            creationflags = subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
+        try:
+            self._proc = subprocess.Popen(
+                [str(a) for a in self._argv],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=creationflags,
+            )
+        except OSError as exc:
+            raise ProviderError(f"failed to start llama-server: {exc}") from exc
+        self._wait_ready(ready_timeout)
+
+    @property
+    def pid(self) -> int:
+        """The server process id (memory observation via psutil)."""
+        return self._proc.pid
+
+    # ------------------------------------------------------------ port agreement
+
+    def _resolve_port(self, wanted: int) -> int:
+        """Endpoint and argv must agree on one port (live-proof catch).
+
+        An explicit ``--port <n>`` (n > 0) in the argv wins — the caller
+        pre-allocated it. Otherwise the ``wanted``/free-port choice is
+        written back INTO the argv: ``--port 0`` would let the OS pick
+        an unknowable ephemeral port while we poll a different one —
+        the server stays alive but unreachable forever (found by
+        tests/phase04/integration_llama_server.py against the real
+        llama-server; fake-server tests cannot see it).
+        """
+        argv_port = self._argv_port()
+        if argv_port and argv_port > 0:
+            return argv_port
+        chosen = wanted or free_port(self._host)
+        for index, flag in enumerate(self._argv):
+            if flag == "--port" and index + 1 < len(self._argv):
+                self._argv[index + 1] = str(chosen)
+                break
+        return chosen
+
+    def _argv_port(self) -> int | None:
+        """The numeric ``--port`` from the argv, best-effort."""
+        try:
+            for index, flag in enumerate(self._argv):
+                if flag == "--port" and index + 1 < len(self._argv):
+                    return int(self._argv[index + 1])
+        except (TypeError, ValueError):
+            return None
+        return None
+
+    # ------------------------------------------------------------ readiness
+
+    def _wait_ready(self, timeout: float) -> None:
+        """Poll ``/health`` until the server says ``ok`` (llama-server
+        reports ``{"status": "loading"}`` while the model loads)."""
+        deadline = time.monotonic() + timeout
+        last_detail = "no response"
+        while time.monotonic() < deadline:
+            if self._proc.poll() is not None:
+                raise ProviderError(
+                    f"llama-server exited with code {self._proc.returncode} "
+                    f"before becoming ready (argv: {self._argv[:2]}…)"
+                )
+            try:
+                status = self.get_json("/health")
+                if isinstance(status, dict) and status.get("status") == "ok":
+                    return
+                last_detail = str(status)
+            except ProviderError as exc:
+                last_detail = str(exc)
+            time.sleep(0.1)
+        self.stop()
+        raise ProviderError(
+            f"llama-server not ready within {timeout}s ({last_detail})"
+        )
+
+    # ---------------------------------------------------------------- HTTP
+
+    def _request(
+        self, path: str, *, payload: Mapping[str, Any] | None, timeout: float
+    ) -> Any:
+        url = f"{self.endpoint}{path}"
+        data = json.dumps(dict(payload)).encode("utf-8") if payload is not None else None
+        headers = {"Content-Type": "application/json"} if data else {}
+        req = urllib.request.Request(url, data=data, headers=headers)  # noqa: S310
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise ProviderError(f"llama-server HTTP {exc.code} on {path}") from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ProviderError(f"llama-server unreachable on {path}: {exc}") from exc
+
+    def get_json(self, path: str) -> Any:
+        return self._request(path, payload=None, timeout=_HEALTH_TIMEOUT)
+
+    def post_json(self, path: str, payload: Mapping[str, Any]) -> Any:
+        return self._request(path, payload=payload, timeout=600.0)
+
+    def stream_sse(
+        self, path: str, payload: Mapping[str, Any]
+    ) -> Iterator[Mapping[str, Any]]:
+        """Stream one SSE response (``data: {json}`` lines)."""
+        url = f"{self.endpoint}{path}"
+        body = json.dumps(dict(payload)).encode("utf-8")
+        req = urllib.request.Request(  # noqa: S310
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=600.0) as resp:  # noqa: S310
+                for raw_line in resp:
+                    line = raw_line.decode("utf-8").strip()
+                    if not line.startswith("data:"):
+                        continue
+                    chunk = line[len("data:"):].strip()
+                    if not chunk or chunk == "[DONE]":
+                        continue
+                    try:
+                        yield json.loads(chunk)
+                    except json.JSONDecodeError:
+                        continue
+        except urllib.error.HTTPError as exc:
+            raise ProviderError(f"llama-server HTTP {exc.code} on {path}") from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ProviderError(f"llama-server stream failed on {path}: {exc}") from exc
+
+    # ------------------------------------------------------------ lifecycle
+
+    def alive(self) -> bool:
+        return self._proc.poll() is None
+
+    def stop(self) -> None:
+        """Terminate, wait up to 5s, then kill."""
+        if self._proc.poll() is None:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+                self._proc.wait(timeout=5.0)
+
+
+#: Factory: argv → running server handle. Injectable for tests.
+ServerFactory = Callable[[Sequence[str]], LlamaServerLike]
+
+
+class LlamaCppProvider(ModelProvider):
+    """The llama.cpp Adapter — one llama-server per loaded model.
+
+    Everything backend-specific lives here (Spec §137: swapping the
+    runtime later means writing one more adapter).
+    """
+
+    backend = "llama.cpp"
+
+    def __init__(
+        self,
+        *,
+        binary: str = DEFAULT_BINARY,
+        host: str = "127.0.0.1",
+        port: int = 0,
+        gpu_layers: int = 0,
+        threads: int = 0,
+        context_size: int = 8192,
+        kv_quant: str | None = None,
+        extra_args: Sequence[str] = (),
+        models_dir: str | None = None,
+        server_factory: ServerFactory | None = None,
+        ready_timeout: float = 30.0,
+    ) -> None:
+        self._binary = binary
+        self._host = host
+        self._port = port
+        self._gpu_layers = gpu_layers
+        self._threads = threads
+        self._context_size = context_size
+        self._kv_quant = kv_quant
+        self._extra_args = list(extra_args)
+        self._models_dir = models_dir
+        self._ready_timeout = ready_timeout
+        self._servers: dict[str, LlamaServerLike] = {}
+        self._models: dict[str, Model] = {}
+        self._server_factory: ServerFactory = server_factory or self._spawn_real
+
+    # ------------------------------------------------------------- spawning
+
+    def _spawn_real(self, argv: Sequence[str]) -> LlamaServerLike:
+        """Default spawn strategy: resolve the binary (clear error when
+        llama.cpp is absent) and start the real process. Injected test
+        factories bypass this — they own their own spawning."""
+        resolved = resolve_binary(str(argv[0]))
+        return LlamaServerProcess(
+            [resolved, *argv[1:]],
+            host=self._host,
+            port=self._port,
+            ready_timeout=self._ready_timeout,
+        )
+
+    def model_path(self, model: Model) -> str:
+        """Resolve the GGUF path: the record's ``path`` or
+        ``<models_dir>/<id>.gguf``."""
+        if model.path:
+            return model.path
+        if self._models_dir:
+            base = self._models_dir.rstrip("/\\")
+            return f"{base}/{model.id}.gguf"
+        raise UnsupportedModelError(
+            f"model {model.id!r} has no local path and no models_dir is set"
+        )
+
+    # ---------------------------------------------------------- §5.1 API
+
+    def load(self, model: Model) -> LoadInfo:
+        if model.id in self._servers:
+            return LoadInfo(model_id=model.id, backend=self.backend, detail="already loaded")
+        argv = build_server_args(
+            model_path=self.model_path(model),
+            context=model.context or self._context_size,
+            host=self._host,
+            port=self._port or 0,
+            gpu_layers=self._gpu_layers,
+            threads=self._threads,
+            kv_quant=self._kv_quant,
+            extra_args=self._extra_args,
+            binary=self._binary,
+        )
+        server = self._server_factory(argv)
+        self._servers[model.id] = server
+        self._models[model.id] = model
+        return LoadInfo(
+            model_id=model.id,
+            backend=self.backend,
+            detail=server.endpoint,
+            handle=server,
+        )
+
+    def unload(self, model_id: str) -> None:
+        server = self._servers.pop(model_id, None)
+        self._models.pop(model_id, None)
+        if server is not None:
+            server.stop()
+
+    def generate(self, request: GenerateRequest) -> GenerateResult:
+        server = self._require_server(request.model_id)
+        body = json.loads(encode_completion_request(request, stream=False))
+        payload = server.post_json("/completion", body)
+        if not isinstance(payload, dict):
+            raise ProviderError("llama-server returned a non-object completion")
+        return parse_completion_response(payload, request.model_id)
+
+    def stream(self, request: GenerateRequest) -> Iterator[StreamChunk]:
+        server = self._require_server(request.model_id)
+        body = json.loads(encode_completion_request(request, stream=True))
+        for event in server.stream_sse("/completion", body):
+            yield parse_sse_event(event, request.model_id)
+
+    def health(self, model_id: str) -> ProviderHealth:
+        if model_id not in self._servers:
+            return ProviderHealth(
+                model_id=model_id, ok=False, status="not_loaded",
+                detail="no llama-server for this model",
+            )
+        server = self._servers[model_id]
+        if not server.alive():
+            return ProviderHealth(
+                model_id=model_id, ok=False, status="error",
+                detail="llama-server process died",
+            )
+        try:
+            status = server.get_json("/health")
+            ok = isinstance(status, dict) and status.get("status") == "ok"
+            return ProviderHealth(
+                model_id=model_id,
+                ok=ok,
+                status="ok" if ok else "starting",
+                detail=str(status),
+            )
+        except ProviderError as exc:
+            return ProviderHealth(
+                model_id=model_id, ok=False, status="unreachable", detail=str(exc)
+            )
+
+    def capabilities(self, model_id: str) -> tuple[str, ...]:
+        model = self._models.get(model_id)
+        return model.capabilities if model else ()
+
+    def resident_memory_mb(self, model_id: str) -> int | None:
+        """The llama-server process's real RSS via psutil (MODE A).
+
+        Duck-typed against the ``LlamaServerLike`` protocol: injected
+        fakes without a ``pid`` simply report ``None`` — the manager
+        then keeps its registry estimate (no invented numbers).
+        """
+        server = self._servers.get(model_id)
+        if server is None:
+            return None
+        pid = getattr(server, "pid", None)
+        if not isinstance(pid, int) or pid <= 0:
+            return None
+        try:
+            import psutil  # noqa: PLC0415 — lazy: optional dependency
+        except ImportError:
+            return None
+        try:
+            rss = psutil.Process(pid).memory_info().rss
+        except Exception:  # noqa: BLE001 — observation is best-effort
+            return None
+        return int(rss // _MB)
+
+    def benchmark(self, model: Model, spec: BenchmarkSpec) -> ModelBenchmark:
+        return run_benchmark(self, model, spec)
+
+    # ------------------------------------------------------------ concrete
+
+    def loaded_ids(self) -> tuple[str, ...]:
+        return tuple(self._servers)
+
+    def close(self) -> None:
+        for model_id in list(self._servers):
+            self.unload(model_id)
+
+    # -------------------------------------------------------------- private
+
+    def _require_server(self, model_id: str) -> LlamaServerLike:
+        server = self._servers.get(model_id)
+        if server is None:
+            raise ModelNotLoadedError(
+                f"model {model_id!r} is not loaded — call load() first (§5.4)"
+            )
+        return server
+
+
+__all__ = [
+    "DEFAULT_BINARY",
+    "KV_QUANT_Q4_0",
+    "LlamaCppProvider",
+    "LlamaServerProcess",
+    "build_server_args",
+    "encode_completion_request",
+    "free_port",
+    "parse_completion_response",
+    "parse_sse_event",
+    "resolve_binary",
+]

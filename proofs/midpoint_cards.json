@@ -1,0 +1,24 @@
+{
+ "check": "midpoint-10-capability-cards",
+ "product": "NEXUS Windows Product v0.1 (MIDPOINT)",
+ "version": "0.25.0",
+ "utc": "2026-10-24T12:47:04Z",
+ "pid": 14000,
+ "caps": [
+  "Full Stack",
+  "Android",
+  "Research",
+  "Coding",
+  "Automation",
+  "Computer",
+  "Documents"
+ ],
+ "caps_closed_modes": false,
+ "cap_seed_check": "ok",
+ "ui_cert_sha256": "5598b3c04940c88c6ab573756825f75cf6b1fa37b07c5506d80b856ff4c5b4e4",
+ "ui_png_sha256": "19839087e22bebbcb8eec129aa4c53d01fb7a5e96470dd465f38a6a2821d7a51",
+ "ui_png_size": 139412,
+ "gate_cert_sha256": "604e26b360fbc3620f64a4a97e2bcd500dc2f7776a9ec60b58af7bf6859af2f4",
+ "exe_sha256": "728adddc6764c18a17957859339dee5255710f831c4dc1339e458d0eb519e642",
+ "verdict": "PASS"
+}

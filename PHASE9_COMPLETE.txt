@@ -1,0 +1,48 @@
+PHASE 9 — WINDOW MANAGER + HUMAN PARALLELISM · COMPLETE ON THIS MACHINE
+======================================================================
+
+repo commit : c428503 (develop == main)
+phase       : 9 / Plan §10 — Window Manager + Human Parallelism
+exit proof  : 84/84 (tests\phase09\verify_exit_criteria.py)
+              + regressions 98·143·104·106·116·88·88·80 inside §F
+              (A=17, B=12, C=15, D=13, E=13, F=14)
+CI          : NEXUS CI on c428503 (job "Phases 1-9")
+deploy      : 21/21 files written + SHA-verified via bridge (Bearer)
+live proof  : tests\phase09\live_proof.py — PROOF RESULT: PASS
+              (16-17 real windows + window.opened events, War Thunder
+              itself among them; ownership + claim/release; both
+              arbitration verdicts + a live pre_tool_call veto;
+              two real monitors — DISPLAY1 1680x1050 primary +
+              DISPLAY5 1050x1680 portrait @ (1680,-379); the native
+              overlay appears, repaints on pause, dismisses; a real
+              SetWindowPos placement verified inside the work area)
+evidence    : M:\NEXUS\proofs\phase9_live.json
+              M:\NEXUS\proofs\overlay_empty.png / working / paused
+
+What landed (nexus\windows\ + additive tool ops + wiring):
+  §10.1 registry.py — the nine fields verbatim + the FIRST real
+        publisher of the canonical window.opened/closed events
+  §10.2 ownership.py — USER · NEXUS · SHARED; rules + explicit
+        claims; the safe default is USER (never assume input)
+  §10.3 arbitration.py — per-window verdicts with reasons, as a
+        pre_tool_call veto on the harness seam (Spec §62: window
+        ownership, never per-motion pausing)
+  §10.4 monitors.py + screen.monitors + windows.geometry/move —
+        monitor list · resolution · position · window placement,
+        every real effect behind the §8.2 router
+  §10.5 overlay.py — "NEXUS is working" + [Pause] [Resume], pure
+        ctypes: WS_EX_LAYERED|TOPMOST, GDI paint, real buttons,
+        message loop in a daemon thread, PostMessage pokes
+
+Two device-caught bugs (the Phase-8 pointer lesson, closed):
+  1) DefWindowProcW without argtypes overflows on pointer-sized
+     LPARAM (WM_NCCREATE CREATESTRUCT*) -> swallowed exception
+     returns 0 -> the window dies at birth SILENTLY. Fixed with
+     explicit argtypes/restype (DefWindowProcW · PostMessageW ·
+     CreateWindowExW · FindWindowW).
+  2) place() read (right, bottom) as (w, h) and resized windows
+     instead of moving them. Fixed: computed (l, t, w, h).
+
+Repository Round 6: NEXUS-native by plan (§10 names no external
+repositories; the hook seam came from Round 3, the input-transport
+discipline from Round 5) — zero imports, zero staging clones.

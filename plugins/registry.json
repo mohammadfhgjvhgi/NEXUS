@@ -1,0 +1,178 @@
+{
+ "generated_utc": "2026-11-19T23:47:48Z",
+ "counts_by_type": {
+  "agent": 1,
+  "tool": 1,
+  "skill": 1,
+  "model": 1,
+  "mcp": 1,
+  "integration": 1,
+  "ui": 1
+ },
+ "loaded_total": 7,
+ "plugins": [
+  {
+   "name": "agent-file-writer",
+   "type": "agent",
+   "version": "1.0.0",
+   "description": "Plan-act-verify file writer agent (spec 36/40)",
+   "permissions": [
+    "filesystem"
+   ],
+   "manifest_sha256": "f889b95bf1867369662ef6f7124b7888b2b78d7f9f713b13c19b8844ec7da7a2",
+   "files_sha256": {
+    "agent_file_writer.py": "f6eb0b52fdce2fa18c5c5bd0a6681e0a5efed74d5e9725eee956b6515ee7241b",
+    "plugin.json": "f889b95bf1867369662ef6f7124b7888b2b78d7f9f713b13c19b8844ec7da7a2"
+   },
+   "registered": {
+    "agent": "file-writer-agent"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_agent-file-writer",
+   "registered_capabilities": {
+    "agents": [
+     "file-writer-agent"
+    ]
+   }
+  },
+  {
+   "name": "integration-events",
+   "type": "integration",
+   "version": "1.0.0",
+   "description": "Relays events into the PHASE 29 events channel (:9412)",
+   "permissions": [],
+   "manifest_sha256": "fb01b515691ea41637f6ac4cd53c51f1d84d3b8111da056d5b7ddd3b81df87b7",
+   "files_sha256": {
+    "integration_events.py": "6acf2c1d0ea3381b8ade4a39f517eaaa22c38f55f79e2b910906d9b0c4ad212c",
+    "plugin.json": "fb01b515691ea41637f6ac4cd53c51f1d84d3b8111da056d5b7ddd3b81df87b7"
+   },
+   "registered": {
+    "integration": "events-relay-9412"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_integration-events",
+   "registered_capabilities": {
+    "integrations": [
+     "events-relay-9412"
+    ]
+   }
+  },
+  {
+   "name": "mcp-echo",
+   "type": "mcp",
+   "version": "1.0.0",
+   "description": "Real stdio JSON-RPC MCP server with an echo tool (79)",
+   "permissions": [],
+   "manifest_sha256": "9429e15536427039f9811f431ba6776aeb7423e805bd0566569ed16c9eff1a5a",
+   "files_sha256": {
+    "mcp_echo_server.py": "fb3badbe5a592915010415fd206617cc9ee67ab7b56db627fa3ffa62d7791193",
+    "plugin.json": "9429e15536427039f9811f431ba6776aeb7423e805bd0566569ed16c9eff1a5a"
+   },
+   "registered": {
+    "mcp": "echo"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_mcp-echo",
+   "registered_capabilities": {
+    "mcp_servers": [
+     "echo"
+    ]
+   }
+  },
+  {
+   "name": "model-local-8080",
+   "type": "model",
+   "version": "1.1.0",
+   "description": "OpenAI-compatible ladder discovery (8080/1234/11434)",
+   "permissions": [],
+   "manifest_sha256": "aab508def8b6d3892b0db9f71dfdc91b58f098e8077a2d6baf224b0da9c167fc",
+   "files_sha256": {
+    "model_local.py": "8aea1907cdc33c1db8300c285154e0434ab738ec379e1ae5e2f885845274761b",
+    "plugin.json": "aab508def8b6d3892b0db9f71dfdc91b58f098e8077a2d6baf224b0da9c167fc"
+   },
+   "registered": {
+    "model": "local-openai-ladder"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_model-local-8080",
+   "registered_capabilities": {
+    "models": [
+     "local-openai-ladder"
+    ]
+   }
+  },
+  {
+   "name": "skill-summarize",
+   "type": "skill",
+   "version": "1.0.0",
+   "description": "Reusable summarization prompt template (spec 82)",
+   "permissions": [],
+   "manifest_sha256": "bb1df32538ef3caee1d2a8d3a32de51e8818488d4b28eff5f40f7a4100135b37",
+   "files_sha256": {
+    "skill_summarize.py": "6f82716fb7537e554688cefd50daa5f85bdce2f19f430c782eb3f308cad44b6a",
+    "plugin.json": "bb1df32538ef3caee1d2a8d3a32de51e8818488d4b28eff5f40f7a4100135b37"
+   },
+   "registered": {
+    "skill": "summarize"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_skill-summarize",
+   "registered_capabilities": {
+    "skills": [
+     "summarize"
+    ]
+   }
+  },
+  {
+   "name": "tool-sha256",
+   "type": "tool",
+   "version": "1.0.0",
+   "description": "SHA-256 text/file hashing tool (spec 76 fields)",
+   "permissions": [],
+   "manifest_sha256": "b84053effd4564213a7b2563c27ce58e98d42178be7a466d68293c780a89a58f",
+   "files_sha256": {
+    "tool_sha256.py": "48a4b8339b380baf85db38115f0b1a002e2ba9482df146603cd5b7a5a2ddc7c4",
+    "plugin.json": "b84053effd4564213a7b2563c27ce58e98d42178be7a466d68293c780a89a58f"
+   },
+   "registered": {
+    "tool": "plugin_sha256"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_tool-sha256",
+   "registered_capabilities": {
+    "tools": [
+     "plugin_sha256"
+    ]
+   }
+  },
+  {
+   "name": "ui-status-card",
+   "type": "ui",
+   "version": "1.0.0",
+   "description": "Dashboard status card contribution (spec 81 UI ext)",
+   "permissions": [],
+   "manifest_sha256": "e2c240f1bf786c17e4b17ff8069e766da78cdd430725627ee72304a0b4132c43",
+   "files_sha256": {
+    "ui_status_card.py": "1d4c2578ddccb0faffe7ca2519be719170a4ebbf1cb1ec5241c9da35330d360c",
+    "plugin.json": "e2c240f1bf786c17e4b17ff8069e766da78cdd430725627ee72304a0b4132c43"
+   },
+   "registered": {
+    "ui": "plugins-status-card"
+   },
+   "status": "loaded",
+   "error": null,
+   "module": "nx_plugin_ui-status-card",
+   "registered_capabilities": {
+    "ui_cards": [
+     "plugins-status-card"
+    ]
+   }
+  }
+ ]
+}

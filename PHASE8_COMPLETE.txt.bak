@@ -1,0 +1,65 @@
+PHASE 8 — WINDOWS COMPUTER RUNTIME · COMPLETE ON THIS MACHINE
+"
+        "============================================================
+
+"
+        "repo commit : cfc8527 (develop == main)
+"
+        "phase       : 8 / Plan §9 — Windows Computer Runtime
+"
+        "exit proof  : 80/80 (tests\\phase08\\verify_exit_criteria.py)
+"
+        "              + regressions 98/143/104/106/116/88/88 inside §F
+"
+        "              (A=14, B=12, C=12, D=17, E=5, F=20)
+"
+        "CI          : NEXUS CI on 5ad999a (job "Phases 1-8")
+"
+        "deploy      : 34/34 files written + SHA-verified via bridge (Bearer)
+
+"
+        "What landed (nexus\\computer\\ + nexus\\tools\
+ative\\ + scanner fix):
+"
+        "  §9.1 api.py — the Computer API: eight domains (screens · windows
+"
+        "        · focus · mouse · keyboard · clipboard · uia · processes),
+"
+        "        every one a thin router client — §8.2 is the only choke
+"
+        "  §9.5 hierarchy.py — the fallback chain: Application API → UIA
+"
+        "        → DOM/a11y → Vision → Mouse/Keyboard, every attempt traced
+"
+        "  §9.4 uia_native.py — the native UIA client (pure ctypes COM,
+"
+        "        every HRESULT checked, BSTR/SAFEARRAY/AddRef discipline)
+"
+        "  §9.2 input_engine.py — ADAPT from windows-harness 46a37cf:
+"
+        "        foreground SendInput + message WM_CHAR transports,
+"
+        "        message-mouse refused by design, ForegroundError honest
+"
+        "  §9.3 adapters/pywinauto_backend.py — MODE A «USE» (optional
+"
+        "        [computer] extra, lazy imports, honest probe)
+"
+        "  mechanics tools — mouse (risk 3) · keyboard (risk 3) · uia
+"
+        "        (risk 2) beside the §8.3 nine, additive
+
+"
+        "On this machine (optional — the deep uia layer needs the extra):
+"
+        "  pip install "nexus-core[computer]"
+"
+        "  python tests\\phase08\\verify_exit_criteria.py  (80/80 + bonus)
+
+"
+        "Repository Round 5 (audited pins — see REPOSITORY-INTEGRATION.md):
+"
+        "  browser-use/windows-harness  46a37cf (MIT, ADAPT — zero imports)
+"
+        "  pywinauto/pywinauto         18d2a95 (BSD-3, MODE A [computer])
+"

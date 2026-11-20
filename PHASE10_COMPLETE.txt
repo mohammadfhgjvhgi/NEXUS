@@ -1,0 +1,42 @@
+PHASE 10 — BROWSER RUNTIME · COMPLETE ON THIS MACHINE
+======================================================
+
+repo commit : 224bbd9 (develop == main)
+phase       : 10 / Plan §11 — Browser Runtime
+exit proof  : 70/70 (tests\phase10\verify_exit_criteria.py)
+              + regressions 98·143·104·106·116·88·88·80·84 inside §F
+              + live_browser_ci.py = PASS 15/15 on a real Chromium
+              (local sandbox + the CI browser-live job)
+CI          : NEXUS CI on 224bbd9 (jobs "Phases 1-10" + "browser-live")
+deploy      : 24/24 files written + SHA-verified via bridge (Bearer)
+live proof  : tests\phase10\live_proof_device.py — PROOF RESULT: PASS
+              (channel=chrome — the system Chrome drove the engine,
+              zero downloads; real internet navigation to
+              example.org; DOM read; form fill via vault_ref; the
+              DPAPI vault round-trip; 14 tool events scanned
+              secret-free; two isolated sessions — agent profile +
+              user CDP attach through the explicit §55 gate; the
+              agent window claimed as NEXUS win-29034352)
+evidence    : M:\NEXUS\proofs\phase10_live.json · phase10_browser.png
+deps        : pip install playwright==1.62.0 (done on this machine)
+              browsers: none needed — the channel ladder rides the
+              installed system Chrome with the agent profile
+
+What landed (nexus\browser\ + the 13th §8.1 record):
+  §11.1 engine.py — Playwright MODE A «USE» behind the §8.2 router
+        (navigation · DOM · forms · upload · download · tabs · states)
+  §11.4 sessions.py — user/agent isolation by construction; the §55
+        CDP gate (explicit consent + URL, no discovery, never mixed)
+  §11.5 auth.py — the DPAPI vault (pure ctypes) + vault references:
+        secrets NEVER cross the tool interface; output scrubbing as
+        the last line; off win32 storing refuses (no plaintext mode)
+  §11.3 selfheal.py — the selector ladder (css→role→text→test_id)
+        with a full attempt ledger; all-fail raises with the ledger
+  §9.5 — the dom_a11y rung is live in the fallback chain
+  tools/native/browser.py — risk 2, path-scoped transfers, per-op
+        verification contracts bound to always-present keys
+
+Repository Round 7: microsoft/playwright USE (dist 1.62.0) ·
+browser-use/browser-use ADAPT (e25ab65, zero imports — the pinned
+deps are the documented reason) · browser-use/browser-harness
+ADAPT (eba1021 — the self-healing + explicit-gate patterns).

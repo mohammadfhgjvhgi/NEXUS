@@ -1,0 +1,26 @@
+{
+  "ten specialists register + answer discovery": {
+    "ok": true,
+    "detail": "roles=['architect', 'backend', 'database', 'debugger', 'devops', 'frontend', 'performance', 'reviewer', 'security', 'tester']"
+  },
+  "the §15.6 loop fixes a real bug on disk (approved, 8 stages)": {
+    "ok": true,
+    "detail": "approved=True cycles=1 order=('understand', 'plan', 'edit', 'build', 'test', 'debug', 'retest', 'review') fixed=True"
+  },
+  "only canonical events on the wire": {
+    "ok": true,
+    "detail": "non-canonical=set()"
+  },
+  "unfixable: bounded rejection exactly at the bound": {
+    "ok": true,
+    "detail": "cycles=2 order=('understand', 'plan', 'edit', 'build', 'test', 'debug', 'retest', 'review', 'debug', 'retest')"
+  },
+  "Cline-style session trail persists + revives": {
+    "ok": true,
+    "detail": "trail=True revived=True"
+  },
+  "the developer agent analyzes M:\\NEXUS itself": {
+    "ok": true,
+    "detail": "files=1539 symbols=6650"
+  }
+}

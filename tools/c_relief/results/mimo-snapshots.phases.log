@@ -1,0 +1,51 @@
+{"utc": "2026-09-12T15:55:20Z", "phase": "start", "detail": "pid=20784 target=mimo-snapshots"}
+{"utc": "2026-09-12T15:55:20Z", "phase": "robocopy_begin", "detail": ""}
+{"utc": "2026-09-13T13:08:04Z", "phase": "start", "detail": "pid=10152 target=mimo-snapshots"}
+{"utc": "2026-09-13T13:08:04Z", "phase": "robocopy_begin", "detail": ""}
+{"utc": "2026-09-13T13:08:04Z", "phase": "robocopy_done", "detail": "exit=0"}
+{"utc": "2026-09-13T13:08:04Z", "phase": "verify_walk_done", "detail": "src=187f/28771850231B dst=187f/28771850231B"}
+{"utc": "2026-09-13T13:59:08Z", "phase": "start", "detail": "pid=10772 target=mimo-snapshots"}
+{"utc": "2026-09-13T13:59:08Z", "phase": "robocopy_begin", "detail": ""}
+{"utc": "2026-09-13T13:59:08Z", "phase": "robocopy_done", "detail": "exit=0"}
+{"utc": "2026-09-13T13:59:08Z", "phase": "verify_walk_done", "detail": "src=187f/28771850231B dst=187f/28771850231B"}
+{"utc": "2026-09-13T13:59:15Z", "phase": "sha_file", "detail": "1 snapshots\\snap_000001_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T13:59:25Z", "phase": "sha_file", "detail": "2 snapshots\\snap_000001_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T13:59:31Z", "phase": "sha_file", "detail": "3 snapshots\\snap_000001_qwen3-0.6b-q4km.gguf"}
+{"utc": "2026-09-13T13:59:38Z", "phase": "sha_file", "detail": "4 snapshots\\snap_000002_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T13:59:49Z", "phase": "sha_file", "detail": "5 snapshots\\snap_000002_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T13:59:55Z", "phase": "sha_file", "detail": "6 snapshots\\snap_000002_qwen3-0.6b-q4km.gguf"}
+{"utc": "2026-09-13T14:18:03Z", "phase": "copy_start", "detail": "pid=21260"}
+{"utc": "2026-09-13T14:18:03Z", "phase": "copy_begin", "detail": ""}
+{"utc": "2026-09-13T14:18:03Z", "phase": "copy_done", "detail": "exit=0"}
+{"utc": "2026-09-13T14:18:03Z", "phase": "copy_result", "detail": "status=copied"}
+{"utc": "2026-09-13T14:18:19Z", "phase": "verify_start", "detail": "pid=14204"}
+{"utc": "2026-09-13T14:18:19Z", "phase": "verify_begin", "detail": ""}
+{"utc": "2026-09-13T14:18:19Z", "phase": "verify_walk_done", "detail": "src=187f/28771850231B dst=187f/28771850231B"}
+{"utc": "2026-09-13T14:18:19Z", "phase": "verify_result", "detail": "status=verified"}
+{"utc": "2026-09-13T14:18:35Z", "phase": "sha_start", "detail": "pid=12904"}
+{"utc": "2026-09-13T14:18:43Z", "phase": "sha_file", "detail": "1 snapshots\\snap_000001_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T14:18:55Z", "phase": "sha_file", "detail": "2 snapshots\\snap_000001_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T14:19:03Z", "phase": "sha_file", "detail": "3 snapshots\\snap_000001_qwen3-0.6b-q4km.gguf"}
+{"utc": "2026-09-13T14:19:11Z", "phase": "sha_file", "detail": "4 snapshots\\snap_000002_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T14:32:44Z", "phase": "detached:detached_sha_start", "detail": "pid=580"}
+{"utc": "2026-09-13T14:32:51Z", "phase": "detached:sha_file", "detail": "1 snapshots\\snap_000001_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T14:33:02Z", "phase": "detached:sha_file", "detail": "2 snapshots\\snap_000001_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T14:33:08Z", "phase": "detached:sha_file", "detail": "3 snapshots\\snap_000001_qwen3-0.6b-q4km.gguf"}
+{"utc": "2026-09-13T14:33:15Z", "phase": "detached:sha_file", "detail": "4 snapshots\\snap_000002_bitnet-b1.58-2b.gguf"}
+{"utc": "2026-09-13T14:33:25Z", "phase": "detached:sha_file", "detail": "5 snapshots\\snap_000002_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T14:33:32Z", "phase": "detached:sha_file", "detail": "6 snapshots\\snap_000002_qwen3-0.6b-q4km.gguf"}
+{"utc": "2026-09-13T14:33:39Z", "phase": "detached:sha_file", "detail": "7 snapshots\\snap_000003_ds-coder-1.3b-q4km.gguf"}
+{"utc": "2026-09-13T14:33:51Z", "phase": "detached:sha_file", "detail": "8 snapshots\\snap_000003_lfm2.5-1.2b-q4km.gguf"}
+{"utc": "2026-09-13T14:34:00Z", "phase": "detached:sha_file", "detail": "9 snapshots\\snap_000003_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T14:34:07Z", "phase": "detached:sha_file", "detail": "10 snapshots\\snap_000004_ds-coder-1.3b-q4km.gguf"}
+{"utc": "2026-09-13T14:34:19Z", "phase": "detached:sha_file", "detail": "11 snapshots\\snap_000004_lfm2.5-1.2b-q4km.gguf"}
+{"utc": "2026-09-13T14:34:28Z", "phase": "detached:sha_file", "detail": "12 snapshots\\snap_000004_qwen25-coder-1.5b-q4km.gguf"}
+{"utc": "2026-09-13T14:34:28Z", "phase": "detached:sha_done", "detail": "checked=12 bad=0 aborted=0"}
+{"utc": "2026-09-13T14:34:28Z", "phase": "detached:sha_result", "detail": "status=sha_ok"}
+{"utc": "2026-09-13T14:34:45Z", "phase": "detached:detached_purge_start", "detail": "pid=11016"}
+{"utc": "2026-09-13T14:34:45Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T14:34:45Z", "phase": "detached:purge_begin", "detail": "files_to_delete=187"}
+{"utc": "2026-09-13T14:34:47Z", "phase": "detached:purge_done", "detail": "exit=2"}
+{"utc": "2026-09-13T14:34:47Z", "phase": "detached:purge_result", "detail": "status=purged"}
+{"utc": "2026-09-13T14:35:03Z", "phase": "detached:detached_finalize_start", "detail": "pid=6084"}
+{"utc": "2026-09-13T14:35:03Z", "phase": "detached:finalize_result", "detail": "status=moved"}

@@ -1,0 +1,5 @@
+line1
+line2	tabbed
+
+line4 with unicode: ✓ ar: مرحبا
+last no newline

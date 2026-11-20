@@ -1,0 +1,10 @@
+{"utc": "2026-09-13T16:44:21Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:44:46Z", "phase": "detached:copy_done", "detail": "exit=1"}
+{"utc": "2026-09-13T16:44:47Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:44:48Z", "phase": "detached:verify_walk_done", "detail": "src=13078f/1629430704B dst=13078f/1629430704B"}
+{"utc": "2026-09-13T16:44:54Z", "phase": "detached:sha_file", "detail": "1 CometUpdater\\crx_cache\\85491319b6a8b35497b8974fdd746ede81293ced91585fdc38a30737a"}
+{"utc": "2026-09-13T16:45:04Z", "phase": "detached:sha_file", "detail": "2 Comet\\Application\\152.0.7977.199\\chrome.dll"}
+{"utc": "2026-09-13T16:45:04Z", "phase": "detached:sha_done", "detail": "checked=2 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:45:04Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:45:05Z", "phase": "detached:purge_begin", "detail": "files_to_delete=13078"}
+{"utc": "2026-09-13T16:45:27Z", "phase": "detached:purge_done", "detail": "exit=2"}

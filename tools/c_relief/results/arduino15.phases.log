@@ -1,0 +1,6 @@
+{"utc": "2026-09-12T15:05:51Z", "phase": "start", "detail": "pid=13536 target=arduino15"}
+{"utc": "2026-09-12T15:05:51Z", "phase": "robocopy_begin", "detail": ""}
+{"utc": "2026-09-12T15:06:00Z", "phase": "robocopy_done", "detail": "exit=2"}
+{"utc": "2026-09-12T15:06:20Z", "phase": "verify_walk_done", "detail": "src=38440f/6008754555B dst=42663f/6387494658B"}
+{"utc": "2026-09-12T15:06:22Z", "phase": "sha_done", "detail": "checked=0 bad=0"}
+{"utc": "2026-09-12T15:06:22Z", "phase": "purge_begin", "detail": ""}

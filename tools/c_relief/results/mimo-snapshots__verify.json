@@ -1,0 +1,11 @@
+{
+ "name": "mimo-snapshots",
+ "status": "verified",
+ "src_files": 187,
+ "src_bytes": 28771850231,
+ "dst_files": 187,
+ "dst_bytes": 28771850231,
+ "src_missing_in_dst": 0,
+ "phase": "verify",
+ "seconds": 0.0
+}

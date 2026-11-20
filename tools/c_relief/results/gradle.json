@@ -1,0 +1,14 @@
+{
+ "name": "gradle",
+ "src": "C:\\Users\\MohandsMohammad\\.gradle",
+ "dst": "M:\\C-RELIEF\\mohands\\.gradle",
+ "status": "moved",
+ "robocopy_exit": 0,
+ "src_files": 23032,
+ "src_bytes": 2318909275,
+ "dst_files": 23032,
+ "dst_bytes": 2318909275,
+ "sha_checked": 3,
+ "sha_bad": [],
+ "seconds": 60.0
+}

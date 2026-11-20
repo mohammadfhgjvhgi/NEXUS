@@ -1,0 +1,34 @@
+{
+ "product": "NEXUS Windows Product v0.1 — Setup preview",
+ "utc": "2026-09-13T20:29:17Z",
+ "install_root": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\NEXUS",
+ "steps": [
+  {
+   "step": "copy",
+   "from": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe",
+   "to": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\NEXUS\\NEXUS.exe",
+   "size": 90701203,
+   "sha256": "6d49d19bd2cf90b1dd67bb83afb8bcfe000876dc080630668b35d381b2f31df9",
+   "src_sha256": "6d49d19bd2cf90b1dd67bb83afb8bcfe000876dc080630668b35d381b2f31df9"
+  },
+  {
+   "step": "uninstall-script",
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\NEXUS\\uninstall.bat"
+  },
+  {
+   "step": "registry",
+   "query_rc": 0,
+   "out": "\nHKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\NEXUS\n    DisplayName    REG_SZ    NEXUS - Windows Product v0.1\n\n"
+  },
+  {
+   "step": "start-menu",
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\NEXUS\\NEXUS.bat"
+  },
+  {
+   "step": "installed-launch-test",
+   "rc": 0,
+   "out_tail": "=========================================\r\n  NEXUS 0.25.0  ·  NEXUS Windows Product v0.1 (MIDPOINT)\r\n  Your computer. With a mind of its own.\r\n  local-first  ·  stdlib core  ·  evidence or silence\r\n==========================================================\r\ncore packages : 37 ok / 0 err (of 37)\r\nmodel runtime : offline at http://127.0.0.1:8080\r\nverdict       : PASS  (3.36s)\r\ncertificate   : C:\\Users\\MohandsMohammad\\AppData\\Local\\proofs\\midpoint_boot.json\r\n"
+  }
+ ],
+ "verdict": "PASS"
+}

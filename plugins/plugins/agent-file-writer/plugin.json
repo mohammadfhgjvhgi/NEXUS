@@ -1,0 +1,10 @@
+{
+ "name": "agent-file-writer",
+ "type": "agent",
+ "version": "1.0.0",
+ "entry": "agent_file_writer.py",
+ "description": "Plan-act-verify file writer agent (spec 36/40)",
+ "permissions": [
+  "filesystem"
+ ]
+}

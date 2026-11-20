@@ -1,0 +1,31 @@
+# MIDPOINT GATE — 10 checks before PHASE 26
+# بوابة منتصف الطريق — عشرة معايير قبل PHASE 26 (README/PROJECT-LOG contract)
+
+Target: **NEXUS Windows Product v0.1** — أول NEXUS.exe حقيقي (Launcher → Core → UI)
+متصل بالنواة الموجودة (v0.25.0, 28 حزمة). القرص يحسم — كل فحص له برهان على القرص.
+
+| # | الفحص · Check | البرهان · Evidence | الحالة |
+|---|---|---|---|
+| 1 | Launcher boot self-check PASS — كل حزم النواة الـ28+ تستورد | `proofs\midpoint_boot.json` (verdict=PASS) | ✅ **منفذ** — 37/37 ok · 4.59s |
+| 2 | NEXUS.exe يُبنى فعلاً (PyInstaller onefile) | `build\midpoint\dist\NEXUS.exe` + sha256 | ✅ **منفذ** — 87,586,287 B · sha256 a435fefeac6d1dc6... · 164s · `proofs\midpoint_build.json` |
+| 3 | أول تشغيل حقيقي للـexe: `NEXUS.exe --check` PASS | إخراج الفحص + شهادة إقلاع محدثة | ✅ **منفذ** — rc=0 · الشهادة كتبها الـexe نفسه (pid=17584 · 37/37 ok · utc 17:32:13Z) |
+| 4 | أول محادثة حقيقية محلية (llama-server MODE A) | سجل `--chat` (prompt→content) | 🔄 قيد التنفيذ — worker_chat.py (بحث→تشغيل→محادثة مكتوبة→شهادة) |
+| 5 | أول مهمة حقيقية عبر محرك المهام (Task State Machine) | مهمة منشأة + حالة مسجلة | ⬜ |
+| 6 | UI سطح مكتب أولي (نافذة محادثة) | لقطة/سجل نافذة | ⬜ MIDPOINT خطوة #2+ |
+| 7 | أيقونة صينية Tray + قائمة | لقطة tray | ⬜ |
+| 8 | Overlay فوق التطبيقات | لقطة overlay | ⬜ |
+| 9 | معاينة مثبّت (installer preview) | installer skeleton | ⬜ |
+| 10 | شهادة MIDPOINT موقعة sha256 تختصر 1–9 | `proofs\midpoint_gate.json` | ⬜ الأخير |
+
+## القواعد الثابتة · Standing laws
+- **stdlib-only** في النواة والـLauncher — الثقيل خلف Adapters (MODE A–F موثقة).
+- كل فحص فاشل يُكتب **بصدق** — لا بند أخضر بلا برهان على القرص.
+- البناء **على الجهاز** (tunnel → `M:\NEXUS\build\midpoint\`) — لا بناء في السحابة.
+- الخطة (Final Build Plan) مرجع ماذا-وكيف؛ أي تعارض = Bug أو مراجعة موثقة أولًا.
+
+## ملاحظات هندسية مثبتة اليوم
+- الـLauncher أصبح **frozen-aware**: في وضع exe يحدد جذر M:\NEXUS بالمشيأ للأعلى من مسار الـexe الحقيقي (onefile يفك في مجلد مؤقت و`__file__` يكذب) — بدونه لكانت شهادة #3 تُكتب في التمب ولا يُعثر على النواة.
+- كل الوحدات الـ37 مثبتة hiddenimports في الـspec (جذر الحزمة lazy — بدون التثبيت لكان الـexe ناقصًا بصمت).
+
+## الخطوة التالية بعد البوابة
+PHASE 26 — Desktop UI Production.

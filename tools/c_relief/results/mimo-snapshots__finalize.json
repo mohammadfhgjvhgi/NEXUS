@@ -1,0 +1,9 @@
+{
+ "name": "mimo-snapshots",
+ "status": "moved",
+ "mklink_rc": 0,
+ "mklink_out": "Junction created for C:\\Users\\MohandsMohammad\\.mimo_storage <<===>> M:\\C-RELIEF\\mohands\\.mimo_storage\n",
+ "junction_ok": true,
+ "phase": "finalize",
+ "seconds": 0.4
+}

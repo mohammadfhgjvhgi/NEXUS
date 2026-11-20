@@ -1,0 +1,446 @@
+# -*- coding: utf-8 -*-
+"""NEXUS Plugin System — PHASE 30 — the seven sample plugins.
+
+One plugin per §81 type, each doing something REAL (evidence or silence):
+  agent         file-writer agent: plan→act→verify loop, AgentMessage
+                transcript (§40), verifies via the TOOL plugin's sha256
+                (cross-plugin composition proof)
+  tool          plugin_sha256 callable (§76 fields)
+  skill         summarize prompt template renderer (§82 fields)
+  model         OpenAI-compatible provider probe (127.0.0.1:8080)
+  mcp           real stdio JSON-RPC MCP server + echo tool (§79)
+  integration   relays events into the PHASE 29 events channel (:9412)
+                with round-trip verification
+  ui            dashboard status card renderer (HTML fragment)
+
+The worker bootstraps these to plugins\\plugins\\<dir>\\ if missing.
+"""
+from __future__ import annotations
+
+import json
+
+MANIFEST_TOOL = {
+    "name": "tool-sha256", "type": "tool", "version": "1.0.0",
+    "entry": "tool_sha256.py",
+    "description": "SHA-256 text/file hashing tool (spec 76 fields)",
+    "permissions": [],
+}
+TOOL_SHA256 = '''# -*- coding: utf-8 -*-
+"""Sample TOOL plugin — registers plugin_sha256 (spec 76)."""
+import hashlib
+
+
+def fn(args):
+    """input_schema {text? , path?} -> sha256 hexdigest."""
+    if args.get("path"):
+        h = hashlib.sha256()
+        with open(args["path"], "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        return {"sha256": h.hexdigest(), "source": "file",
+                "path": args["path"]}
+    text = str(args.get("text") or "")
+    return {"sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            "source": "text", "length": len(text)}
+
+
+def register(ctx):
+    ctx.register_tool({
+        "name": "plugin_sha256",
+        "description": "Hash text or a file with SHA-256",
+        "input_schema": {"type": "object",
+                         "properties": {"text": {"type": "string"},
+                                        "path": {"type": "string"}}},
+        "output_schema": {"type": "object",
+                          "properties": {"sha256": {"type": "string"}}},
+        "permissions": [], "risk": "none", "scope": "local",
+        "availability": "always", "version": "1.0.0",
+        "verification": "deterministic_hash",
+        "fn": fn,
+    })
+'''
+
+MANIFEST_SKILL = {
+    "name": "skill-summarize", "type": "skill", "version": "1.0.0",
+    "entry": "skill_summarize.py",
+    "description": "Reusable summarization prompt template (spec 82)",
+    "permissions": [],
+}
+SKILL_SUMMARIZE = '''# -*- coding: utf-8 -*-
+"""Sample SKILL plugin — reusable workflow template (spec 82)."""
+TEMPLATE = ("لخص النص التالي في {{count}} نقاط مع الحفاظ على المصطلحات:\\n\\n"
+            "{{text}}")
+
+
+def render(inputs):
+    n = int(inputs.get("count") or 4)
+    return TEMPLATE.replace("{{count}}", str(n)).replace(
+        "{{text}}", str(inputs.get("text") or ""))
+
+
+def register(ctx):
+    ctx.register_skill({
+        "id": "summarize",
+        "description": "Summarize text into N bullet points",
+        "inputs": ["text", "count"],
+        "tools": [], "workflow": ["render_prompt"],
+        "verification": "prompt_contains_markers",
+        "version": "1.0.0",
+        "render": render,
+    })
+'''
+
+MANIFEST_AGENT = {
+    "name": "agent-file-writer", "type": "agent", "version": "1.0.0",
+    "entry": "agent_file_writer.py",
+    "description": "Plan-act-verify file writer agent (spec 36/40)",
+    "permissions": ["filesystem"],
+}
+AGENT_FILE_WRITER = '''# -*- coding: utf-8 -*-
+"""Sample AGENT plugin — spec 36 manifest + spec 40 message transcript.
+
+run(task, ctx) executes a REAL plan→act→verify loop:
+  plan   : record the goal as an AgentMessage
+  act    : write the file inside the jailed fs_root (permission: filesystem)
+  verify : hash the file with the injected plugin_sha256 tool and compare
+"""
+import json
+import os
+
+
+def _msg(step, sender, receiver, status, data, evidence=None, confidence=1.0):
+    return {"task_id": data.get("task_id"), "sender": sender,
+            "receiver": receiver, "message_type": step, "status": status,
+            "evidence": evidence or {}, "confidence": confidence,
+            "data": {k: v for k, v in data.items() if k != "task_id"},
+            "timestamp": os.environ.get("NEXUS_TS") or data.get("ts", "")}
+
+
+def run(task, ctx):
+    """task: {out_rel, content, task_id} · ctx: {tool_sha256, ts}"""
+    fs_root = ctx["fs_root"]
+    out = fs_root / str(task.get("out_rel") or "agent_out.txt")
+    content = str(task.get("content") or "")
+    transcript = []
+
+    transcript.append(_msg("plan", "agent-file-writer", "master", "ok", {
+        "task_id": task.get("task_id"), "ts": ctx.get("ts"),
+        "goal": "write+verify file", "steps": 3, "content_bytes": len(content)}))
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.write(content)
+        fh.flush()
+        os.fsync(fh.fileno())
+    transcript.append(_msg("act", "agent-file-writer", "filesystem", "ok", {
+        "task_id": task.get("task_id"), "ts": ctx.get("ts"),
+        "path": str(out), "bytes": out.stat().st_size}))
+
+    got = ctx["tool_sha256"]({"path": str(out)})["sha256"]
+    want = ctx["tool_sha256"]({"text": content})["sha256"]
+    ok = got == want
+    transcript.append(_msg("verify", "agent-file-writer", "master",
+                           "ok" if ok else "failed", {
+        "task_id": task.get("task_id"), "ts": ctx.get("ts"),
+        "sha256_file": got[:32], "sha256_expected": want[:32]}, None,
+        1.0 if ok else 0.0))
+    return {"completed": ok, "steps": len(transcript),
+            "transcript": transcript, "path": str(out),
+            "sha256": got}
+
+
+def register(ctx):
+    ctx.register_agent({
+        "id": "file-writer-agent",
+        "role": "Coder",
+        "description": "Writes a jailed file and verifies it byte-exact",
+        "model_policy": {"mode": "tool-only", "llm_required": False},
+        "tools": ["plugin_sha256"],
+        "skills": [],
+        "permissions": ["filesystem"],
+        "context_requirements": ["fs_root", "tool_sha256"],
+        "input_schema": {"type": "object",
+                         "properties": {"out_rel": {"type": "string"},
+                                        "content": {"type": "string"}}},
+        "output_schema": {"type": "object",
+                          "properties": {"completed": {"type": "boolean"}}},
+        "verification_rules": ["sha256_file == sha256(content)"],
+        "run": run,
+    })
+'''
+
+MANIFEST_MODEL = {
+    "name": "model-local-8080", "type": "model", "version": "1.1.0",
+    "entry": "model_local.py",
+    "description": "OpenAI-compatible ladder discovery (8080/1234/11434)",
+    "permissions": [],
+}
+MODEL_LOCAL = '''# -*- coding: utf-8 -*-
+"""Sample MODEL plugin — local OpenAI-compatible provider (spec §33 area).
+
+health() probes /v1/models · complete() runs a tiny chat completion.
+Honest either way — an offline backend is a DEGRADED verdict, not a lie.
+"""
+import json
+import urllib.request
+from pathlib import Path
+
+# model ladder discovery: ui_settings port first, then common local ports
+BASES = ["http://127.0.0.1:8080/v1", "http://127.0.0.1:1234/v1",
+         "http://127.0.0.1:11434/v1"]
+TIMEOUT = 8
+ACTIVE = {"base": None}
+
+
+def health():
+    last = None
+    for base in BASES:
+        try:
+            req = urllib.request.Request(base + "/models")
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                data = json.loads(resp.read().decode("utf-8", "replace"))
+            ids = [m.get("id") for m in data.get("data", []) if m.get("id")]
+            ACTIVE["base"] = base
+            return {"ok": True, "models": ids[:10], "http": resp.status,
+                    "endpoint": base}
+        except BaseException as exc:  # noqa: BLE001
+            last = f"{base}: {type(exc).__name__}"[:160]
+    return {"ok": False, "reason": last or "no_backend"}
+
+
+def complete(model, prompt, max_tokens=16, timeout=40):
+    base = ACTIVE.get("base") or BASES[0]
+    body = json.dumps({"model": model,
+                       "messages": [{"role": "user", "content": prompt}],
+                       "max_tokens": max_tokens, "temperature": 0}).encode()
+    req = urllib.request.Request(
+        base + "/chat/completions", data=body,
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+        txt = (((data.get("choices") or [{}])[0].get("message") or {})
+               .get("content") or "")
+        return {"ok": True, "text": txt[:200], "model": data.get("model")}
+    except BaseException as exc:  # noqa: BLE001
+        return {"ok": False, "reason": f"{type(exc).__name__}: {exc}"[:200]}
+
+
+def register(ctx):
+    ctx.register_model({
+        "id": "local-openai-ladder", "kind": "openai-compatible",
+        "endpoint": BASES[0], "discovery": BASES,
+        "health": health, "complete": complete,
+    })
+'''
+
+MANIFEST_MCP = {
+    "name": "mcp-echo", "type": "mcp", "version": "1.0.0",
+    "entry": "mcp_echo_server.py",
+    "description": "Real stdio JSON-RPC MCP server with an echo tool (79)",
+    "permissions": [],
+}
+MCP_ECHO_SERVER = '''# -*- coding: utf-8 -*-
+"""Sample MCP plugin — a REAL MCP server over stdio (one JSON-RPC per line).
+
+Handshake: initialize -> notifications/initialized -> tools/list ->
+tools/call. Protocol version 2024-11-05 (spec 79: NEXUS puts MCP behind
+its Tool Router — registration here is the connector contract).
+"""
+import json
+import sys
+from pathlib import Path
+
+TOOLS = [{
+    "name": "echo",
+    "description": "Echo a message back with a prefix",
+    "inputSchema": {"type": "object",
+                    "properties": {"message": {"type": "string"}},
+                    "required": ["message"]},
+}]
+
+
+def register(ctx):
+    """Connector contract: register this server as an NEXUS MCP plugin."""
+    ctx.register_mcp_server({
+        "id": "echo",
+        "transport": "stdio",
+        "command": sys.executable,
+        "args": [str(Path(__file__).resolve())],
+        "protocol": "2024-11-05",
+        "tools": [t["name"] for t in TOOLS],
+    })
+
+
+def main() -> None:
+    for raw in sys.stdin:
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            req = json.loads(raw)
+        except BaseException:
+            continue
+        rid = req.get("id")
+        if rid is None:
+            continue                      # notification — no response
+        method = req.get("method")
+        if method == "initialize":
+            result = {"protocolVersion": "2024-11-05",
+                      "capabilities": {"tools": {}},
+                      "serverInfo": {"name": "echo-mcp", "version": "1.0.0"}}
+        elif method == "tools/list":
+            result = {"tools": TOOLS}
+        elif method == "tools/call":
+            args = (req.get("params") or {}).get("arguments") or {}
+            text = "echo: " + str(args.get("message") or "")
+            result = {"content": [{"type": "text", "text": text}]}
+        elif method == "ping":
+            result = {}
+        else:
+            sys.stdout.write(json.dumps({
+                "jsonrpc": "2.0", "id": rid,
+                "error": {"code": -32601, "message": "method_not_found"}}) + "\\n")
+            sys.stdout.flush()
+            continue
+        sys.stdout.write(json.dumps(
+            {"jsonrpc": "2.0", "id": rid, "result": result}) + "\\n")
+        sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+MANIFEST_INTEGRATION = {
+    "name": "integration-events", "type": "integration", "version": "1.0.0",
+    "entry": "integration_events.py",
+    "description": "Relays events into the PHASE 29 events channel (:9412)",
+    "permissions": [],
+}
+INTEGRATION_EVENTS = '''# -*- coding: utf-8 -*-
+"""Sample INTEGRATION plugin — bridges to PHASE 29 realtime events.
+
+Reads the bearer token from realtime\\token.txt (device-local file), posts
+to the loopback events channel, and verify() reads the stream back to
+confirm delivery round-trip.
+"""
+import json
+import urllib.request
+from pathlib import Path
+
+TOKEN_FILE = Path(__file__).resolve().parents[2] / "realtime" / "token.txt"
+PUB = "http://127.0.0.1:9412/events/pub"
+STREAM = "http://127.0.0.1:9412/events/stream"
+
+
+def _token() -> str:
+    try:
+        return TOKEN_FILE.read_text(encoding="utf-8").strip()
+    except BaseException:
+        return "ps1-stable-token-2026"
+
+
+def relay(event: dict, timeout=10):
+    body = json.dumps(event).encode("utf-8")
+    req = urllib.request.Request(PUB, data=body, headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + _token()}, method="POST")
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8", "replace"))
+
+
+def verify(event_id: int, etype: str, timeout=10):
+    url = f"{STREAM}?cursor={max(0, event_id - 1)}&wait_s=3"
+    req = urllib.request.Request(url, headers={
+        "Authorization": "Bearer " + _token()})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8", "replace"))
+    hit = any(e.get("id") == event_id and e.get("type") == etype
+              for e in data.get("events", []))
+    return {"ok": hit, "count": len(data.get("events", [])),
+            "cursor": data.get("cursor")}
+
+
+def register(ctx):
+    ctx.register_integration({
+        "id": "events-relay-9412",
+        "target": "nexus-realtime/events:9412",
+        "transport": "http-loopback",
+        "relay": relay,
+        "verify": verify,
+    })
+'''
+
+MANIFEST_UI = {
+    "name": "ui-status-card", "type": "ui", "version": "1.0.0",
+    "entry": "ui_status_card.py",
+    "description": "Dashboard status card contribution (spec 81 UI ext)",
+    "permissions": [],
+}
+UI_STATUS_CARD = '''# -*- coding: utf-8 -*-
+"""Sample UI plugin — a dashboard card contribution with a renderer."""
+
+CARD_ID = "plugins-status-card"
+
+
+def render(snapshot, lang="ar"):
+    counts = snapshot.get("counts_by_type", {})
+    total = snapshot.get("loaded_total", 0)
+    cells = "".join(
+        f"<span class=\\"nx-card-cell\\">{t}: {n}</span>"
+        for t, n in sorted(counts.items()))
+    title = "بطاقة الإضافات" if lang == "ar" else "Plugins status card"
+    return (f"<div class=\\"nx-card\\" id=\\"{CARD_ID}\\">"
+            f"<div class=\\"nx-card-title\\">{title}</div>"
+            f"<div class=\\"nx-card-total\\">loaded={total}</div>"
+            f"{cells}</div>")
+
+
+def register(ctx):
+    ctx.register_ui_card({
+        "id": CARD_ID, "slot": "dashboard.sidebar",
+        "data": "plugins-registry", "render": render, "lang": "ar",
+    })
+'''
+
+# dir -> {filename: content}
+SAMPLES = {
+    "tool-sha256": {"plugin.json": MANIFEST_TOOL, "tool_sha256.py": TOOL_SHA256},
+    "skill-summarize": {"plugin.json": MANIFEST_SKILL,
+                        "skill_summarize.py": SKILL_SUMMARIZE},
+    "agent-file-writer": {"plugin.json": MANIFEST_AGENT,
+                          "agent_file_writer.py": AGENT_FILE_WRITER},
+    "model-local-8080": {"plugin.json": MANIFEST_MODEL,
+                         "model_local.py": MODEL_LOCAL},
+    "mcp-echo": {"plugin.json": MANIFEST_MCP,
+                 "mcp_echo_server.py": MCP_ECHO_SERVER},
+    "integration-events": {"plugin.json": MANIFEST_INTEGRATION,
+                           "integration_events.py": INTEGRATION_EVENTS},
+    "ui-status-card": {"plugin.json": MANIFEST_UI,
+                       "ui_status_card.py": UI_STATUS_CARD},
+}
+
+
+def bootstrap(plugins_root, log=print) -> dict:
+    """Write any missing sample plugin files. Returns {dir: [files]}."""
+    out = {}
+    for d, files in SAMPLES.items():
+        pdir = plugins_root / d
+        pdir.mkdir(parents=True, exist_ok=True)
+        written = []
+        for fname, content in files.items():
+            target = pdir / fname
+            if not target.is_file():
+                if fname == "plugin.json":
+                    payload = json.dumps(content, ensure_ascii=False,
+                                         indent=1)
+                else:
+                    payload = content
+                with open(target, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(payload)
+                written.append(fname)
+        out[d] = written
+        if written:
+            log(f"bootstrap {d}: +{len(written)} files")
+    return out

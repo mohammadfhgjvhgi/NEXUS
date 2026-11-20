@@ -1,0 +1,39 @@
+{
+ "python": "3.14.5",
+ "utc": "2026-11-19T22:11:33Z",
+ "ico_exists": {
+  "ready": true,
+  "working": true,
+  "offline": true
+ },
+ "strategyB": {
+  "add": null,
+  "modify": null,
+  "delete": null,
+  "saw_callback": null,
+  "err": "ArgumentError: argument 11: OverflowError: int too long to convert",
+  "hicon32": 43976157,
+  "hicon16": 4720037,
+  "register": true
+ },
+ "strategyC": {
+  "add": null,
+  "modify": null,
+  "delete": null,
+  "err": "ArgumentError: argument 11: OverflowError: int too long to convert",
+  "callback_seen": null,
+  "register": true
+ },
+ "verdicts": {},
+ "run_err": "ArgumentError: argument 11: OverflowError: int too long to convert",
+ "hwnd_alive": false,
+ "delete_ok_after_stop": null,
+ "run_err_after_stop": "ArgumentError: argument 11: OverflowError: int too long to convert",
+ "registry": {
+  "open_rc": 0,
+  "set_rc": 0,
+  "del_rc": 0,
+  "startup_dir_exists": true,
+  "startup_write_ok": true
+ }
+}

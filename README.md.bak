@@ -1,0 +1,909 @@
+<!-- NEXUS — Legendary Bilingual README -->
+<!-- اللغة العربية أساسية، English للتقنية والعالم — لأن NEXUS يتكلم الاثنين -->
+
+```text
+███╗   ██╗███████╗██║   ██╗██╗  ██╗██║   ██║███████╗
+████╗  ██║██╔════╝██║   ██║██║ ██╔╝██║   ██║██╔════╝
+██╔██╗ ██║█████╗  ██║   ██║█████╔╝ ██║   ██║███████╗
+██║╚██╗██║██╔══╝  ██║   ██║██╔═██╗ ██║   ██║╚════██║
+██║ ╚████║███████╗╚██████╔╝██║  ██╗╚██████╔╝███████║
+╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+```
+
+<div align="center">
+
+## NEXUS — Local Autonomous Computer Intelligence Platform
+
+### طبقة تشغيل ذكية فوق Windows · An intelligent execution layer above Windows
+
+**الهدف → نتيجة مكتملة. Goal → Finished Result.**
+
+[![Status](https://img.shields.io/badge/STATUS-SPECIFICATION%20PHASE-8b5cf6?style=for-the-badge&labelColor=1e1b2e)](#roadmap)
+[![Platform](https://img.shields.io/badge/PLATFORM-Windows%2010%2B-0078D6?style=for-the-badge&labelColor=1e1b2e&logo=windows&logoColor=white)](#roadmap)
+[![Runtime](https://img.shields.io/badge/AI%20RUNTIME-llama.cpp-d97a00?style=for-the-badge&labelColor=1e1b2e)](#local-ai)
+[![Privacy](https://img.shields.io/badge/DATA-LOCAL--FIRST-2da44e?style=for-the-badge&labelColor=1e1b2e)](#principles)
+[![Spec](https://img.shields.io/badge/MASTER%20SPEC-v1.0%20·%20375%20SECTIONS-8250df?style=for-the-badge&labelColor=1e1b2e)](docs/reference/NEXUS-Master-Technical-Specification-v1.0.md)
+[![Language](https://img.shields.io/badge/README-العربية%20%2B%20English-ffd845?style=for-the-badge&labelColor=1e1b2e)](#)
+
+*Windows-first · Local-first · Model-agnostic · Goal-driven · Verification-first · Persistence-first*
+
+</div>
+
+---
+
+> 🌐 **README ثنائي اللغة** — كل قسم عربي ثم إنجليزي، أو متمازج طبيعيًا كما يتكلم مهندسو المنطقة.
+> **Bilingual by design** — Arabic narrative, English engineering terms. Because NEXUS itself must speak both (Spec §8: العربية، الإنجليزية، والمخلوط في نفس الجملة).
+
+---
+
+<a id="toc"></a>
+
+## 📑 Table of Contents · فهرس المحتويات
+
+| # | Section · القسم | # | Section · القسم |
+|---|---|---|---|
+| 1 | [The Problem · المشكلة](#problem) | 9 | [Local AI Strategy · الذكاء المحلي](#local-ai) |
+| 2 | [What NEXUS Is · ما هو NEXUS](#what-nexus) | 10 | [Integration Map · خريطة التكامل](#integration) |
+| 3 | [The Comparison · المقارنة](#comparison) | 11 | [Security Model · نموذج الأمان](#security) |
+| 4 | [Core Principles · المبادئ](#principles) | 12 | [Use Cases · حالات الاستخدام](#use-cases) |
+| 5 | [Architecture · المعمارية](#architecture) | 13 | [Repository Structure · هيكل المستودع](#structure) |
+| 6 | [The 35 Systems · الأنظمة الـ35](#systems) | 14 | [Roadmap · خارطة الطريق](#roadmap) |
+| 7 | [Task Lifecycle · دورة حياة المهمة](#lifecycle) | 15 | [FAQ · أسئلة شائعة](#faq) |
+| 8 | [Memory & Learning · الذاكرة والتعلم](#memory) | 16 | [Definition of Done · معيار الاكتمال](#done) |
+
+📄 **[The Master Specification v1.0 — الوثيقة المرجعية الكاملة](docs/reference/NEXUS-Master-Technical-Specification-v1.0.md)** · 💬 [Contributing · المشاركة](#contributing) · ⚖️ [License · الترخيص](#license)
+
+---
+
+<a id="problem"></a>
+
+## 🔥 The Problem · المشكلة
+
+<div dir="rtl">
+
+> **كل أدوات الذكاء الاصطناعي اليوم تجيب. قليلٌ منها يُنجِز.**
+>
+> تسأل Chatbot فيجيبك نصًا. تطلب من Coding Agent فيكتب ملفًا. تشغّل RPA فينفّذ سكربتًا جامدًا.
+> لكن جهازك — بكل قوته — ما زال **أنت** من يفتح Word، ويبحث، ويحمّل، وينسّق، ويراجع، ويصلح، ويرفع إلى GitHub.
+>
+> الفجوة ليست في الذكاء. الفجوة بين **الإجابة والإنجاز**.
+
+</div>
+
+> **Every AI tool today answers. Very few actually *finish*.**
+>
+> Chatbots return text. Coding agents write files. RPA runs dead scripts.
+> But your machine — with all its power — still needs **you** to open Word, research, download, format, review, repair, and push to GitHub.
+>
+> The gap isn't intelligence. The gap is between **answering and accomplishing**.
+
+---
+
+<a id="what-nexus"></a>
+
+## 🧠 What NEXUS Is · ما هو NEXUS
+
+<div dir="rtl">
+
+> **NEXUS ليس Chatbot، وليس Coding Agent فقط، وليس Browser Agent فقط، وليس Remote Desktop.**
+>
+> NEXUS هو **طبقة تشغيل ذكية فوق Windows** تجعل الكمبيوتر بيئة تنفيذٍ لوكيل ذكاء اصطناعي **محلي**، قادر على تحويل هدف المستخدم إلى نتيجة مكتملة — مع التخطيط، البحث، التنفيذ، التحكم بالكمبيوتر، الذاكرة، التحقق، الإصلاح، الاستعادة، التعلم، والتوسع. *(Spec §1)*
+
+</div>
+
+> **NEXUS is not a chatbot, not just a coding agent, not a browser agent, not a remote desktop.**
+>
+> NEXUS is an **intelligent execution layer above Windows** that turns the user's machine into the execution environment of a **local** autonomous AI agent — one that converts a stated *goal* into a *finished result*: planning, researching, executing, controlling the computer, remembering, verifying, repairing, recovering, learning, and scaling. *(Spec §1)*
+
+### The core difference · الفارق الجوهري
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  Traditional AI:                                                │
+│                                                                 │
+│      Question  ──────────────────────────────────────▶  Answer  │
+│                          (end of story)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  NEXUS:                                                         │
+│                                                                 │
+│      Goal ▶ Understand ▶ Plan ▶ Research ▶ Execute ▶ Observe    │
+│            ▶ Verify ▶ Repair ▶ Remember ▶ Learn ▶ Continue      │
+│            ──────────────────────────────▶  Finished Result     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+<div dir="rtl">
+
+المستخدم يقول، وNEXUS ينجز:
+
+</div>
+
+The user says — NEXUS delivers:
+
+```text
+"Build me an application."                      → app built, tested, on GitHub
+"افتح Word واعمل التقرير."                        → researched, formatted, saved .docx
+"Analyze the project on drive M: and extend it."  → understood, mapped, extended
+"Find the best 10 repos of this kind."            → ranked analysis with evidence
+"حلل جهازي واضبط إعدادات War Thunder."            → hardware profile + tuned settings
+"كمل المشروع."                                     → checkpoint reconciled, resumed
+```
+
+<div dir="rtl">
+
+**وبلا عشرات الأوامر الصغيرة** *(Spec §2)* — نظام تنفيذ رقمي عام الأغراض: **General-purpose digital execution system.**
+
+**خارج النطاق صراحةً:** ليس نظام تشغيل بديلًا، ليس بوت ألعاب، لا يتجاوز أنظمة الحماية أو الـAnti-cheat، وليس "مجرد" واجهة شات / أوتوميشن متصفح / IDE / RAG *(Spec §5)*.
+
+</div>
+
+**General-purpose digital execution system** *(Spec §2-3)*. **Hard boundaries:** no OS replacement, no autoplay bot, no bypassing anti-cheat or protection systems, not "just" a chat UI / browser automation / IDE / RAG *(Spec §5)*.
+
+---
+
+<a id="comparison"></a>
+
+## ⚔️ The Comparison · لماذا NEXUS ليس كالبقية
+
+| Capability · القدرة | 💬 Chatbot | 👨‍💻 Coding Agent | 🤖 RPA / Scripting | 🧠 **NEXUS** |
+|---|:---:|:---:|:---:|:---:|
+| Conversational answers · إجابات حوارية | ✅ | ⚠️ | ❌ | ✅ |
+| Writes real code · كتابة كود فعلي | ❌ | ✅ | ❌ | ✅ |
+| Runs until **goal** done · يشتغل حتى الهدف | ❌ | ⚠️ | ⚠️ scripted | ✅ autonomous |
+| Verifies with evidence · تحقق بأدلة | ❌ | ⚠️ | ❌ | ✅ Verification-first |
+| Survives reboot & power loss · ينجو من إعادة التشغيل | ❌ | ❌ | ❌ | ✅ Checkpoints + Recovery |
+| Learns from experience · يتعلم من التجربة | ❌ | ❌ | ❌ | ✅ Learning Engine |
+| Local-first models · نماذج محلية | ⚠️ | ❌ | n/a | ✅ llama.cpp |
+| Controls Windows apps · يتحكم بتطبيقات Windows | ❌ | ❌ | ⚠️ brittle | ✅ API→UIA→Vision |
+| Human + AI in parallel · إنسان وAI بالتوازي | ❌ | ❌ | ⚠️ | ✅ Input Ownership |
+| Multi-agent planning · تخطيط متعدد الوكلاء | ❌ | ⚠️ | ❌ | ✅ Master + Specialists |
+
+---
+
+<a id="principles"></a>
+
+## 🧭 Core Principles · المبادئ الأساسية
+
+<div dir="rtl">
+
+تسعة مبادئ غير قابلة للتفاوض — من القسم 4 من الوثيقة:
+
+</div>
+
+Nine non-negotiable principles — from Spec §4:
+
+| # | Principle | Meaning · المعنى |
+|:---:|---|---|
+| 1 | **Goal-first** | الهدف النهائي أهم من أي سلسلة خطوات ثابتة — the end goal outranks any fixed sequence |
+| 2 | **Prompt priority** | تعليماتك الحالية فوق كل ذاكرة وتفضيل سابق — `Current Prompt > Task Constraints > Workspace Policy > Project Decisions > User Preferences > Long-term Learning` |
+| 3 | **Task-scoped capability** | قدرات واسعة لا تُستخدم عشوائيًا — القدرة مرتبطة بالمهمة |
+| 4 | **Verification-first** | إعلان النجاح يتطلب تحققًا فعليًا بأدلة — success claims need evidence |
+| 5 | **Persistence-first** | المهمة لا تعتمد على بقاء نافذة مفتوحة — tasks survive windows, reboots, power loss |
+| 6 | **Local-first** | البيانات والنماذج والذاكرة والحالة… محلية — core data stays on the machine |
+| 7 | **Model-agnostic** | لا ارتباط بنموذج محدد — no hard model dependency |
+| 8 | **Composable** | كل مكوّن يدخل عبر عقد واضحة — every Agent/Tool/Model/Skill/Plugin has explicit contracts |
+| 9 | **Graceful degradation** | نقص الموارد ⇒ تباطؤ لا خسارة — slowness beats losing the task |
+
+<div align="center">
+
+> **النموذج ليس المدير. NEXUS Core هو المدير.**
+> **The model is not the manager. NEXUS Core is the manager.** *(Spec §364)*
+
+</div>
+
+---
+
+<a id="architecture"></a>
+
+## 🏗️ Architecture · المعمارية
+
+<div dir="rtl">
+
+معمارية Super-Harness: نواة NEXUS ملكٌ خالص لنا، وكل مشاريع المصادر المفتوحة تدخل خلف **Adapters** — يموت المستودع الخارجي؟ نستبدل الـAdapter ويستمر NEXUS *(Spec §266-267)*.
+
+</div>
+
+A Super-Harness architecture: the NEXUS Core is fully ours; every open-source component sits **behind adapters** — an external repo dies? Swap the adapter, NEXUS continues *(Spec §266-267)*.
+
+```text
+                         ┌──────────────────────┐
+                         │        USER          │
+                         │ Text / Voice / Files │
+                         └──────────┬───────────┘
+                                    ▼
+                         ┌──────────────────────┐
+                         │      NEXUS UI        │
+                         └──────────┬───────────┘
+                                    ▼
+                         ┌──────────────────────┐
+                         │    MASTER AGENT      │
+                         └──────────┬───────────┘
+                                    ▼
+                    ┌──────────────────────────────┐
+                    │      NEXUS ORCHESTRATOR      │
+                    │ Goal / Scope / Plan / State  │
+                    └──────────────┬───────────────┘
+        ┌──────────────────────────┼───────────────────────────┐
+        ▼                          ▼                           ▼
+┌───────────────┐          ┌────────────────┐          ┌────────────────┐
+│ AGENT SYSTEM  │          │ MEMORY/LEARNING│          │ RESOURCE SYSTEM│
+│ Planner       │          │ User/Project   │          │ CPU / RAM      │
+│ Research      │          │ Workspace/Task │          │ GPU / VRAM     │
+│ Coding        │          │ Lessons/Skills │          │ Concurrency    │
+│ Browser       │          └───────┬────────┘          └───────┬────────┘
+│ Computer      │                  │                           │
+│ Testing/Sec   │                  │                           │
+└──────┬────────┘                  │                           │
+       └───────────────────────────┼───────────────────────────┘
+                                   ▼
+                          ┌──────────────────┐
+                          │   TOOL ROUTER    │
+                          └────────┬─────────┘
+                  ┌────────────────┼────────────────┐
+                  ▼                ▼                ▼
+              Native            MCP             Plugins
+               Tools             Tools             Tools
+                                   ▼
+                         ┌────────────────────┐
+                         │ COMPUTER RUNTIME   │
+                         │ Windows UI · Browser│
+                         │ Terminal · Files    │
+                         │ Mouse/Keyboard     │
+                         │ Vision · Processes │
+                         └─────────┬──────────┘
+                                   ▼
+                              WINDOWS PC
+                                   ▼
+                          OBSERVE + VERIFY
+                       ┌───────────┴───────────┐
+                       ▼                       ▼
+                    SUCCESS                  REPAIR ──▶ EXECUTE
+                       │
+                       ▼
+                  CHECKPOINT ──▶ MEMORY/LEARNING ──▶ CONTINUE
+                       │
+                       ▼
+               FINAL VERIFICATION ──▶ RESULT
+```
+
+### Windows control hierarchy · هرمية التحكم بـ Windows
+
+<div dir="rtl">
+
+NEXUS يجرّب دائمًا الطبقة الأعلى موثوقية أولًا، والأدنى fallback *(Spec §59)*:
+
+</div>
+
+Always the most reliable layer first, lower layers are fallback *(Spec §59)*:
+
+```text
+1. Native / Application API        ← native app control (most reliable)
+2. Windows UI Automation (UIA)     ← accessibility tree, pywinauto
+3. Browser / DOM Automation        ← Playwright, Browser Use
+4. Vision                          ← screen understanding via VLM
+5. Mouse / Keyboard                ← last resort, with visible overlay
+```
+
+### Input ownership · ملكية الإدخال (Human + AI بالتوازي)
+
+```text
+Monitor 1:   War Thunder  →  USER    (يقاتل بحرية)
+Monitor 2:   Chrome B     →  NEXUS   (يبحث وينفّذ المهمة)
+```
+
+<div dir="rtl">
+
+بمنطق **Window/Input Ownership** — ليس بمنطق "كل حركة ماوس توقف الوكيل" *(Spec §61-62)*. المستخدم يلعب، وNEXUS يشتغل، ولا يفسد أحدهما الآخر.
+
+</div>
+
+With **Window/Input Ownership** — never "any mouse movement stops the agent" *(Spec §61-62)*. The user plays; NEXUS works; neither corrupts the other.
+
+---
+
+<a id="systems"></a>
+
+## ⚙️ The 35 Core Systems · الأنظمة الأساسية الـ35
+
+<div dir="rtl">
+
+المنتج النهائي = 35 نظامًا مترابطًا *(Spec §343)*:
+
+</div>
+
+The final product = 35 interconnected systems *(Spec §343)*:
+
+| # | System | # | System | # | System |
+|:---:|---|:---:|---|:---:|---|
+| 1 | UI | 13 | Memory Engine | 25 | Research Engine |
+| 2 | Desktop Launcher (Tray) | 14 | Learning Engine | 26 | Document Engine |
+| 3 | Core Service | 15 | Model Manager | 27 | Speech Engine |
+| 4 | Master Agent | 16 | Resource Manager | 28 | Vision Engine |
+| 5 | Orchestrator | 17 | Verification Engine | 29 | Event Bus |
+| 6 | Agent Runtime | 18 | Recovery Engine | 30 | Audit System |
+| 7 | Agent Registry | 19 | Checkpoint Manager | 31 | Plugin System |
+| 8 | Tool Registry | 20 | Workspace Manager | 32 | Skill System |
+| 9 | Tool Router | 21 | Scope Engine | 33 | Remote Gateway |
+| 10 | Computer Runtime | 22 | Permission Engine | 34 | NEXUS API |
+| 11 | Windows Runtime | 23 | Git Manager | 35 | Evaluation System |
+| 12 | Browser Runtime | 24 | GitHub Manager | | |
+
+---
+
+<a id="lifecycle"></a>
+
+## 🔄 Task Lifecycle · دورة حياة المهمة
+
+<div dir="rtl">
+
+آلة حالات رسمية — **FAILED ليست نهاية** بل بعد استنفاد كل مسارات الإصلاح *(Spec §15)*. والاستعادة تثق بالواقع لا بالذاكرة: *"الذاكرة تقول أنشأت app.py، والملف غير موجود → الملف يغلب"* *(Spec §119)*.
+
+</div>
+
+A formal state machine — **FAILED is not terminal** until recovery/repair paths are exhausted *(Spec §15)*. Recovery trusts reality over memory: *"memory says app.py created, filesystem says missing → **filesystem wins**"* *(Spec §119)*.
+
+```text
+CREATED ▶ ANALYZING ▶ CLARIFICATION_REQUIRED* ▶ PLANNING ▶ EXECUTING
+        ▶ VERIFYING ▶ REPAIRING ▶ EXECUTING ▶ COMPLETED
+
+Side states:  PAUSED · RECOVERING · CANCELLED
+              WAITING_NETWORK · WAITING_RESOURCE · WAITING_FOR_USER
+```
+
+\* **Clarification Gate** *(Spec §17)* — يسأل فقط عند نقصٍ جوهري يمنع التنفيذ:
+<div dir="rtl">
+
+> يسأل إذا النقص جوهري. لا يسأل إذا شكلي. لا يسأل بعد البدء عن شيء يمكن استنتاجه أو جمعه.
+
+</div>
+
+> Asks only on substantive gaps. Never for formal details. Never mid-task for discoverable info.
+
+<div dir="rtl">
+
+**وإليه الذاكرة** — القديم لا يقهر الجديد أبديًا *(Spec §24)*:
+
+</div>
+
+**Memory priority** — the old never overrides the new *(Spec §24)*:
+
+```text
+Current Prompt  >  Current Task  >  Workspace  >  Project  >  User  >  Learned Knowledge
+```
+
+---
+
+<a id="memory"></a>
+
+## 🧬 Memory & Learning · الذاكرة والتعلم
+
+<div dir="rtl">
+
+الذاكرة ليست "سجل المحادثة" — إنها **وقود القرارات**: حقائق، قرارات، ملاحظات، دروس، مهارات، أدلة بمصادرها — وكل ذاكرة تحمل `confidence` و`source` حتى لا يتحول التخمين إلى حقيقة دائمة *(Spec §23-26)*.
+
+</div>
+
+Memory isn't a "chat log" — it's **decision fuel**: facts, decisions, observations, lessons, skills, sourced evidence — each entry carrying `confidence` + `source`, so guesswork never hardens into eternal truth *(Spec §23-26)*.
+
+```text
+Memory namespaces:   GLOBAL ▸ USER ▸ PROJECT ▸ WORKSPACE ▸ TASK ▸ SESSION ▸ AGENT
+Memory types:        Fact · Decision · Observation · Hypothesis · Lesson · Skill · Evidence
+Storage:             SQLite (structured) + Qdrant (semantic) + Mem0 — all behind NEXUS abstraction
+```
+
+### Learning engine · محرك التعلم
+
+```text
+Experience ▶ Extract candidate ▶ Validate ▶ Confidence ▶ Store ▶ Reuse
+```
+
+<div dir="rtl">
+
+- **يتعلم من الأخطاء:** *"الأداة X تفشل عندما يحتوي المسار على مسافات" → درس: اقتبس المسارات* *(Spec §215)*
+- **يولّد Skills:** سير عمل متكرر ⇒ مهارة قابلة لإعادة الاستخدام — فقط إذا كان متكررًا، مفيدًا، قابلًا للتحقق *(Spec §84)*
+- **حماية من Memory Poisoning:** تجربة خام ⇒ مرشح درس ⇒ دليل ⇒ ثقة ⇒ حفظ *(Spec §162)*
+
+</div>
+
+- **Learns from errors:** *"Tool X fails when paths contain spaces" → lesson: quote path arguments* *(Spec §215)*
+- **Generates Skills:** repeated workflow ⇒ reusable capability — only if repeated, useful, verifiable *(Spec §84)*
+- **Memory-poisoning defense:** raw experience ⇒ candidate lesson ⇒ evidence ⇒ confidence ⇒ persist *(Spec §162)*
+
+---
+
+<a id="local-ai"></a>
+
+## 🤖 Local AI Strategy · استراتيجية الذكاء المحلي
+
+<div dir="rtl">
+
+الفلسفة ليست "اجعل نموذج 1B يساوي 100B" — بل **انقل القدرة من داخل النموذج إلى النظام حوله** *(Spec §138)*:
+
+</div>
+
+The philosophy is **not** *"make 1B equal 100B"* — it's **move capability out of the model into the system around it** *(Spec §138)*:
+
+```text
+Small Local Models
+  + Agent Harness      + Multi-Agent Runtime     + Memory
+  + Learning           + Retrieval               + Browser
+  + Windows Control    + Tools                   + Research
+  + Verification       + Recovery               + Git/GitHub
+  + Resource Mgmt      + Remote Control          + Plugin System
+```
+
+**Measured baseline on the reference machine** *(i7-3770, AVX-only — real benchmarks, not vendor claims — Spec §88)*:
+
+| Model | Setup | Throughput |
+|---|---|---:|
+| Qwen3-0.6B | KV-Q4 | ≈ 11.66 tok/s |
+| DS-Coder-1.3B | GPU offload | ≈ 29.14 tok/s |
+| Qwen2.5-Coder-1.5B | ctx 8192 | ≈ 9.57 tok/s |
+| LFM2.5-1.2B | ctx 8192 | ≈ 7.54 tok/s |
+
+**Routing:** لكل مهمة نموذجها — اختيار حسب task fit + capabilities + RAM/VRAM + latency + context + **observed reliability من benchmark حقيقي على الجهاز نفسه** *(Spec §136, §180)*.
+
+**Multi-Agent ≠ Multi-LLM** — نموذج واحد يخدم أدوار وكلاء متعددة *(Spec §177)*.
+
+**Degradation ladder · سلّم التدهور الرشيق** — البطء أفضل من ضياع المهمة:
+
+```text
+RAM low → reduce concurrency → unload idle models → switch smaller model
+        → prune context → continue  (never lose the task)
+```
+
+---
+
+<a id="integration"></a>
+
+## 🗺️ Integration Map · خريطة التكامل الخارجية
+
+<div dir="rtl">
+
+كل مكوّن خارجي يمر عبر **NEXUS Adapter** — القرارات: `USE / ADAPT / REFERENCE / TEST / REJECT` *(Spec §167-169)*:
+
+</div>
+
+Every external component passes through a **NEXUS adapter** — decisions: `USE / ADAPT / REFERENCE / TEST / REJECT` *(Spec §167-169)*:
+
+| Layer · الطبقة | Component | Decision · القرار |
+|---|---|---|
+| Harness | ECC | `ADAPT / REFERENCE` |
+| Agent SDK | Cline | `ADAPT / REFERENCE` |
+| Orchestration | LangGraph | `USE / ADAPT` |
+| Long-horizon | Prime Agent | `REFERENCE` |
+| Multi-agent | MS Agent Framework | `REFERENCE / POSSIBLE USE` |
+| Coding | OpenHands · OpenCode | `ADAPT / REFERENCE` |
+| Codebase Intel | Aider (repo-map) | `ADAPT IDEAS` |
+| Browser Agent | Browser Use | `USE / ADAPT` |
+| Browser Execution | Playwright | `USE` |
+| Windows | windows-harness | `ADAPT` (experimental — behind API) |
+| Windows UI | pywinauto | `USE` |
+| Memory | Mem0 | `USE / ADAPT` |
+| Vector Search | Qdrant | `USE` |
+| Parsing | Tree-sitter | `USE` |
+| Documents | Docling | `USE` |
+| Speech | sherpa-onnx | `BENCHMARK / USE` |
+| Local LLM | **llama.cpp** | `USE` — primary inference backend |
+| Protocol | MCP | `USE SELECTIVELY` (behind Tool Router) |
+| Evaluation | OSWorld-V2 · BrowserGym | `TEST ONLY` |
+| Security | Trivy · Semgrep · Pyright | `USE SELECTIVELY` |
+| Remote | RustDesk / WebRTC | `REFERENCE` |
+
+<div dir="rtl">
+
+**لماذا لا framework واحد؟** لأن كل مشروع يحل قطعة مختلفة: ECC أفكار Harness، Cline لـAgent runtime، LangGraph للأوركستريشن، Prime للـlong-horizon، Browser Use لذكاء المتصفح، Windows Harness لتنفيذ Windows *(Spec §274)*.
+
+**ما يبقى ملك NEXUS حصريًا** *(Spec §368)*: Core · Task Model · Scope · Permission System · Orchestrator · Agent/Tool Registries · Memory Manager · Learning · Resource Manager · Verification · Recovery · Checkpoints · Workspace Manager · Window Manager · Input Arbitration · Plugin/Skill/Event Systems · APIs · Desktop UI · Remote Protocol.
+
+</div>
+
+**Why not one framework?** Each project solves a different piece: ECC → harness ideas, Cline → agent runtime, LangGraph → stateful orchestration, Prime → long-horizon, Browser Use → browser intelligence, Windows Harness → Windows execution *(Spec §274)*.
+
+**Forever owned by NEXUS** *(Spec §368)*: Core · Task Model · Scope · Permission System · Orchestrator · Agent/Tool Registries · Memory Manager · Learning · Resource Manager · Verification · Recovery · Checkpoints · Workspace Manager · Window Manager · Input Arbitration · Plugin/Skill/Event Systems · APIs · Desktop UI · Remote Protocol.
+
+---
+
+<a id="security"></a>
+
+## 🔐 Security Model · نموذج الأمان
+
+<div dir="rtl">
+
+ثلاث طبقات إنفاذ على **كل** فعل، مهما كان صغيرًا *(Spec §156-159)*:
+
+</div>
+
+Three enforcement layers on **every single action** *(Spec §156-159)*:
+
+```text
+Scope Policy       →  هل العملية مرتبطة بالمهمة؟          (is it task-related?)
+Permission Policy  →  هل المهمة تسمح بهذا النوع من الفعل؟   (does the task allow it?)
+Execution Gate     →  هل الوضع الحالي يسمح الآن؟           (do conditions allow it now?)
+```
+
+- 🗝️ **Secrets** — توكنات وبيانات الدخول خلف Secret Abstraction؛ الوكيل يستلم *reference* لا قيمة خام. لا تظهر أبدًا في Chat/Logs/Memory/Telemetry/Screenshots *(Spec §124, §161)*
+- 🎯 **Tool risk classification** — `low` (قراءة) / `medium` (تعديل) / `high` (حذف، أوامر غير مقيدة، releases) *(Spec §163)*
+- 📜 **Audit ≠ Activity** — المستخدم يرى Timeline نظيف؛ والسجل التقني الدقيق للتحقق والتشخيص *(Spec §165)*
+- 🧪 **No silent success, no silent destruction** — كل نتيجة مهمة تحتاج دليلًا؛ كل فعل مدمر مرتبط بالمهمة *(Spec §334-335)*
+- 🌐 **External AI boundary** — قبل إرسال أي شيء خارجيًا: تصنيف البيانات → هل الإرسال ضروري؟ → إخفاء ما يمكن إخفاؤه → إرسال *(Spec §211)*
+
+---
+
+<a id="use-cases"></a>
+
+## 🎮 Use Cases · حالات الاستخدام
+
+<div dir="rtl">
+
+أمثلة رسمية من الوثيقة — الواقع اليومي:
+
+</div>
+
+Official examples from the spec — everyday reality:
+
+### 🛩️ War Thunder
+```text
+"حلل مواصفات جهازي واضبط War Thunder"
+→ Hardware Profile ▶ Launch ▶ Observe UI ▶ Adjust settings ▶ Apply
+▶ Monitor performance ▶ Report ▶ Recommend
+```
+<div dir="rtl">NEXUS يضبط الإعدادات ويراقب الأداء — **ولا يلعب بدلك ولا يتجاوز الـAnti-cheat** *(Spec §66)*.</div>
+NEXUS tunes and monitors — **never plays for you, never touches anti-cheat** *(Spec §66)*.
+
+### 📄 Word Report
+```text
+"اكتب تقريرًا في Word عن Smart Buildings، جيب المصادر والصور ونسّقه واحفظه"
+→ Research ▶ Sources ▶ Images ▶ Create docx ▶ Word control ▶ Format ▶ Review ▶ Save ▶ Verify
+```
+
+### 🚀 Full SaaS Build *(Spec §276)*
+```text
+"ابنِ منصة SaaS على القرص M، ابحث عن أفضل architecture، حلل مشاريع GitHub
+ المشابهة، أنشئها، اختبرها، أصلح كل الأخطاء، وارفعها على GitHub"
+→ 22 خطوة آلية: Understand ▶ Research ▶ GitHub discovery ▶ Architecture ▶
+  Decomposition ▶ Scheduling ▶ Model selection ▶ Coding ▶ Tests ▶ Debugging ▶
+  Security ▶ Review ▶ Git ▶ GitHub ▶ Final verification ▶ Memory ▶ Learning ▶ Report
+```
+
+### ⏯️ "كمل المشروع" *(Spec §277)*
+```text
+Conversation lookup ▶ Task lookup ▶ Workspace ▶ Checkpoint ▶
+Real filesystem ▶ Git state ▶ Memory ▶ Next valid action ▶ يُكمِل
+```
+
+### 📴 Offline *(Spec §281)*
+```text
+Research ▶ انقطع الإنترنت ▶ WAITING_NETWORK
+Coding   ▶ يستمر محليًا ▶ Testing يستمر محليًا
+Internet عاد ▶ Research resumes — حالة المهمة لم تُفقد أبدًا
+```
+
+---
+
+<a id="structure"></a>
+
+## 📁 Planned Repository Structure · هيكل المستودع المخطط
+
+<div dir="rtl">
+
+الهيكل المستهدف عند بدء التنفيذ *(Spec §255)*:
+
+</div>
+
+The target layout once implementation begins *(Spec §255)*:
+
+```text
+nexus/
+├── core/            # tasks · sessions · policies · lifecycle · events · errors
+├── orchestration/   # planners · scheduler · state · graph · delegation · replanning
+├── agents/          # master · planner · research · coding · computer · browser · registry
+├── tools/           # registry · router · native + MCP adapters
+├── computer/        # screen · windows · mouse · keyboard · uia · vision · arbitration
+├── browser/         # sessions · playwright · browser_use · downloads · verification
+├── models/          # manager · registry · routing · benchmark · llama.cpp adapter
+├── memory/          # manager · retrieval · compaction · qdrant · mem0 · sqlite
+├── learning/        # lessons · skills · workflow optimization
+├── verification/    # acceptance · evidence · repair
+├── recovery/        # checkpoints · reconciliation · restart · rollback · health
+├── security/        # scope · permissions · credentials · secrets · audit · redaction
+├── git/  github/    # repository + remote management
+├── plugins/ skills/ # extensibility
+├── events/          # event bus + schemas
+├── resources/       # resource manager + hardware profile
+├── remote/          # gateway · auth · control · file transfer · realtime
+├── ui/              # chat · tasks · activity · models · overlay · tray
+├── tests/           # internal + fault-injection suites
+└── docs/
+    └── reference/
+        ├── NEXUS-Master-Technical-Specification-v1.0.md   ⬅ WHAT · the source of truth
+        └── NEXUS-Final-Build-Plan-v1.0.md                 ⬅ HOW · the mandatory build order
+```
+
+<div dir="rtl">
+
+**ما هبط فعليًا في المرحلة 1** *(خطة البناء §2)* — القلب يعمل الآن، بلا أي اعتماد خارجي (stdlib فقط):
+
+</div>
+
+**Actually landed in Phase 1** *(Build Plan §2)* — the heart is beating now, stdlib-only by design:
+
+```text
+config/                    # §2.1 six typed TOML sections
+├── system/ models/ tools/ agents/ workspaces/ security/
+nexus/
+├── core/
+│   ├── config/            # schema · loader · environment · paths · runtime (NexusRuntime.boot)
+│   ├── session/           # User → Conversation → Task → Session (§2.3, strict hierarchy)
+│   ├── engine/            # 13-state Task State Machine + TaskEngine (§2.4)
+│   └── persistence/       # atomic JSON task records + index (§2.5, 11 fields)
+└── events/                # central EventBus · 28 canonical events (§2.2)
+tests/phase01/             # §2.6 exit-criteria harness — 98/98 checks
+pyproject.toml             # nexus-core manifest · zero dependencies (no agent framework)
+```
+
+<div dir="rtl">
+
+**وما هبط في المرحلة 2** *(خطة البناء §3)* — المفهوم مُثبّت: **Full Control within Task Scope**:
+
+</div>
+
+**And what landed in Phase 2** *(Build Plan §3)* — the concept is locked: **Full Control within Task Scope**:
+
+```text
+nexus/core/
+├── workspace/            # §3.1 registry · 7 fields verbatim · atomic JSON · path resolution
+├── scope/                # §3.2–§3.4 six dimensions · resolve("اشتغل على M:\Client")
+│                         #   · cross-workspace access: never an absolute block
+└── policy/               # §3.5 nine components · AutonomyLevel · allow/confirm/deny
+nexus/resources/          # §4.1–§4.5 hardware scanner (12 targets) · hardware_profile
+                          #   · change detection · 8 tracked resources · §92 ladder
+nexus/models/             # §5.1–§5.7 ModelProvider (7 members) · registry (13 fields)
+                          #   · llama.cpp adapter → llama-server · dynamic loading
+                          #   per resources · §135 benchmark · §178 router · MiMo pool
+nexus/agents/             # §6.1–§6.6 Agent (8 fields) · loop (7 phases, traced)
+nexus/harness/            # §7.1–§7.5 + §41: skills · rules · hooks (8 points,
+                         #  pre_tool_call veto) · sessions (5-state) · checkpoints
+                         #  (3 durability modes) · goals+heartbeats · §41 assembler
+nexus/agents/            # §6.1–§6.6 Agent (8 fields) · loop (7 phases, traced)
+                          #   · Master Agent (7 behaviors, §2.4 choreography)
+                          #   · registry (4 verbs) · messages (8 fields) · ownership
+nexus/tools/             # §8.1–§8.5 Tool System: registry (9 fields/tool) ·
+                          #   router (7-stage pipeline, proof trace) · 9 native
+                          #   tools (stdlib) · MCP interop (official SDK v2
+                          #   behind the router, §8.5 server gates)
+tests/phase02/            # §3 exit-criteria harness — 143/143 checks
+tests/phase03/            # §4 exit-criteria harness — 104/104 checks (+ real platform scan)
+tests/phase04/            # §5 exit-criteria harness — 106/106 checks (+ fake llama-server)
+tests/phase05/            # §6 exit-criteria harness — 116/116 checks (+ regressions 1–4)
+tests/phase06/            # §7 exit-criteria harness — 88/88 checks (+ regressions 1–5)
+tests/phase07/            # §8 exit-criteria harness — 88/88 + 1 bonus (+ echo MCP server fixture)
+tests/phase08/            # §9 exit-criteria harness — 80/80 (+ live Windows proofs)
+tests/phase09/            # §10 exit-criteria harness — 84/84 (+ live Windows proofs, PASS)
+tests/phase10/            # §11 exit-criteria harness — 70/70 (+ real-Chromium proofs, PASS)
+```
+
+---
+
+<a id="roadmap"></a>
+
+## 🗺️ Roadmap · خارطة الطريق
+
+<div dir="rtl">
+
+خطة البناء تفرض **40 مرحلة تنفيذية** من تجهيز الجهاز حتى التغليف الإنتاجي *(Build Plan §1–§40)* — وهي تفصّل المراحل الكلية الـ17 في المواصفة *(Spec §344-360)*. التقدم يُحدَّث مع كل milestone:
+
+</div>
+
+The Build Plan mandates **40 executable phases** from machine prep to production packaging *(Build Plan §1–§40)* — they expand the Spec's 17 macro-phases *(Spec §344-360)*. Progress updates with every milestone:
+
+| Deliverable · المخرَج | Progress |
+|---|---|
+| Master Specification v1.0 (375 sections) | `██████████ 100%` ✅ |
+| Final Build Plan v1.0 (109 sections) | `██████████ 100%` ✅ |
+| PHASE 0 — Machine & Repository Preparation | `██████████ 100%` ✅ |
+| **PHASE 1 — NEXUS Core Foundation** · config · event bus · sessions · task engine · persistence | `██████████ 100%` ✅ |
+| **PHASE 2 — Workspace + Scope + Policy** · 143/143 | `██████████ 100%` ✅ |
+| **PHASE 3 — Hardware Intelligence + Resource Manager** · 104/104 | `██████████ 100%` ✅ |
+| **PHASE 4 — Local Model Runtime** · llama.cpp · 106/106 + live 26/26 (repo round 1) | `██████████ 100%` ✅ |
+| **PHASE 5 — Agent Runtime** · agent · loop · master · registry · messages · ownership · 116/116 | `██████████ 100%` ✅ |
+| **PHASE 6 — Harness Integration** · ECC/Cline/LangGraph/Prime/DeepAgents patterns · skills · rules · hooks · sessions · checkpoints · goals · §41 contract · 88/88 + repo round 3 | `██████████ 100%` ✅ |
+| **PHASE 7 — Tool System** · Tool Registry (§8.1, 9 fields) · Tool Router (§8.2, 7-stage traced) · 9 native tools · official MCP SDK v2 behind the router (§8.4/§8.5) · 88/88 + cross-SDK proof · repo round 4 | `██████████ 100%` ✅ |
+| **PHASE 8 — Windows Computer Runtime** · Computer API (§9.1, 8 domains behind the §8.2 router) · §9.5 fallback hierarchy (5 layers, traced) · native UIA ctypes client (§9.4) · SendInput mechanics (§9.2 ADAPT) · pywinauto `[computer]` extra (§9.3 MODE A) · 80/80 + live device proofs · repo round 5 | `██████████ 100%` ✅ |
+| **PHASE 9 — Window Manager + Human Parallelism** · Window Registry (§10.1, 9 fields + first real publisher of window.opened/closed) · Ownership USER/NEXUS/SHARED (§10.2) · per-window input arbitration on the pre_tool_call veto (§10.3) · multi-monitor topology + placement (§10.4) · native ctypes overlay “NEXUS is working · Pause · Resume” (§10.5) · 84/84 + live device proofs (PASS) · repo round 6 (NEXUS-native by plan) | `██████████ 100%` ✅ |
+| **PHASE 10 — Browser Runtime** · Playwright MODE A «USE» behind the §8.2 router (the 13th record) · channel ladder (chromium→chrome→msedge) · user/agent sessions isolated by construction (§11.4/§55) · the never-crossing secret — DPAPI vault + vault_ref (§11.5) · self-healing selectors (§11.3) · the §9.5 dom_a11y rung live · 70/70 + local Chromium 15/15 + device PASS · repo round 7 | `██████████ 100%` ✅ |
+| **PHASE 11 — Vision + OCR + Screen Understanding** · Screen Capture (full/window/region, pure ctypes) · VisionProvider · OCR engine race (device benchmark decides) · §9.5 locate→click · 119/119 +7 · live 11/11 · device PASS | `██████████ 100%` ✅ |
+
+| **PHASE 12 — Memory System** · contracts + 12-scope hierarchy · SQLite index · Qdrant MODE A local · Mem0 MODE B · retrieval pipeline + §12.8 conflict ladder · forget · compression · 137/137 · live 11/11 · device 12/12 | `██████████ 100%` ✅ |
+| **PHASE 13 — Learning System** · Experience Extractor (six kinds) · Learning Record · six-stage pipeline → §12 engine promotion · SkillCandidate + WorkflowMiner · 60/60 · live 14/14 · device 12/12 | `██████████ 100%` ✅ |
+| **PHASE 14 — Code Intelligence** · File/Symbol Index · AST (stdlib-ast + tree-sitter MODE A + regex) · Dependency/API/Test Graphs · Architecture + Repository Maps (Aider PageRank methodology) · 100k-scale engine + §14.12 live update · 97/97+1 · live 21/21 · device PASS | `██████████ 100%` ✅ |
+| PHASE 15 — Git and GitHub | `░░░░░░░░░░` |
+| PHASE 16 — Research Engine | `░░░░░░░░░░` |
+| PHASE 17 — Document Intelligence | `░░░░░░░░░░` |
+| PHASE 18 — Speech System | `░░░░░░░░░░` |
+| PHASE 19 — Verification Engine | `░░░░░░░░░░` |
+| PHASE 20 — Security System | `░░░░░░░░░░` |
+| PHASE 21 — Recovery + Checkpoints | `░░░░░░░░░░` |
+| PHASE 22 — Heartbeat + Stall Detection | `░░░░░░░░░░` |
+| PHASE 23 — Multi-Agent Orchestration | `░░░░░░░░░░` |
+| PHASE 24 — Long-Horizon Execution | `░░░░░░░░░░` |
+| PHASE 25 — Desktop UI | `░░░░░░░░░░` |
+| PHASE 26 — Desktop Tray + Startup | `░░░░░░░░░░` |
+| PHASE 27 — Remote Web | `░░░░░░░░░░` |
+| PHASE 28 — Remote Security | `░░░░░░░░░░` |
+| PHASE 29 — Plugin System | `░░░░░░░░░░` |
+| PHASE 30 — Skill System | `░░░░░░░░░░` |
+| PHASE 31 — Model Learning / Fine-tuning | `░░░░░░░░░░` |
+| PHASE 32 — Computer Use Evaluation | `░░░░░░░░░░` |
+| PHASE 33 — Browser Evaluation | `░░░░░░░░░░` |
+| PHASE 34 — Full System Verification | `░░░░░░░░░░` |
+| PHASE 35 — Failure Injection | `░░░░░░░░░░` |
+| PHASE 36 — Recovery Validation | `░░░░░░░░░░` |
+| PHASE 37 — Final Security Audit | `░░░░░░░░░░` |
+| PHASE 38 — Performance Optimization | `░░░░░░░░░░` |
+| PHASE 39 — Production Packaging | `░░░░░░░░░░` |
+
+### 📋 Requirements · المتطلبات
+
+<div dir="rtl">
+
+الحد الأدنى المستهدف من الوثيقة — جهاز Windows 10 Pro يعمل inference محلي (مرجع الاختبار: i7-3770، AVX-only). التفاصيل الكاملة في الوثيقة المرجعية.
+
+</div>
+
+Minimum target from the spec: a Windows 10 Pro machine capable of local inference (reference test rig: i7-3770, AVX-only). Full details in the master specification.
+
+---
+
+<a id="faq"></a>
+
+## ❓ FAQ · أسئلة شائعة
+
+<details>
+<summary><b>هل NEXUS عبارة عن Chatbot؟ · Is NEXUS a chatbot?</b></summary>
+
+<div dir="rtl">لا. الشات واجهة واحدة فقط. المحرك هو Task/Agent/Computer Runtime الذي يحول الهدف إلى عمل فعلي.</div>
+No. Chat is just one interface. The engine is the Task/Agent/Computer Runtime that turns goals into real work.
+</details>
+
+<details>
+<summary><b>هل يحتاج إنترنت؟ · Does it need internet?</b></summary>
+
+<div dir="rtl">Local-first: النواة والنماذج والذاكرة تعمل بلا إنترنت. ما يحتاج الشبكة يدخل حالة WAITING_NETWORK ويستأنف تلقائيًا عند عودتها.</div>
+Local-first: core, models, and memory work offline. Network-dependent work enters `WAITING_NETWORK` and auto-resumes when connectivity returns.
+</details>
+
+<details>
+<summary><b>هل يلعب الألعاب بدالي؟ · Does it play games for me?</b></summary>
+
+<div dir="rtl">أبدًا. يضبط الإعدادات ويحلل الأداء ويوصي — ولا يتجاوز الـAnti-cheat أو يحل محل اللاعب. هذا حدٌّ أخلاقي مصمم في المنتج *(Spec §5, §66)*.</div>
+Never. It tunes settings, analyzes performance, and recommends — it does not bypass anti-cheat or replace the player. A designed-in ethical boundary *(Spec §5, §66)*.
+</details>
+
+<details>
+<summary><b>ماذا لو انقطعت الكهرباء؟ · What if power is lost mid-task?</b></summary>
+
+<div dir="rtl">Checkpoint ▶ إقلاع ▶ كشف المهمة المقاطوعة ▶ فحص الواقع الفعلي (Filesystem wins) ▶ Resume من آخر نقطة مؤكدة.</div>
+Checkpoint ▶ boot ▶ detect interrupted task ▶ inspect reality (filesystem wins) ▶ resume from the last reconciled point.
+</details>
+
+<details>
+<summary><b>هل بياناتي تغادر الجهاز؟ · Does my data leave the machine?</b></summary>
+
+<div dir="rtl">النواة محلية 100%. الاستشارة الخارجية اختيارية، تخضع لتصنيف وإخفاء البيانات قبل أي إرسال.</div>
+The core is 100% local. External consultation is optional and passes data classification + redaction before anything is sent.
+</details>
+
+<details>
+<summary><b>لماذا نموذج صغير؟ لماذا لا GPT-حجم؟ · Why a small model?</b></summary>
+
+<div dir="rtl">لأن الهدف جهازك أنت، بلا اشتراكات ولا سحابة. والفارق يُعوّض بنظام: Tools + Memory + Planning + Verification + Recovery حول النموذج *(Spec §138)*.</div>
+Because the target is *your* machine — no subscriptions, no cloud. The gap is compensated by the system around the model *(Spec §138)*.
+</details>
+
+---
+
+<a id="done"></a>
+
+## 🏁 Definition of Done · معيار الاكتمال
+
+<div dir="rtl">
+
+NEXUS لا يعتبر منتهيًا عندما "تعمل الواجهة" ولا عندما "يستدعي الوكيل أدوات" — بل عندما ينجح في *(Spec §361)*:
+
+</div>
+
+NEXUS is not finished when the UI works, nor when the agent calls tools — it is finished when it succeeds at *(Spec §361)*:
+
+```text
+Understand + Plan + Execute + Observe + Verify + Repair + Persist + Recover + Learn
+```
+
+<div dir="rtl">
+
+عبر: **الملفات · تطبيقات Windows · المتصفح · الطرفية · الكود · GitHub · المستندات · المهام الطويلة**
+
+والمعيار على مستوى المنتج:
+
+> **"أعطيك الهدف، وتنجزه."** — بأقل تدخل ممكن.
+
+</div>
+
+across: **Files · Windows apps · Browser · Terminal · Code · GitHub · Documents · Long tasks**
+
+And the product-level bar:
+
+> **"You give the goal — NEXUS delivers."** — with minimal intervention.
+
+---
+
+<a id="docs"></a>
+
+## 📚 Documentation · التوثيق
+
+| Document | Description |
+|---|---|
+| [**NEXUS Master Technical Specification v1.0**](docs/reference/NEXUS-Master-Technical-Specification-v1.0.md) | ⭐ **مصدر الحقيقة الوحيد · The single source of truth** — 375 sections (Arabic): الرؤية، المعمارية، Task Model، الذاكرة، التعلم، Computer/Browser Runtimes، التحقق، الاستعادة، الأمان، APIs، العقود، Phases 0-16 |
+| [**NEXUS Final Build Plan v1.0**](docs/reference/NEXUS-Final-Build-Plan-v1.0.md) | 🧭 **خطة التنفيذ الإجبارية · The mandatory execution plan** — 109 sections (Arabic): تُستخدم بعد المواصفة. Integration Modes A–F، قاعدة الـAdapter، خريطة الملكية، الترتيب الإجباري (57 خطوة)، دورة كل مرحلة `IMPLEMENT → TEST → VERIFY → COMMIT → DOCUMENT → NEXT`، معايير الاكتمال الأربعة، ومصفوفة التكامل النهائية لـ25+ repository |
+| [**Repository Integration Record**](docs/REPOSITORY-INTEGRATION.md) | 🔌 **سجل دخول المستودعات · The §0.2 intake ledger** — every external repo that entered NEXUS: license audit, security/architecture/compatibility reviews, integration mode (A–F), pinned version/commit, and the live proof. Round 1: llama.cpp (MODE B, b10829) · psutil (MODE A, 7.2.2) · Qwen3-0.6B-GGUF — plus the port-disagreement bug only the live proof could catch · Round 2: langgraph/autogen/deepagents (MODE D) · Round 3: ecc/cline/langgraph/prime-agent/deepagents (Phase 6 patterns) · Round 4: modelcontextprotocol python-sdk (MODE A, mcp 2.1.1) + servers/servers-archived (§8.5 gates) |
+
+> ⚖️ **قاعدة المستودع · Rule of the repo:**
+> <div dir="rtl">المواصفة المرجعية هي مصدر الحقيقة الوحيد (ماذا نبني)، وخطة البناء هي أمر التنفيذ (كيف وبأي ترتيب). أي كود أو تصميم أو قرار يخالفهما هو **Bug** — أو يتطلب مراجعة موثقة صريحة أولًا.</div>
+> The Master Specification is the single source of truth (*what we build*); the Final Build Plan is the execution order (*how, and in what order*). Any code, design, or decision that conflicts with either is a **bug** — or requires an explicit, documented revision first.
+
+---
+
+<a id="contributing"></a>
+
+## 🤝 Contributing · المشاركة
+
+<div dir="rtl">
+
+المشروع أنهى **PHASE 0** و**PHASE 1** (98/98) و**PHASE 2** (143/143) و**PHASE 3 — Hardware Intelligence + Resource Manager** (104/104) و**PHASE 4 — Local Model Runtime** (106/106 + برهان حي 26/26) و**PHASE 5 — Agent Runtime** (تجريد الوكيل الثماني حقول · حلقة سباعية مؤرّخة · الوكيل الرئيسي السبعة سلوكيات على آلة الحالات · سجل الأفعال الأربعة · رسائل مُهيكلة بترانسكربت · ملكية تمنع التعديل المتزامن — 116/116)، وأكمل **جولتي تكامل المستودعات** (llama.cpp MODE B + psutil MODE A في الجولة 1 · langgraph/autogen/deepagents MODE D مرجعية في الجولة 2 · [السجل الدائم](docs/REPOSITORY-INTEGRATION.md))، ثم أكمل **PHASE 6 — Harness Integration** (عقد §41 بسبع مدخلات وأربع مخرجات · مهارات وقواعد وخطاطيف ECC · دورة حياة جلسات Cline · نقاط تفتيش LangGraph بثلاث درجات متانة · أهداف ونبضات Prime — 88/88 مع انحدار كامل، وجولة مستودعات ثالثة بخمسة تثبيتات)، ثم أكمل **PHASE 7 — Tool System** (سجلّ أدوات §8.1 بتسعة حقول مُتحقَّقة · موجّه §8.2 بسبع مراحل مُؤرَّخة · تسع أدوات أصلية stdlib · طبقة MCP بالـSDK الرسمي v2 خلف البوابة · 88/88 مع انحدار كامل وبرهان cross-SDK، وجولة مستودعات رابعة)، ثم أكمل **PHASE 8 — Windows Computer Runtime** (واجهة الحاسوب §9.1 بثمانية نطاقات خلف الموجّه نفسه · سلسلة تراجع §9.5 بخمس طبقات مُسجَّلة · عميل UIA أصلي عبر ctypes · محرّك إدخال SendInput بتكيف windows-harness · pywinauto كامتداد اختياري — 80/80 مع انحدار كامل وبراهين حية على الجهاز الحقيقي، وجولة مستودعات خامسة)، ثم أكمل **PHASE 9 — Window Manager + Human Parallelism** (سجلّ نوافذ §10.1 بتسعة حقول وناشر حقيقي أول لحدثي window.opened/closed · ملكية §10.2 بثلاث قيم وافتراض آمن USER · تحكيم §10.3 لكل نافذة عبر نقض pre_tool_call نفسه · طوبولوجيا شاشات §10.4 مع موضعة داخل منطقة العمل · طبقة عائمة §10.5 بـctypes خالصة “NEXUS is working · Pause · Resume” — 84/84 مع انحدار كامل وبرهان حي **PASS** على الجهاز الحقيقي شامل نافذتي War Thunder وChrome الحقيقيتين وشاشتين فعليتين، وجولة مستودعات سادسة NEXUS-native بحكم الخطة). ثم أكمل **PHASE 10 — Browser Runtime** (محرك Playwright خلف الموجّه كالسجلّ الثالث عشر · سلّم القنوات يركب Chrome النظام بلا تنزيل · جلستان معزولتان بنيويًا ببوابة §55 الصريحة · الأسرار لا تعبر واجهة الأداة — خزنة DPAPI ومرجع vault_ref و14 حدثًا مُمسوحًا نظيفًا · شفاء اختيارات ذاتي · درزة dom_a11y حيّة في سلسلة §9.5 — 70/70 مع انحدار كامل وبرهان Chromium حي 15/15 وبرهان جهاز PASS، وجولة مستودعات سابعة). أكمل بعدها **PHASE 11 — Vision/OCR** (119/119 +7) و**PHASE 12 — Memory System** (137/137 · Qdrant MODE A · جهاز 12/12) و**PHASE 13 — Learning System** (60/60 · جهاز 12/12) ثم **PHASE 14 — Code Intelligence** (فهرس الملفات والرموز · AST بثلاث محركات · مخططات التبعية/الـAPI/الاختبار · خرائط البنية والمستودع بمنهجية Aider PageRank · محرّك 100k مع تحديث حيّ tree-sitter — 97/97+1 · حي 21/21 · جهاز PASS). أفضل مساهمة الآن:
+
+1. 📖 اقرأ [الوثيقة المرجعية](docs/reference/NEXUS-Master-Technical-Specification-v1.0.md) وفحصها مقابل قائمة المراجعة النهائية للخبراء *(Spec §374)*
+2. 🔌 رشّح مستودعًا لجولة التكامل القادمة — بدورة §0.2 الكاملة كما في [سجل التكامل](docs/REPOSITORY-INTEGRATION.md)
+3. 🐛 افتح **Issue** لأي ثغرة معمارية، تناقض، أو نقص في المواصفة
+4. 💡 اقترح تحسينات عبر Issues قبل أي PR
+
+عند بدء التنفيذ: كل PR يمر بـ Plan ▶ Implement ▶ Verify — نفس فلسفة NEXUS نفسها.
+
+</div>
+
+The project completed **PHASE 0**, **PHASE 1** (98/98), **PHASE 2** (143/143), **PHASE 3 — Hardware Intelligence + Resource Manager** (104/104), **PHASE 4 — Local Model Runtime** (106/106 plus a 26/26 live proof) and **PHASE 5 — Agent Runtime** (the eight-field agent abstraction · the seven-phase traced loop · the seven-behavior Master Agent over the task machine · the four-verb registry · structured messaging with a transcript · ownership that prevents uncoordinated writes — 116/116), plus **two repository-integration rounds** (llama.cpp MODE B + psutil MODE A in round 1 · langgraph/autogen/deepagents as MODE D references in round 2 · [the permanent record](docs/REPOSITORY-INTEGRATION.md)). It then completed **PHASE 6 — Harness Integration** (the §41 contract · ECC skills/rules/hooks · Cline sessions · LangGraph checkpoints · Prime goals — 88/88 with full regression), **PHASE 7 — Tool System** (the §8.1 registry with nine validated fields · the §8.2 seven-stage traced router · the nine stdlib native tools · the official MCP SDK v2 behind the router — 88/88 with full regression and a cross-SDK proof, plus repository Round 4), **PHASE 8 — Windows Computer Runtime** (the §9.1 Computer API with eight domains behind the same router · the §9.5 five-layer traced fallback hierarchy · the native ctypes UIA client · the ADAPTed SendInput engine · pywinauto as an optional extra — 80/80 with full regression plus live proofs on the real machine, and repository Round 5) and **PHASE 9 — Window Manager + Human Parallelism** (the §10.1 nine-field registry and the first real publisher of window.opened/closed · §10.2 USER/NEXUS/SHARED ownership with the safe USER default · §10.3 per-window input arbitration on the pre_tool_call veto · §10.4 the real two-monitor topology with work-area placement · §10.5 the native ctypes overlay "NEXUS is working · Pause · Resume" — 84/84 with full regression and a live **PASS** proof on the real machine including the actual War Thunder and Chrome windows and both physical monitors; repository Round 6 was NEXUS-native by plan). It then completed **PHASE 10 — Browser Runtime** (the Playwright engine as the thirteenth record behind the router · the channel ladder driving the operator's system Chrome with zero downloads · user/agent sessions isolated by construction behind the explicit §55 gate · secrets that never cross the tool interface — the DPAPI vault, vault references, 14 events scanned clean · self-healing selectors · the dom_a11y rung live in the §9.5 chain — 70/70 with full regression, a live 15/15 Chromium roundtrip and a device PASS; repository Round 7). It then completed **PHASE 11 — Vision/OCR** (119/119 +7), **PHASE 12 — Memory System** (137/137 · Qdrant MODE A · device 12/12), **PHASE 13 — Learning System** (60/60 · device 12/12) and **PHASE 14 — Code Intelligence** (file+symbol index · three-engine AST · dependency/API/test graphs · architecture+repository maps via the Aider PageRank methodology · the 100k-scale engine with the live tree-sitter §14.12 update — 97/97+1 · live 21/21 · device PASS). The best contributions right now:
+
+1. 📖 Read the [master specification](docs/reference/NEXUS-Master-Technical-Specification-v1.0.md) and review it against the final expert checklist *(Spec §374)*
+2. 🐛 Open an **Issue** for any architectural gap, contradiction, or missing piece
+3. 🔌 Nominate a repository for the next integration round — through the same full §0.2 cycle as the [integration record](docs/REPOSITORY-INTEGRATION.md)
+4. 💡 Propose improvements via Issues before any PR
+
+Once implementation starts: every PR passes Plan ▶ Implement ▶ Verify — NEXUS's own philosophy applied to itself.
+
+---
+
+<a id="license"></a>
+
+## ⚖️ License · الترخيص
+
+<div dir="rtl">المشروع مرخّص بـ**MIT** — نفس عائلة تراخيص محركات التكامل الأساسية (llama.cpp). انظر [LICENSE](LICENSE).</div>
+
+Licensed under the **MIT License** — matching the permissive family of our core integration engines (llama.cpp et al.). See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│   NEXUS هو النظام. كل Repo خارجي مجرد قطعة.              │
+│   NEXUS is the system. Every other repo is a piece.      │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Built on Windows · Powered locally · Verified always 🔥**
+
+[⬆ Back to top · عودة للأعلى](#toc)
+
+</div>

@@ -1,0 +1,8 @@
+{
+ "name": "skill-summarize",
+ "type": "skill",
+ "version": "1.0.0",
+ "entry": "skill_summarize.py",
+ "description": "Reusable summarization prompt template (spec 82)",
+ "permissions": []
+}

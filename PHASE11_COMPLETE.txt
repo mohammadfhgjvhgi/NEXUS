@@ -1,0 +1,39 @@
+PHASE 11 — VISION + OCR + SCREEN UNDERSTANDING · COMPLETE ON THIS MACHINE
+====================================================================
+
+repo commit : 83797c5 (develop == main, CI 6/6 green)
+phase       : 11 / Plan §12 — Vision + OCR + Screen Understanding
+exit proof  : 119/119 + 7 bonus (tests\phase11\verify_exit_criteria.py)
+              + regressions 98/143/104/106/116/88/88/80/84/70 inside §F
+live pixels : live_vision_ci.py PASS 11/11 — tesseract CER 0.0 on the
+              four §12.5 categories (English · numbers · UI labels ·
+              documents), rendered by GDI, read on the GitHub runner
+deploy      : 29/29 files written + SHA-verified via bridge (Bearer)
+
+What landed (nexus\vision\, 12 files + 1 tool + 2 model edits):
+  §12.1 capture.py — full screen · window · region; PrintWindow
+        (PW_RENDERFULLCONTENT) + BitBlt fallback + true DWM bounds;
+        ctypes only, no imaging library
+  §12.2 provider.py/models.py/api.py — VisionProvider with the four
+        verbs analyze · locate · classify · compare over the Phase-4
+        Model Runtime (GenerateRequest.images, llama-server base64)
+  §12.5 ocr.py + benchmark.py — the engine candidates (winrt ·
+        tesseract · model), the CER metric, the §12.5 device decision
+        round with the strict winner policy (>0.30 CER never wins)
+  §9.5 rung 4 — locate by description → real click through §8.2
+  §8.1 record 14 — nexus/tools/native/vision.py (risk 1, path-scoped)
+
+THE §12.5 DECISION RUN (do this now — the operator's box decides):
+  cd /d M:\NEXUS
+  python -X utf8 tests\phase11\live_proof_device.py
+  → real window capture + the engine race + the winner JSON
+
+Repository Round 8 (audited pins — see REPOSITORY-INTEGRATION.md):
+  bytedance/UI-TARS   582f3a7 (MIT, REFERENCE/BENCHMARK — NOT the
+                      primary model, per the Plan)
+  OpenCUA             dfc91ba (RESEARCH)
+  Agent-S             3aa272d (RESEARCH)
+  → study copies live in vendor-staging; zero imports in the
+    production runtime (verified by CI)
+
+Next: PHASE 12 — Memory System (Plan §13) at the operator's command.

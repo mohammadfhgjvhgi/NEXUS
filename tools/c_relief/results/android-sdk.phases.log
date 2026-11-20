@@ -1,0 +1,9 @@
+{"utc": "2026-09-13T16:41:52Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:42:53Z", "phase": "detached:copy_done", "detail": "exit=1"}
+{"utc": "2026-09-13T16:42:53Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:43:11Z", "phase": "detached:verify_walk_done", "detail": "src=39718f/1697281485B dst=39718f/1697281485B"}
+{"utc": "2026-09-13T16:43:15Z", "phase": "detached:sha_file", "detail": "1 Sdk\\emulator\\lib64\\qt\\lib\\Qt6WebEngineCoreAndroidEmu.dll"}
+{"utc": "2026-09-13T16:43:15Z", "phase": "detached:sha_done", "detail": "checked=1 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:43:15Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:43:20Z", "phase": "detached:purge_begin", "detail": "files_to_delete=39718"}
+{"utc": "2026-09-13T16:44:21Z", "phase": "detached:purge_done", "detail": "exit=2"}

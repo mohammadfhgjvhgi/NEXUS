@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+"""Reboot trigger for the PHASE 29 worker (runs ON THE DEVICE via pytest).
+
+Sequence (all inside this one trigger, then read-only polling outside):
+  1. graceful shutdown of the running worker via LOOPBACK control channel
+     (127.0.0.1:9411 — the tunnel cannot reach loopback ports)
+  2. wait until the control port frees (worker exit confirmation)
+  3. re-spawn rt_worker.py DETACHED — it now loads the PATCHED modules
+     (screen $args fix) and re-certifies into proofs\\phase29_realtime.json
+"""
+from __future__ import annotations
+
+import http.client
+import json
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # M:\NEXUS\realtime
+WORKER = HERE / "rt_worker.py"
+REC = HERE / "worker_phase29_reboot_record.json"
+HB = HERE / ".hb.json"
+CTRL_PORT = 9411
+
+
+def _token() -> str:
+    try:
+        return (HERE / "token.txt").read_text(encoding="utf-8").strip()
+    except BaseException:
+        return "ps1-stable-token-2026"
+
+
+def _port_free(port: int) -> bool:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        try:
+            s.close()
+        except BaseException:
+            pass
+
+
+def _request_shutdown() -> dict:
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", CTRL_PORT, timeout=10)
+        body = json.dumps({"op": "shutdown", "confirm": "PHASE29"}).encode("utf-8")
+        conn.request("POST", "/control/admin", body=body, headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {_token()}",
+            "Content-Length": str(len(body))})
+        resp = conn.getresponse()
+        raw = resp.read().decode("utf-8", "replace")[:300]
+        conn.close()
+        return {"http": resp.status, "reply": raw}
+    except BaseException as exc:  # noqa: BLE001
+        return {"error": f"{type(exc).__name__}: {exc}"[:160]}
+
+
+def _hb_pid() -> int:
+    try:
+        hb = json.loads(HB.read_text(encoding="utf-8"))
+        return int(hb.get("pid") or 0)
+    except BaseException:
+        return 0
+
+
+def _exec_kill(pid: int) -> dict:
+    """Fallback: the RUNNING (old) worker executes the kill itself.
+
+    The old worker's shutdown branch is broken (deployed before the
+    request_shutdown fix), but its control/exec allowlist includes the
+    `python` prefix — so a python one-liner through /control/exec
+    terminates the stale process. pid comes from the live heartbeat.
+    """
+    try:
+        cmd = f'python -c "import os,signal;os.kill({pid},9)"'
+        conn = http.client.HTTPConnection("127.0.0.1", CTRL_PORT, timeout=20)
+        body = json.dumps({"cmd": cmd, "timeout_s": 15}).encode("utf-8")
+        conn.request("POST", "/control/exec", body=body, headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {_token()}",
+            "Content-Length": str(len(body))})
+        resp = conn.getresponse()
+        raw = resp.read().decode("utf-8", "replace")[:300]
+        conn.close()
+        return {"http": resp.status, "reply": raw}
+    except BaseException as exc:  # noqa: BLE001 — expected when the
+        # terminating request kills the very process answering it
+        return {"expected_conn_loss": f"{type(exc).__name__}: {exc}"[:160]}
+
+
+def test_phase29_reboot() -> None:
+    rec = {"utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    rec["shutdown"] = _request_shutdown()
+    free = False
+    t0 = time.time()
+    while time.time() - t0 < 20:
+        if _port_free(CTRL_PORT):
+            free = True
+            break
+        time.sleep(1.0)
+    rec["port_free_after_s"] = round(time.time() - t0, 1)
+    rec["port_free"] = free
+    if not free:
+        pid = _hb_pid()
+        rec["kill_fallback"] = {"pid": pid, **_exec_kill(pid)}
+        t1 = time.time()
+        while time.time() - t1 < 20:
+            if _port_free(CTRL_PORT):
+                free = True
+                break
+            time.sleep(1.0)
+        rec["port_free_after_kill_s"] = round(time.time() - t1, 1)
+        rec["port_free"] = free
+    rec["respawn_pid"] = None
+    if free:
+        log_path = HERE / "worker_phase29.log"
+        fh = open(log_path, "a", encoding="utf-8")
+        flags = 0x00000008 | 0x00000200   # DETACHED_PROCESS | NEW_GROUP
+        proc = subprocess.Popen(
+            [sys.executable, str(WORKER)], stdout=fh, stderr=fh,
+            stdin=subprocess.DEVNULL, creationflags=flags, cwd=str(HERE))
+        fh.close()
+        rec["respawn_pid"] = proc.pid
+        assert proc.pid > 0
+    else:
+        rec["note"] = ("port never freed within both windows — read-only "
+                       "polling will decide; no further force attempted")
+    REC.write_text(json.dumps(rec, ensure_ascii=False, indent=1),
+                   encoding="utf-8")

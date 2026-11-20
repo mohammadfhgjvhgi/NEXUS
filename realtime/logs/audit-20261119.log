@@ -1,0 +1,112 @@
+{"utc": "2026-11-19T23:08:05Z", "channel": "gateway", "action": "worker_boot", "detail": {"phase": 29}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "control", "action": "channel_started", "detail": {"port": 9411, "mode": "gateway"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "screen", "action": "channel_started", "detail": {"port": 9413, "mode": "gateway"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "files", "action": "channel_started", "detail": {"port": 9414, "mode": "gateway"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "control", "action": "exec", "detail": {"cmd": "echo nexus29-control-ok", "rc": 0, "killed": false, "duration_ms": 259.3}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "control", "action": "exec_denied", "detail": {"cmd": "calc.exe", "prefix": "calc.exe"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "events", "action": "pub", "detail": {"id": 8, "type": "phase29.test"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "screen", "action": "capture_failed", "detail": {"reason": "no_OK_marker"}}
+{"utc": "2026-11-19T23:08:05Z", "channel": "files", "action": "put", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "written": 16384, "append": false, "size": 16384}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 0, "returned": 16384, "size": 16384}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 4096, "returned": 1024, "size": 16384}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "M:\\Windows\\win.ini"}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "../jail_escape_probe"}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "control", "action": "admin", "detail": {"op": "stop", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:08:06Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:08:08Z", "channel": "control", "action": "admin", "detail": {"op": "restart", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:08:08Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:08:08Z", "channel": "gateway", "action": "selftest_certified", "detail": {"verdict": "PASS_WITH_DEGRADATION", "evidence": "phase29_realtime.json"}}
+{"utc": "2026-11-19T23:12:54Z", "channel": "control", "action": "admin", "detail": {"op": "shutdown", "body_keys": ["confirm", "op"]}}
+{"utc": "2026-11-19T23:17:20Z", "channel": "control", "action": "admin", "detail": {"op": "shutdown", "body_keys": ["confirm", "op"]}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "gateway", "action": "worker_boot", "detail": {"phase": 29}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "control", "action": "channel_started", "detail": {"port": 9411, "mode": "gateway"}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "screen", "action": "channel_started", "detail": {"port": 9413, "mode": "gateway"}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "files", "action": "channel_started", "detail": {"port": 9414, "mode": "gateway"}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "control", "action": "exec", "detail": {"cmd": "echo nexus29-control-ok", "rc": 0, "killed": false, "duration_ms": 178.3}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "control", "action": "exec_denied", "detail": {"cmd": "calc.exe", "prefix": "calc.exe"}}
+{"utc": "2026-11-19T23:17:41Z", "channel": "events", "action": "pub", "detail": {"id": 8, "type": "phase29.test"}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "screen", "action": "capture_failed", "detail": {"reason": "no_OK_marker"}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "files", "action": "put", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "written": 16384, "append": false, "size": 16384}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 0, "returned": 16384, "size": 16384}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 4096, "returned": 1024, "size": 16384}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "M:\\Windows\\win.ini"}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "../jail_escape_probe"}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "control", "action": "admin", "detail": {"op": "stop", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:17:42Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:17:44Z", "channel": "control", "action": "admin", "detail": {"op": "restart", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:17:44Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:17:44Z", "channel": "gateway", "action": "selftest_certified", "detail": {"verdict": "PASS_WITH_DEGRADATION", "evidence": "phase29_realtime.json"}}
+{"utc": "2026-11-19T23:23:13Z", "channel": "control", "action": "admin", "detail": {"op": "shutdown", "body_keys": ["confirm", "op"]}}
+{"utc": "2026-11-19T23:23:14Z", "channel": "control", "action": "channel_stopped", "detail": {"port": 9411}}
+{"utc": "2026-11-19T23:23:14Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:23:14Z", "channel": "screen", "action": "channel_stopped", "detail": {"port": 9413}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "files", "action": "channel_stopped", "detail": {"port": 9414}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "gateway", "action": "worker_boot", "detail": {"phase": 29}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "control", "action": "channel_started", "detail": {"port": 9411, "mode": "gateway"}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "screen", "action": "channel_started", "detail": {"port": 9413, "mode": "gateway"}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "files", "action": "channel_started", "detail": {"port": 9414, "mode": "gateway"}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "control", "action": "exec", "detail": {"cmd": "echo nexus29-control-ok", "rc": 0, "killed": false, "duration_ms": 332.4}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "control", "action": "exec_denied", "detail": {"cmd": "calc.exe", "prefix": "calc.exe"}}
+{"utc": "2026-11-19T23:23:15Z", "channel": "events", "action": "pub", "detail": {"id": 8, "type": "phase29.test"}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "files", "action": "put", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "written": 16384, "append": false, "size": 16384}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 0, "returned": 16384, "size": 16384}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 4096, "returned": 1024, "size": 16384}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "M:\\Windows\\win.ini"}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "../jail_escape_probe"}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "control", "action": "admin", "detail": {"op": "stop", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:23:16Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:23:18Z", "channel": "control", "action": "admin", "detail": {"op": "restart", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:23:18Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:23:18Z", "channel": "gateway", "action": "selftest_certified", "detail": {"verdict": "FAIL", "evidence": "phase29_realtime.json"}}
+{"utc": "2026-11-19T23:25:38Z", "channel": "control", "action": "admin", "detail": {"op": "shutdown", "body_keys": ["confirm", "op"]}}
+{"utc": "2026-11-19T23:25:38Z", "channel": "control", "action": "channel_stopped", "detail": {"port": 9411}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "screen", "action": "channel_stopped", "detail": {"port": 9413}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "files", "action": "channel_stopped", "detail": {"port": 9414}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "gateway", "action": "worker_boot", "detail": {"phase": 29}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "control", "action": "channel_started", "detail": {"port": 9411, "mode": "gateway"}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "screen", "action": "channel_started", "detail": {"port": 9413, "mode": "gateway"}}
+{"utc": "2026-11-19T23:25:39Z", "channel": "files", "action": "channel_started", "detail": {"port": 9414, "mode": "gateway"}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "control", "action": "exec", "detail": {"cmd": "echo nexus29-control-ok", "rc": 0, "killed": false, "duration_ms": 332.8}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "control", "action": "exec_denied", "detail": {"cmd": "calc.exe", "prefix": "calc.exe"}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "events", "action": "pub", "detail": {"id": 8, "type": "phase29.test"}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "files", "action": "put", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "written": 16384, "append": false, "size": 16384}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 0, "returned": 16384, "size": 16384}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 4096, "returned": 1024, "size": 16384}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "M:\\Windows\\win.ini"}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "../jail_escape_probe"}}
+{"utc": "2026-11-19T23:25:40Z", "channel": "control", "action": "admin", "detail": {"op": "stop", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:25:41Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:25:43Z", "channel": "control", "action": "admin", "detail": {"op": "restart", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:25:43Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:25:43Z", "channel": "gateway", "action": "selftest_certified", "detail": {"verdict": "FAIL", "evidence": "phase29_realtime.json"}}
+{"utc": "2026-11-19T23:28:32Z", "channel": "control", "action": "admin", "detail": {"op": "shutdown", "body_keys": ["confirm", "op"]}}
+{"utc": "2026-11-19T23:28:33Z", "channel": "control", "action": "channel_stopped", "detail": {"port": 9411}}
+{"utc": "2026-11-19T23:28:33Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:28:33Z", "channel": "screen", "action": "channel_stopped", "detail": {"port": 9413}}
+{"utc": "2026-11-19T23:28:33Z", "channel": "files", "action": "channel_stopped", "detail": {"port": 9414}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "gateway", "action": "worker_boot", "detail": {"phase": 29}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "control", "action": "channel_started", "detail": {"port": 9411, "mode": "gateway"}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "screen", "action": "channel_started", "detail": {"port": 9413, "mode": "gateway"}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "files", "action": "channel_started", "detail": {"port": 9414, "mode": "gateway"}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "control", "action": "exec", "detail": {"cmd": "echo nexus29-control-ok", "rc": 0, "killed": false, "duration_ms": 335.4}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "control", "action": "exec_denied", "detail": {"cmd": "calc.exe", "prefix": "calc.exe"}}
+{"utc": "2026-11-19T23:28:34Z", "channel": "events", "action": "pub", "detail": {"id": 8, "type": "phase29.test"}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "screen", "action": "capture", "detail": {"file": "cap_20261119_232834.png", "engine": "gdi", "size": 316582, "sha256": "66d5518371ae2218", "w": 3360, "h": 1050, "duration_ms": 332.7}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "files", "action": "put", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "written": 16384, "append": false, "size": 16384}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 0, "returned": 16384, "size": 16384}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "files", "action": "get", "detail": {"path": "M:\\NEXUS\\realtime\\selftest\\up29.bin", "offset": 4096, "returned": 1024, "size": 16384}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "M:\\Windows\\win.ini"}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "files", "action": "jail_reject_get", "detail": {"path": "../jail_escape_probe"}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "control", "action": "admin", "detail": {"op": "stop", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:28:35Z", "channel": "events", "action": "channel_stopped", "detail": {"port": 9412}}
+{"utc": "2026-11-19T23:28:37Z", "channel": "control", "action": "admin", "detail": {"op": "restart", "body_keys": ["channel", "op"]}}
+{"utc": "2026-11-19T23:28:37Z", "channel": "events", "action": "channel_started", "detail": {"port": 9412, "mode": "gateway"}}
+{"utc": "2026-11-19T23:28:37Z", "channel": "gateway", "action": "selftest_certified", "detail": {"verdict": "PASS", "evidence": "phase29_realtime.json"}}
+{"utc": "2026-11-19T23:42:52Z", "channel": "events", "action": "pub", "detail": {"id": 13, "type": "phase30.integration"}}
+{"utc": "2026-11-19T23:47:48Z", "channel": "events", "action": "pub", "detail": {"id": 14, "type": "phase30.integration"}}

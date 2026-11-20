@@ -1,0 +1,58 @@
+NEXUS — PHASE 19 COMPLETE — SPEECH SYSTEM (New Plan §19)
+==========================================================
+
+Date:            2026-09-09 (UTC)
+Version:         0.19.0  ·  NEXUS_PHASE = 19
+Scope:           §19.1 Speech API · §19.2 sherpa-onnx (MODE A/B) ·
+                 §19.3 Benchmark (six real conditions) ·
+                 §19.4 Voice → NEXUS pipeline (Microphone → STT →
+                 Normalization → Intent → Task)
+
+COMMITS
+  da26860  feat(speech): PHASE 19 — the Speech System (§19.1–§19.4)
+  8da5672  fix(speech): the injected seam needs no numpy; model
+           discovery gains the repo-root default
+  main == develop == 8da5672
+
+CI (the final judge — green before this marker)
+  runs 34412935226 (main) + 34412937603 (develop): success
+  13/13 jobs — including the new "Speech live proof (New Plan §19)"
+  (earlier runs on da26860: 2 honest failures — the numpy-less
+  injected-seam path; fixed by 8da5672, the device caught it first)
+
+SANDBOX PROOF
+  tests/phase19 .............. 104/104
+  exit gate .................. 26/26, zero regression (15·16·17·18)
+  live proof ................. 9/9 (MODE B real engine: whisper-tiny
+                               wer=0.00 en · native ar detection)
+
+REAL-WINDOWS PROOF (M:\NEXUS, via the tunnels)
+  deploy ..................... 41/41 files sha-verified (29.0s)
+  device tests ............... 103/103 (9 files, one file per call)
+  device live proof .......... PASSED 9/9 in 8.92s
+  verdict .................... M:\NEXUS\proofs\phase19_live.json
+                               PASS · 9/9 rungs · nexus 0.19.0 ·
+                               python 3.14.5 · Windows-10-10.0.19045
+  device mode ................ MODE B: sherpa-onnx 1.13.7 (cp314
+                               win_amd64) + numpy + whisper-tiny at
+                               M:\NEXUS\models\sherpa-onnx-whisper-tiny
+                               rung 9: provider=sherpa-onnx
+                               hypothesis='Open the browser and run
+                               the tests.' wer=0.00 · ar detect=ar
+                               (native)
+
+REAL-WINDOWS DISCOVERIES (recorded in knowledge file 27)
+  5  this box ships ZERO SAPI recognizers — the probe said so
+     honestly and MODE B took over (MODE A/SAPI stays the code floor)
+  6  the injected engine seam must not require the real engine's
+     numpy — the factory receives raw samples
+  7  the bridge gate cuts long tool calls — long work goes to
+     detached background workers with heartbeat logs; pure-python
+     workers, no cmd pipes in headless consoles
+  8  z-ai TTS does not produce real Arabic speech (whisper detects
+     ko/zh on it) — edge-tts ar-SA-HamedNeural is real Arabic,
+     whisper-verified; fixtures ship as base64 text (CRLF-immune)
+
+MARKER LAW:  CI green -> then this marker.  Evidence above.
+NEXUS — the machine now hears. Next: PHASE 20 — Verification Engine.
+==========================================================

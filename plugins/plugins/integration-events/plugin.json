@@ -1,0 +1,8 @@
+{
+ "name": "integration-events",
+ "type": "integration",
+ "version": "1.0.0",
+ "entry": "integration_events.py",
+ "description": "Relays events into the PHASE 29 events channel (:9412)",
+ "permissions": []
+}

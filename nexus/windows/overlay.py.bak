@@ -1,0 +1,560 @@
+"""Overlay (Final Build Plan §10.5 — Spec §63 / §154).
+
+When NEXUS uses the computer, a small transparent always-on-top
+window appears:
+
+    ┌────────────────────────┐
+    │ NEXUS is working       │
+    │ [Pause]  [Resume]      │
+    └────────────────────────┘
+
+شفاف وبسيط — literally the spec's brief. Two layers:
+
+* :class:`OverlayController` — the platform-neutral state machine
+  (IDLE → WORKING ⇄ PAUSED) with thread-safe transitions and the
+  pause/resume intents the buttons produce (wired by the runtime to
+  the task/session pause surface);
+* :class:`NativeOverlay` — the real thing on Windows: a pure-ctypes
+  ``CreateWindowExW`` window (``WS_EX_LAYERED | WS_EX_TOPMOST`` —
+  alpha ~235 for the "شفاف" feel), GDI-painted text, two real
+  ``BUTTON`` children whose clicks ride ``WM_COMMAND`` home. The
+  message loop lives in a daemon thread; every cross-thread poke is
+  a ``PostMessage`` (the one thread-safe Win32 seam).
+
+Off win32 the controller degrades to :class:`HeadlessOverlay` —
+honest unavailability, the state machine still provable on CI.
+
+الطبقة العائمة — ctypes خالصة، شفافة، بزرّي إيقاف واستئناف
+حقيقيين، ورسائل عبر طابور واحد.
+
+Stdlib only.
+"""
+
+from __future__ import annotations
+
+import ctypes
+import logging
+import sys
+import threading
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any
+
+logger = logging.getLogger("nexus.windows")
+
+#: WINFUNCTYPE is win32-only in the stubs — fall back to CFUNCTYPE
+#: (the Phase-8 uia_native precedent, same discipline here).
+_WINFUNCTYPE = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)
+#: LRESULT is a signed pointer-sized int — c_ssize_t everywhere.
+_LRESULT = ctypes.c_ssize_t
+
+#: The §10.5 status line, verbatim from the spec.
+STATUS_WORKING = "NEXUS is working"
+STATUS_PAUSED = "NEXUS is paused"
+
+
+class OverlayState(StrEnum):
+    """IDLE (nothing shows) → WORKING ⇄ PAUSED — the §10.5 machine."""
+
+    IDLE = "IDLE"
+    WORKING = "WORKING"
+    PAUSED = "PAUSED"
+
+
+#: (state → state) legal transitions — illegal ones raise.
+_TRANSITIONS: dict[str, tuple[str, ...]] = {
+    OverlayState.IDLE: (OverlayState.WORKING,),
+    OverlayState.WORKING: (OverlayState.PAUSED, OverlayState.IDLE),
+    OverlayState.PAUSED: (OverlayState.WORKING, OverlayState.IDLE),
+}
+
+
+@dataclass(frozen=True, slots=True)
+class Transition:
+    """One state change — the overlay's audit trail."""
+
+    from_state: str
+    to_state: str
+    label: str = ""
+    origin: str = "api"  # "api" (programmatic) | "button" (human)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "from": self.from_state,
+            "to": self.to_state,
+            "label": self.label,
+            "origin": self.origin,
+        }
+
+
+class OverlayError(Exception):
+    """An illegal transition or a dead overlay backend."""
+
+
+class _HeadlessOverlay:
+    """The honest off-win32 backend — records, never fakes a window."""
+
+    available = False
+    reason = "win32-only window (this runtime records state honestly)"
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.visible_state: str = OverlayState.IDLE
+        self.calls: list[tuple[str, str]] = []
+
+    def show(self, state: str, label: str) -> None:
+        with self._lock:
+            self.visible_state = state
+            self.calls.append(("show", f"{state}:{label}"))
+
+    def hide(self) -> None:
+        with self._lock:
+            self.visible_state = OverlayState.IDLE
+            self.calls.append(("hide", ""))
+
+    def shutdown(self) -> None:
+        self.hide()
+
+
+class OverlayController:
+    """The §10.5 state machine + the backend driver.
+
+    * ``begin(label)`` → WORKING (the overlay appears);
+    * ``pause()`` / ``resume()`` → the ⇄ pair (buttons *and* API);
+    * ``end()`` → IDLE (the overlay dismisses);
+    * callbacks ``on_pause`` / ``on_resume`` fire on the *human*
+      button path — the runtime wires them to the task pause surface.
+    """
+
+    def __init__(
+        self,
+        *,
+        on_pause: Callable[[], None] | None = None,
+        on_resume: Callable[[], None] | None = None,
+        backend: Any = None,
+        use_native: bool = True,
+    ) -> None:
+        self._lock = threading.RLock()
+        self._state = OverlayState.IDLE
+        self._label = ""
+        self._transitions: list[Transition] = []
+        self._on_pause = on_pause
+        self._on_resume = on_resume
+        self._backend: Any
+        if backend is not None:
+            self._backend = backend
+        elif use_native and sys.platform == "win32":
+            self._backend = NativeOverlay(self)
+        else:
+            self._backend = _HeadlessOverlay()
+
+    # ------------------------------------------------------------ state
+
+    @property
+    def state(self) -> str:
+        return str(self._state)
+
+    @property
+    def backend_kind(self) -> str:
+        return "native" if getattr(self._backend, "available", False) else "headless"
+
+    def _transition(
+        self, target: OverlayState, *, label: str, origin: str
+    ) -> Transition:
+        with self._lock:
+            if target is not self._state:
+                if str(target) not in _TRANSITIONS[str(self._state)]:
+                    raise OverlayError(
+                        f"illegal transition {self._state} → {target}"
+                    )
+                change = Transition(
+                    from_state=str(self._state), to_state=str(target),
+                    label=label, origin=origin,
+                )
+                self._state = target
+                self._transitions.append(change)
+                if len(self._transitions) > 256:
+                    del self._transitions[:128]
+                if target is OverlayState.WORKING:
+                    self._backend.show(str(target), label)
+                elif target is OverlayState.PAUSED:
+                    self._backend.show(str(target), label)
+                else:
+                    self._backend.hide()
+            else:
+                change = Transition(
+                    from_state=str(self._state), to_state=str(target),
+                    label=label, origin="noop",
+                )
+            return change
+
+    # ------------------------------------------------------------- api
+
+    def begin(self, label: str = "") -> str:
+        """Computer Use starts → the overlay shows WORKING."""
+        self._label = label
+        self._transition(OverlayState.WORKING, label=label, origin="api")
+        return self.state
+
+    def pause(self, *, origin: str = "api") -> str:
+        """WORKING → PAUSED. On the human path also fires on_pause."""
+        self._transition(OverlayState.PAUSED, label=self._label, origin=origin)
+        if origin == "button" and self._on_pause is not None:
+            self._on_pause()
+        return self.state
+
+    def resume(self, *, origin: str = "api") -> str:
+        """PAUSED → WORKING. On the human path also fires on_resume."""
+        self._transition(OverlayState.WORKING, label=self._label, origin=origin)
+        if origin == "button" and self._on_resume is not None:
+            self._on_resume()
+        return self.state
+
+    def end(self) -> str:
+        """Back to IDLE — the overlay dismisses."""
+        self._transition(OverlayState.IDLE, label="", origin="api")
+        self._label = ""
+        return self.state
+
+    # ---------------------------------------------------------- introspect
+
+    def transitions(self) -> tuple[Transition, ...]:
+        with self._lock:
+            return tuple(self._transitions)
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "state": str(self._state),
+                "label": self._label,
+                "backend": self.backend_kind,
+                "status_text": (
+                    STATUS_WORKING if self._state is OverlayState.WORKING
+                    else STATUS_PAUSED if self._state is OverlayState.PAUSED
+                    else ""
+                ),
+                "transitions": [t.to_dict() for t in self._transitions[-8:]],
+            }
+
+    def shutdown(self) -> None:
+        """Dismiss the backend window (idempotent)."""
+        with self._lock:
+            self._state = OverlayState.IDLE
+            self._backend.shutdown()
+
+
+# ----------------------------------------------------------------- win32
+#
+# The native overlay — pure ctypes. Everything below runs *on* the
+# overlay thread except :meth:`NativeOverlay.show` / :meth:`hide` /
+# :meth:`shutdown`, which are PostMessage pokes (thread-safe by
+# design). No pywin32, no WPF — GDI and two stock BUTTON controls.
+
+
+class NativeOverlay:  # pragma: win32-cover — exercised on the device
+    """The real §10.5 window (win32/ctypes, daemon thread)."""
+
+    available = True
+    reason = "CreateWindowExW + GDI + PostMessage (pure ctypes)"
+
+    _CLASS_NAME = "NexusOverlayWnd"
+    _WM_APP_STATE = 0x8000 + 1  # WM_APP + 1 — cross-thread state pokes
+    _BTN_PAUSE = 101
+    _BTN_RESUME = 102
+
+    _WIDTH = 280
+    _HEIGHT = 128
+
+    def __init__(self, controller: OverlayController) -> None:
+        import ctypes
+        import ctypes.wintypes as wintypes
+
+        self._ct = ctypes
+        self._wt = wintypes
+        self._controller = controller
+        self._user32 = ctypes.windll.user32  # type: ignore[attr-defined]
+        self._gdi32 = ctypes.windll.gdi32  # type: ignore[attr-defined]
+        self._kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        self._hwnd: int = 0
+        self._btn_pause: int = 0
+        self._btn_resume: int = 0
+        self._font = 0
+        self._state: str = OverlayState.WORKING
+        self._label: str = ""
+        self._thread: threading.Thread | None = None
+        self._ready = threading.Event()
+        self._alive = False
+        # keep strong refs so ctypes never GCs the callback mid-loop
+        self._wndproc_ref = None
+
+    # ------------------------------------------------------------ public
+
+    def start(self) -> bool:
+        """Spawn the overlay thread; returns when the window exists."""
+        if sys.platform != "win32" or self._thread is not None:
+            return False
+        self._thread = threading.Thread(
+            target=self._run, name="nexus-overlay", daemon=True
+        )
+        self._thread.start()
+        self._ready.wait(timeout=10)
+        return self._alive
+
+    def show(self, state: str, label: str) -> None:
+        """Cross-thread state poke (PostMessage — the safe seam)."""
+        if not self._alive:
+            self.start()
+        if self._alive:
+            # the label rides the shared attribute (GIL-safe simple
+            # assignment); the state rides a posted message.
+            self._label = label
+            code = (
+                2 if state == OverlayState.PAUSED else 1 if state == OverlayState.WORKING else 0
+            )
+            self._user32.PostMessageW(self._hwnd, self._WM_APP_STATE, code, 0)
+
+    def hide(self) -> None:
+        self.shutdown()
+
+    def shutdown(self) -> None:
+        if self._alive and self._hwnd:
+            self._user32.PostMessageW(self._hwnd, 0x0010, 0, 0)  # WM_CLOSE
+
+    @property
+    def hwnd(self) -> int:
+        return self._hwnd
+
+    # ------------------------------------------------------------- thread
+
+    def _run(self) -> None:  # pragma: win32-cover
+        ctypes = self._ct
+        wintypes = self._wt
+        user32 = self._user32
+
+        # Explicit argtypes/restype for every 64-bit-bearing call — the
+        # Phase-8 lesson (the raw-this-int bug) applies here too: a
+        # pointer-sized WPARAM/LPARAM passed through a default c_int
+        # conversion raises OverflowError inside the wndproc, the
+        # swallowed exception returns 0, and WM_NCCREATE's FALSE kills
+        # the window at birth. Typed calls cannot truncate.
+        user32.DefWindowProcW.restype = _LRESULT
+        user32.DefWindowProcW.argtypes = (
+            wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM,
+        )
+        user32.PostMessageW.restype = wintypes.BOOL
+        user32.PostMessageW.argtypes = (
+            wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM,
+        )
+        user32.CreateWindowExW.restype = wintypes.HWND
+        user32.CreateWindowExW.argtypes = (
+            wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+            wintypes.HWND, wintypes.HMENU, wintypes.HINSTANCE, wintypes.LPVOID,
+        )
+        user32.FindWindowW.restype = wintypes.HWND
+        user32.FindWindowW.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR)
+
+        wndproc_type = _WINFUNCTYPE(
+            _LRESULT, wintypes.HWND, wintypes.UINT,
+            wintypes.WPARAM, wintypes.LPARAM,
+        )
+        self._wndproc_ref = wndproc_type(self._wndproc)
+
+        class _WNDCLASSW(ctypes.Structure):
+            _fields_ = [
+                ("style", wintypes.UINT), ("lpfnWndProc", wndproc_type),
+                ("cbClsExtra", ctypes.c_int), ("cbWndExtra", ctypes.c_int),
+                ("hInstance", wintypes.HINSTANCE), ("hIcon", wintypes.HICON),
+                ("hCursor", ctypes.c_void_p), ("hbrBackground", ctypes.c_void_p),
+                ("lpszMenuName", wintypes.LPCWSTR), ("lpszClassName", wintypes.LPCWSTR),
+            ]
+
+        hinstance = self._kernel32.GetModuleHandleW(None)
+        wc = _WNDCLASSW()
+        wc.style = 0
+        wc.lpfnWndProc = self._wndproc_ref
+        wc.hInstance = hinstance
+        wc.hCursor = user32.LoadCursorW(0, 32512)  # IDC_ARROW
+        wc.hbrBackground = None  # we paint in WM_PAINT
+        wc.lpszClassName = self._CLASS_NAME
+        if not user32.RegisterClassW(ctypes.byref(wc)):
+            self._ready.set()
+            return
+
+        x, y = self._anchor_point()
+        # WS_POPUP | WS_VISIBLE; WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW
+        self._hwnd = user32.CreateWindowExW(
+            0x00080000 | 0x00000008 | 0x00000080,  # layered | topmost | toolwindow
+            self._CLASS_NAME,
+            "NEXUS Overlay",
+            0x80000000 | 0x10000000,  # WS_POPUP | WS_VISIBLE
+            x, y, self._WIDTH, self._HEIGHT,
+            0, 0, hinstance, 0,
+        )
+        if not self._hwnd:
+            self._ready.set()
+            return
+        # the "شفاف" part — layered alpha, never a click-through
+        user32.SetLayeredWindowAttributes(self._hwnd, 0, 235, 0x2)  # LWA_ALPHA
+
+        self._font = self._gdi32.GetStockObject(17)  # DEFAULT_GUI_FONT
+        self._btn_pause = user32.CreateWindowExW(
+            0, "BUTTON", "Pause",
+            0x40000000 | 0x10000000 | 0x00000001,  # WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON
+            24, 72, 110, 34, self._hwnd, self._BTN_PAUSE, hinstance, 0,
+        )
+        self._btn_resume = user32.CreateWindowExW(
+            0, "BUTTON", "Resume",
+            0x40000000 | 0x10000000 | 0x00000001,
+            146, 72, 110, 34, self._hwnd, self._BTN_RESUME, hinstance, 0,
+        )
+        for child in (self._btn_pause, self._btn_resume):
+            if child:
+                user32.SendMessageW(child, 0x0030, self._font, 0)  # WM_SETFONT
+        self._sync_buttons()
+
+        self._alive = True
+        self._ready.set()
+
+        msg = wintypes.MSG()
+        while user32.GetMessageW(ctypes.byref(msg), 0, 0, 0) > 0:
+            user32.TranslateMessage(ctypes.byref(msg))
+            user32.DispatchMessageW(ctypes.byref(msg))
+        self._alive = False
+        self._hwnd = 0
+        self._btn_pause = 0
+        self._btn_resume = 0
+        user32.UnregisterClassW(self._CLASS_NAME, hinstance)
+        # a closed overlay can be born again — allow start() to respawn
+        self._thread = None
+
+    def _anchor_point(self) -> tuple[int, int]:
+        """Bottom-right of the primary work area (never the taskbar)."""
+        ctypes = self._ct
+        wintypes = self._wt
+        rect = wintypes.RECT()
+        if not self._user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(rect), 0):
+            # SPI_GETWORKAREA failed — fall back to the screen metrics
+            width = self._user32.GetSystemMetrics(0)
+            height = self._user32.GetSystemMetrics(1)
+            rect.right, rect.bottom = width, height - 48
+        return (
+            rect.right - self._WIDTH - 24,
+            rect.bottom - self._HEIGHT - 24,
+        )
+
+    # ------------------------------------------------------------- wndproc
+
+    def _wndproc(self, hwnd: int, message: int, wparam: int, lparam: int) -> int:
+        user32 = self._user32
+        try:
+            if message == 0x000F:  # WM_PAINT
+                self._paint(hwnd)
+                return 0
+            if message == self._WM_APP_STATE:  # cross-thread state poke
+                code = int(wparam & 0xFFFFFFFF)
+                if code == 0:
+                    user32.ShowWindow(hwnd, 0)  # SW_HIDE
+                else:
+                    self._state = (
+                        OverlayState.PAUSED if code == 2 else OverlayState.WORKING
+                    )
+                    user32.ShowWindow(hwnd, 5)  # SW_SHOW
+                self._sync_buttons()
+                user32.InvalidateRect(hwnd, None, True)
+                return 0
+            if message == 0x0111:  # WM_COMMAND — a button was clicked
+                control_id = int(wparam & 0xFFFF)
+                if control_id == self._BTN_PAUSE:
+                    try:
+                        self._controller.pause(origin="button")
+                    except OverlayError:
+                        pass  # illegal (already paused) — ignore the click
+                elif control_id == self._BTN_RESUME:
+                    try:
+                        self._controller.resume(origin="button")
+                    except OverlayError:
+                        pass
+                return 0
+            if message == 0x0010:  # WM_CLOSE
+                user32.DestroyWindow(hwnd)
+                return 0
+            if message == 0x0002:  # WM_DESTROY
+                user32.PostQuitMessage(0)
+                return 0
+            return user32.DefWindowProcW(hwnd, message, wparam, lparam)
+        except Exception:  # noqa: BLE001 — a paint error must never kill the loop
+            logger.exception("overlay wndproc error (message=%s)", message)
+            return 0
+
+    def _paint(self, hwnd: int) -> None:
+        ctypes = self._ct
+        wintypes = self._wt
+        user32 = self._user32
+        gdi32 = self._gdi32
+
+        class _PAINTSTRUCT(ctypes.Structure):
+            _fields_ = [
+                ("hdc", wintypes.HDC), ("fErase", wintypes.BOOL),
+                ("rcPaint", wintypes.RECT), ("fRestore", wintypes.BOOL),
+                ("fIncUpdate", wintypes.BOOL),
+                ("rgbReserved", ctypes.c_ubyte * 32),
+            ]
+
+        ps = _PAINTSTRUCT()
+        hdc = user32.BeginPaint(hwnd, ctypes.byref(ps))
+        try:
+            rect = wintypes.RECT(0, 0, self._WIDTH, self._HEIGHT)
+            background = gdi32.CreateSolidBrush(0x1F1F23)  # dark #23231F BGR
+            gdi32.FillRect(hdc, ctypes.byref(rect), background)
+            gdi32.DeleteObject(background)
+            # the status accent — green when working, amber when paused
+            accent = gdi32.CreateSolidBrush(
+                0x5F7A30 if self._state == OverlayState.WORKING else 0x54A7C9
+            )
+            bar = wintypes.RECT(0, 0, self._WIDTH, 6)
+            gdi32.FillRect(hdc, ctypes.byref(bar), accent)
+            gdi32.DeleteObject(accent)
+
+            gdi32.SetBkMode(hdc, 1)  # TRANSPARENT
+            gdi32.SetTextColor(hdc, 0x00FFFFFF)
+            status = STATUS_WORKING if self._state == OverlayState.WORKING else STATUS_PAUSED
+            header = wintypes.RECT(16, 18, self._WIDTH - 16, 46)
+            gdi32.DrawTextW(hdc, status, -1, ctypes.byref(header), 0x0025)  # single|center|vcenter
+            if self._label:
+                gdi32.SetTextColor(hdc, 0x00B9C4CE)
+                sub = wintypes.RECT(16, 46, self._WIDTH - 16, 66)
+                # single|center|vcenter|end-ellipsis
+                gdi32.DrawTextW(hdc, self._label, -1, ctypes.byref(sub), 0x8025)
+        finally:
+            user32.EndPaint(hwnd, ctypes.byref(ps))
+
+    def _sync_buttons(self) -> None:
+        """Pause enabled while WORKING; Resume while PAUSED."""
+        self._user32.EnableWindow(
+            self._btn_pause, 1 if self._state == OverlayState.WORKING else 0
+        )
+        self._user32.EnableWindow(
+            self._btn_resume, 1 if self._state == OverlayState.PAUSED else 0
+        )
+
+
+def build_overlay(
+    *,
+    on_pause: Callable[[], None] | None = None,
+    on_resume: Callable[[], None] | None = None,
+) -> OverlayController:
+    """The §10.5 controller — native on win32, headless elsewhere."""
+    return OverlayController(on_pause=on_pause, on_resume=on_resume)
+
+
+__all__ = [
+    "NativeOverlay",
+    "OverlayController",
+    "OverlayError",
+    "OverlayState",
+    "STATUS_PAUSED",
+    "STATUS_WORKING",
+    "build_overlay",
+]

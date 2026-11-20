@@ -1,0 +1,13 @@
+WORKER START
+DONE sherpa-onnx-whisper-tiny 0B in 0.0s
+DONE sherpa-onnx-whisper-tiny/tiny-encoder.onnx 37647080B in 9.8s
+DONE sherpa-onnx-whisper-tiny/tiny-decoder.int8.onnx 89855401B in 21.0s
+DONE sherpa-onnx-whisper-tiny/tiny-encoder.int8.onnx 12937772B in 3.2s
+DONE sherpa-onnx-whisper-tiny/test_wavs 0B in 0.0s
+DONE sherpa-onnx-whisper-tiny/tiny-tokens.txt 816730B in 0.1s
+DONE sherpa-onnx-whisper-tiny/tiny-decoder.onnx 114505801B in 27.0s
+DONE sherpa-onnx-whisper-tiny/test_wavs/8k.wav 77244B in 0.0s
+DONE sherpa-onnx-whisper-tiny/test_wavs/0.wav 212044B in 0.0s
+DONE sherpa-onnx-whisper-tiny/test_wavs/1.wav 534924B in 0.1s
+DONE sherpa-onnx-whisper-tiny/test_wavs/trans.txt 449B in 0.0s
+WORKER ALL DONE

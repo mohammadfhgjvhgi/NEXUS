@@ -1,0 +1,26 @@
+{"utc": "2026-09-13T17:29:33Z", "phase": "start", "detail": "worker pid=2508 py=C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe"}
+{"utc": "2026-09-13T17:29:33Z", "phase": "subprocess_start", "detail": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m pip show pyinstaller"}
+{"utc": "2026-09-13T17:29:35Z", "phase": "subprocess_done", "detail": "rc=1"}
+{"utc": "2026-09-13T17:29:35Z", "phase": "pip_install_begin", "detail": ""}
+{"utc": "2026-09-13T17:29:35Z", "phase": "subprocess_start", "detail": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m pip install --upgrade pyinstaller"}
+{"utc": "2026-09-13T17:29:52Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:29:52Z", "phase": "build_begin", "detail": "PyInstaller --noconfirm --clean NEXUS.exe.spec"}
+{"utc": "2026-09-13T17:29:52Z", "phase": "subprocess_start", "detail": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m PyInstaller --noconfirm --clean NEXUS.exe.spec"}
+{"utc": "2026-09-13T17:32:03Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:32:03Z", "phase": "build_done", "detail": "size=87586287 sha256=a435fefeac6d1dc6..."}
+{"utc": "2026-09-13T17:32:03Z", "phase": "exe_check_begin", "detail": "dist\\NEXUS.exe --check"}
+{"utc": "2026-09-13T17:32:03Z", "phase": "subprocess_start", "detail": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe --check"}
+{"utc": "2026-09-13T17:32:18Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:32:18Z", "phase": "exe_check_done", "detail": "rc=0 verdict=PASS"}
+{"utc": "2026-09-13T17:32:18Z", "phase": "done", "detail": "verdict=PASS"}
+{"utc": "2026-09-13T17:43:57Z", "phase": "build_stage_begin", "detail": "pid=10504"}
+{"utc": "2026-09-13T17:43:57Z", "phase": "subprocess_start", "detail": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m pip show pyinstaller"}
+{"utc": "2026-09-13T17:43:59Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:43:59Z", "phase": "build_begin", "detail": ""}
+{"utc": "2026-09-13T17:43:59Z", "phase": "subprocess_start", "detail": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe -m PyInstaller --noconfirm --clean NEXUS.exe.spec"}
+{"utc": "2026-09-13T17:47:11Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:47:12Z", "phase": "build_done", "detail": "size=87586472 sha256=c3a89b437f152f5b..."}
+{"utc": "2026-09-13T17:47:12Z", "phase": "subprocess_start", "detail": "M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe --check"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "subprocess_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "exe_check_done", "detail": "rc=0"}
+{"utc": "2026-09-13T17:47:30Z", "phase": "build_stage_done", "detail": "verdict=PASS"}

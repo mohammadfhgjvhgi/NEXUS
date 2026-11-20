@@ -1,0 +1,11 @@
+{
+ "triggered_utc": "2026-10-24T14:55:20Z",
+ "pid": 18600,
+ "hb_before": {
+  "worker": "phase26",
+  "stage": "fatal",
+  "note": "RuntimeError: ui-selftest verdict=FAIL rc=1 sections={\"conversations\": {\"ok\": true, \"conv_id\": \"conv_cf3063c01d6f49999390b40f3bf\", \"live_count\": 1}, \"memory\": {\"ok\": false, \"error\": \"OSError: [Errno 9",
+  "utc": "2026-10-24T14:49:46Z",
+  "pid": 2424
+ }
+}

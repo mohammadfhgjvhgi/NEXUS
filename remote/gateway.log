@@ -1,0 +1,43 @@
+00:36:37 gateway started on 127.0.0.1:8899
+00:36:37 http "GET /api/health HTTP/1.1" 200 -
+00:36:37 http "GET /api/status HTTP/1.1" 401 -
+00:36:37 http "GET /api/status HTTP/1.1" 401 -
+00:36:38 http "GET /api/status HTTP/1.1" 200 -
+00:36:38 http "POST /api/commands HTTP/1.1" 201 -
+00:36:38 http "GET /api/commands/58e580967aff9c28 HTTP/1.1" 200 -
+00:36:39 http "GET /api/commands/58e580967aff9c28 HTTP/1.1" 200 -
+00:36:40 http "GET /api/commands/58e580967aff9c28 HTTP/1.1" 200 -
+00:36:41 http "GET /api/commands/58e580967aff9c28 HTTP/1.1" 200 -
+00:36:42 http "GET /api/commands/58e580967aff9c28 HTTP/1.1" 200 -
+00:36:42 executor error: PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'M:\\NEXUS\\remote\\commands.tmp' -> 'M:\\NEXUS\\remote\\commands.json'
+00:36:42 http "POST /api/commands HTTP/1.1" 201 -
+00:36:42 http "GET /api/commands/7aa243f2c7ddf625 HTTP/1.1" 200 -
+00:36:43 http "GET /api/commands/7aa243f2c7ddf625 HTTP/1.1" 200 -
+00:36:44 http "GET /api/commands/7aa243f2c7ddf625 HTTP/1.1" 200 -
+00:36:44 http "POST /api/commands HTTP/1.1" 201 -
+00:36:44 http "GET /api/commands/a550f6aaaada0ce9 HTTP/1.1" 200 -
+00:36:45 http "GET /api/commands/a550f6aaaada0ce9 HTTP/1.1" 200 -
+00:36:46 http "GET /api/commands/a550f6aaaada0ce9 HTTP/1.1" 200 -
+00:36:46 http "POST /api/commands HTTP/1.1" 201 -
+00:36:46 http "GET /api/commands/45e232bad7f5a8a4 HTTP/1.1" 200 -
+00:36:47 http "GET /api/commands/45e232bad7f5a8a4 HTTP/1.1" 200 -
+00:36:47 http "GET /api/tasks HTTP/1.1" 200 -
+00:36:47 http "POST /api/commands HTTP/1.1" 201 -
+00:36:47 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:48 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:49 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:50 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:51 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:52 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:53 http "GET /api/commands/ac4f3f9397d3318b HTTP/1.1" 200 -
+00:36:53 http "POST /api/files/push HTTP/1.1" 201 -
+00:36:53 http "GET /api/files/get?name=p28_report.txt HTTP/1.1" 200 -
+00:36:53 http "GET /api/files/get?name=..%5C..%5Cnexus_ui.py HTTP/1.1" 400 -
+00:36:53 http "POST /api/files/push HTTP/1.1" 400 -
+00:36:53 http "GET /api/files/get?name=nexus_ui.py HTTP/1.1" 404 -
+00:36:53 http "GET / HTTP/1.1" 200 -
+00:36:53 http "GET /app.js HTTP/1.1" 200 -
+00:36:53 http "GET /app.css HTTP/1.1" 200 -
+00:36:53 http "GET /api/health HTTP/1.1" 200 -
+00:36:53 http "OPTIONS /api/status HTTP/1.1" 204 -
+00:36:54 gateway stopped

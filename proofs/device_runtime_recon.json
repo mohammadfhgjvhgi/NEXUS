@@ -1,0 +1,86 @@
+{
+ "product": "device runtime recon (why no llama-server runs)",
+ "utc": "2026-09-13T17:52:37Z",
+ "pid": 6084,
+ "cpu": {
+  "Name": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+  "Caption": "Intel64 Family 6 Model 58 Stepping 9",
+  "NumberOfCores": 4,
+  "NumberOfLogicalProcessors": 8,
+  "MaxClockSpeed": 3901
+ },
+ "system": {
+  "Manufacturer": "Gigabyte Technology Co., Ltd.",
+  "Model": "To be filled by O.E.M.",
+  "TotalPhysicalMemory": 12700012544
+ },
+ "gpu": [
+  {
+   "Name": "NVIDIA GeForce GTX 750 Ti",
+   "AdapterRAM": 4293918720,
+   "DriverVersion": "32.0.15.8228"
+  },
+  {
+   "Name": "Intel(R) HD Graphics 4000",
+   "AdapterRAM": 2281701376,
+   "DriverVersion": "10.18.10.4358"
+  }
+ ],
+ "where": {
+  "ollama.exe": [
+   "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\ollama.exe"
+  ],
+  "llama-server.exe": "not found",
+  "llama-cli.exe": "not found",
+  "koboldcpp.exe": "not found",
+  "llamafile.exe": "not found",
+  "mimo.exe": "not found"
+ },
+ "app_dir_hits": {
+  "C:\\Program Files": [
+   {
+    "path": "C:\\Program Files\\NVIDIA Corporation",
+    "dir": true
+   }
+  ],
+  "C:\\Program Files (x86)": [
+   {
+    "path": "C:\\Program Files (x86)\\NVIDIA Corporation",
+    "dir": true
+   }
+  ],
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs": [
+   {
+    "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama",
+    "dir": true,
+    "exe_hits": [
+     "ollama app.exe",
+     "ollama.exe"
+    ]
+   }
+  ],
+  "C:\\Users\\MohandsMohammad\\AppData\\Local": [
+   {
+    "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\lm-studio-updater",
+    "dir": true
+   },
+   {
+    "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA",
+    "dir": true
+   },
+   {
+    "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA Corporation",
+    "dir": true
+   },
+   {
+    "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Ollama",
+    "dir": true
+   }
+  ]
+ },
+ "mimo_storage_top": [
+  "snapshots"
+ ],
+ "recon_seconds": 9.82,
+ "utc_end": "2026-09-13T17:52:47Z"
+}

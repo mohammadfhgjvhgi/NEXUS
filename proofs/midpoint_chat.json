@@ -1,0 +1,18 @@
+{
+ "product": "NEXUS first real chat (MIDPOINT #4, Ollama MODE A2, --say seam)",
+ "utc": "2026-09-13T18:30:58Z",
+ "pid": 12912,
+ "prompt": "مرحبًا يا NEXUS، عرّف عن نفسك بجملة واحدة.",
+ "model": "qwen3:0.6b",
+ "exe_sha256": "c9e386bb8adf6c55df3d2a861e3ff4c05f197940f64dc4cb31bc7fd09a10c3a2",
+ "system_proxies": {},
+ "ollama_server": "spawned",
+ "ollama_list": "NAME          ID              SIZE      MODIFIED       \nqwen3:0.6b    7df6b6e09427    522 MB    30 minutes ago    \n",
+ "say_rc": 0,
+ "transcript_chars": 115,
+ "transcript_excerpt": "مرحباً، أكون NEXUS، وهو برنامج يسمح لك بالوصول إلى مساحات مائية وحيات مائية، ويعمل ليكون مساعدياً في أي سياق مائي.\n",
+ "reply": "مرحباً، أكون NEXUS، وهو برنامج يسمح لك بالوصول إلى مساحات مائية وحيات مائية، ويعمل ليكون مساعدياً في أي سياق مائي.",
+ "verdict": "PASS",
+ "chat_seconds": 89.56,
+ "utc_end": "2026-09-13T18:32:27Z"
+}

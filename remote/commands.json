@@ -1,0 +1,75 @@
+{
+ "commands": [
+  {
+   "id": "58e580967aff9c28",
+   "type": "pause",
+   "payload": {},
+   "state": "done",
+   "utc": "2026-11-19T22:36:38Z",
+   "result": {
+    "paused": true,
+    "honest": "no new work until resume"
+   },
+   "utc_done": "2026-11-19T22:36:42Z"
+  },
+  {
+   "id": "7aa243f2c7ddf625",
+   "type": "resume",
+   "payload": {},
+   "state": "done",
+   "utc": "2026-11-19T22:36:42Z",
+   "result": {
+    "paused": false
+   },
+   "utc_done": "2026-11-19T22:36:43Z"
+  },
+  {
+   "id": "a550f6aaaada0ce9",
+   "type": "checkpoint",
+   "payload": {},
+   "state": "done",
+   "utc": "2026-11-19T22:36:44Z",
+   "result": {
+    "checkpoint": "remote_cp_20261120_003645",
+    "count": 4,
+    "dir": "M:\\NEXUS\\checkpoints\\remote_cp_20261120_003645"
+   },
+   "utc_done": "2026-11-19T22:36:45Z"
+  },
+  {
+   "id": "45e232bad7f5a8a4",
+   "type": "task",
+   "payload": {
+    "goal": "PHASE 28 remote task — اكتب ملف remote_28.txt يحتوي عملية نجاح في مساحة العمل"
+   },
+   "state": "done",
+   "utc": "2026-11-19T22:36:46Z",
+   "result": {
+    "rc": 0,
+    "task_id": "task_4d27a1ac1eb84591b618a519a60d7e53",
+    "verdict": "PASS",
+    "gate5_cert_backup": {
+     "sha_before": "2c86b94dd02b2e2d748251558e1987a6aada9386fe2ebbd9b84c015fd07218e1",
+     "backed_up_to": "M:\\NEXUS\\remote\\gate5_task_backup.json"
+    },
+    "goal": "PHASE 28 remote task — اكتب ملف remote_28.txt يحتوي عملية نجاح في مساحة العمل"
+   },
+   "utc_done": "2026-11-19T22:36:47Z"
+  },
+  {
+   "id": "ac4f3f9397d3318b",
+   "type": "chat",
+   "payload": {
+    "text": "مرحبا يا NEXUS"
+   },
+   "state": "done",
+   "utc": "2026-11-19T22:36:47Z",
+   "result": {
+    "reply": null,
+    "honest": "النموذج المحلي غير مشغّل الآن",
+    "model": "offline"
+   },
+   "utc_done": "2026-11-19T22:36:53Z"
+  }
+ ]
+}

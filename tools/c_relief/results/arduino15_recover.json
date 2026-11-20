@@ -1,0 +1,10 @@
+{
+ "utc": "2026-09-12T15:53:24Z",
+ "src_exists": true,
+ "dst_files_bytes": [
+  11,
+  "scanned_root"
+ ],
+ "junction_ok": false,
+ "C_free_gb": 3.98
+}

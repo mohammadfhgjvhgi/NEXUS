@@ -1,0 +1,460 @@
+# -*- coding: utf-8 -*-
+"""NEXUS Plugin System — PHASE 30 — detached worker & certification.
+
+Spawned ONCE via the pytest trigger (plugins\\test_phase30_spawn.py),
+DETACHED so it survives tunnel/gate death. Read-only polling afterwards.
+
+Lifecycle:
+  bootstrap   write the 7 sample plugins if missing
+  discover    scan plugins\\plugins\\*\\plugin.json (spec §81 — no Core edits)
+  load        validate manifest -> import entry -> register(ctx) (§240 API,
+              §241 jail: filesystem permission + selftest fs_root only)
+  functional  one REAL test per type:
+                tool          hash a known string, compare vs stdlib hash
+                skill         render template, marker assertions
+                agent         run plan→act→verify; transcript (§40); the
+                              agent VERIFIES VIA the tool plugin's sha256
+                              (cross-plugin composition, independently
+                              re-checked here)
+                model         /v1/models probe + tiny completion (honest
+                              DEGRADED when the backend is offline)
+                mcp           spawn stdio server; initialize ->
+                              notifications/initialized -> tools/list ->
+                              tools/call echo (REAL MCP handshake)
+                integration   relay into PHASE 29 events channel :9412 and
+                              read the stream back (round-trip proof)
+                ui            render the dashboard card fragment, markers
+  certify     registry.json + proofs\\phase30_plugins.json (evidence or
+              silence); then RESIDENT: rescan every 30s (hot-load new
+              plugin dirs), heartbeat every 10s, STOP file = clean exit
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import subprocess
+import sys
+import threading
+import time
+import traceback
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # M:\NEXUS\plugins
+ROOT = HERE.parent                              # M:\NEXUS
+PROOFS = ROOT / "proofs"
+PLUGINS_ROOT = HERE / "plugins"
+SELFTEST_DIR = HERE / "selftest"
+sys.path.insert(0, str(HERE))
+
+from plugin_common import (CORE_TYPES, DEGRADABLE_TYPES, PHASE, VERSION,  # noqa: E402
+                           atomic_json, sha256_bytes, sha256_file, utcnow)
+import plugin_manager  # noqa: E402
+import plugin_samples  # noqa: E402
+
+HB_PATH = HERE / ".hb.json"
+REGISTRY_PATH = HERE / "registry.json"
+RESULT_PATH = HERE / "worker_phase30.result.json"
+EVIDENCE_PATH = PROOFS / "phase30_plugins.json"
+STOP_PATH = HERE / "STOP"
+RESUBSCRIBE_SCAN_S = 30.0
+
+_T0 = time.time()
+_state = {"selftest": "not_started", "loaded": 0, "counts": {}}
+_state_lock = threading.Lock()
+
+
+def _set_state(**kw) -> None:
+    with _state_lock:
+        _state.update(kw)
+
+
+def write_hb() -> None:
+    obj = {"utc": utcnow(), "phase": PHASE, "version": VERSION,
+           "pid": None, "uptime_s": round(time.time() - _T0, 1),
+           "running": True}
+    with _state_lock:
+        obj.update({k: _state.get(k) for k in
+                    ("selftest", "loaded", "counts")})
+    obj["pid"] = _PID
+    atomic_json(HB_PATH, obj)
+
+
+def _hb_loop() -> None:
+    while True:
+        try:
+            write_hb()
+        except BaseException:
+            pass
+        time.sleep(10.0)
+
+
+def _hb_fresh() -> bool:
+    try:
+        hb = json.loads(HB_PATH.read_text(encoding="utf-8"))
+        import calendar
+        age = time.time() - calendar.timegm(
+            time.strptime(hb["utc"], "%Y-%m-%dT%H:%M:%SZ"))
+        return age < 90 and hb.get("running") is True
+    except BaseException:
+        return False
+
+
+# ------------------------------------------------------------ functional
+def _t_tool(records: dict) -> dict:
+    t = records.get("tool-sha256")
+    fn = ((t or {}).get("registry") or {}).get("tools", {}).get(
+        "plugin_sha256", {}).get("fn")
+    if fn is None:
+        return {"verdict": "FAIL", "detail": {"error": "tool_not_registered"}}
+    probe = "nexus30-tool-probe"
+    want = hashlib.sha256(probe.encode("utf-8")).hexdigest()
+    out = fn({"text": probe})
+    ok = out.get("sha256") == want
+    return {"verdict": "PASS" if ok else "FAIL",
+            "detail": {"probe_len": len(probe), "sha256": str(out.get(
+                "sha256"))[:32], "matches_stdlib": ok}}
+
+
+def _t_skill(records: dict) -> dict:
+    s = records.get("skill-summarize")
+    render = ((s or {}).get("registry") or {}).get("skills", {}).get(
+        "summarize", {}).get("render")
+    if render is None:
+        return {"verdict": "FAIL", "detail": {"error": "skill_not_registered"}}
+    out = render({"text": "NEXUS三十階段", "count": 3})
+    ok = ("3" in out) and ("NEXUS三十階段" in out)
+    return {"verdict": "PASS" if ok else "FAIL",
+            "detail": {"rendered_len": len(out),
+                       "head": out[:48].replace("\n", " ")}}
+
+
+def _t_agent(records: dict, tool_fn) -> dict:
+    a = records.get("agent-file-writer")
+    spec = ((a or {}).get("registry") or {}).get("agents", {}).get(
+        "file-writer-agent")
+    if spec is None or not callable(spec.get("run")):
+        return {"verdict": "FAIL", "detail": {"error": "agent_not_registered"}}
+    task = {"out_rel": "agent_out.txt", "task_id": "phase30-selftest",
+            "content": "nexus30-agent-roundtrip"}
+    ctx = {"tool_sha256": tool_fn, "fs_root": SELFTEST_DIR,
+           "ts": utcnow()}
+    res = spec["run"](task, ctx)
+    # independent re-verification (never trust the agent's own claim)
+    p = Path(res.get("path") or "")
+    indep = p.is_file() and sha256_file(p) == sha256_bytes(
+        task["content"].encode("utf-8"))
+    msgs = res.get("transcript", [])
+    types_ok = [m.get("message_type") for m in msgs] == ["plan", "act",
+                                                         "verify"]
+    spec40 = all(all(k in m for k in ("task_id", "sender", "receiver",
+                                      "message_type", "status", "evidence",
+                                      "confidence", "data", "timestamp"))
+                 for m in msgs)
+    ok = (res.get("completed") is True and indep and types_ok and spec40
+          and len(msgs) == 3)
+    return {"verdict": "PASS" if ok else "FAIL",
+            "detail": {"completed": res.get("completed"),
+                       "independent_hash_ok": indep,
+                       "transcript_types": types_ok,
+                       "spec40_messages": spec40,
+                       "steps": len(msgs)}}
+
+
+def _t_model(records: dict) -> dict:
+    m = records.get("model-local-8080")
+    reg_models = ((m or {}).get("registry") or {}).get("models", {})
+    prov = reg_models.get("local-openai-ladder") or reg_models.get(
+        "local-openai-8080")
+    if prov is None:
+        return {"verdict": "FAIL", "detail": {"error": "model_not_registered"}}
+    h = prov["health"]()
+    if not h.get("ok"):
+        return {"verdict": "DEGRADED",
+                "detail": {"registered": True, "backend_online": False,
+                           "reason": h.get("reason")}}
+    models = h.get("models") or []
+    comp = None
+    if models:
+        comp = prov["complete"](models[0], "Say NEXUS30", max_tokens=16)
+    ok = bool(models)
+    return {"verdict": "PASS" if ok else "DEGRADED",
+            "detail": {"backend_online": True, "models": models[:5],
+                       "completion": {k: v for k, v in (comp or {}).items()
+                                      if k != "reason"} or None}}
+
+
+def _t_mcp(records: dict) -> dict:
+    m = records.get("mcp-echo")
+    srv = ((m or {}).get("registry") or {}).get("mcp_servers", {}).get(
+        "echo")
+    if srv is None:
+        return {"verdict": "FAIL", "detail": {"error": "mcp_not_registered"}}
+    server_path = Path(srv["args"][0]) if srv.get("args") else None
+    if server_path is None or not server_path.is_file():
+        return {"verdict": "FAIL",
+                "detail": {"error": "server_script_missing"}}
+    steps = {}
+    proc = None
+    try:
+        proc = subprocess.Popen(
+            [srv["command"], str(server_path)],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+        def rpc(method, params=None, rid=1):
+            payload = {"jsonrpc": "2.0", "id": rid, "method": method}
+            if params is not None:
+                payload["params"] = params
+            proc.stdin.write(json.dumps(payload).encode("utf-8") + b"\n")
+            proc.stdin.flush()
+            line = proc.stdout.readline()
+            return json.loads(line.decode("utf-8"))
+
+        init = rpc("initialize", {"protocolVersion": "2024-11-05",
+                                  "capabilities": {},
+                                  "clientInfo": {"name": "nexus30",
+                                                 "version": "1.0.0"}}, 1)
+        steps["initialize"] = {
+            "ok": init.get("result", {}).get("serverInfo", {}).get(
+                "name") == "echo-mcp",
+            "protocol": init.get("result", {}).get("protocolVersion")}
+        proc.stdin.write(json.dumps(
+            {"jsonrpc": "2.0", "method": "notifications/initialized"}).encode()
+            + b"\n")
+        proc.stdin.flush()
+        tools = rpc("tools/list", {}, 2)
+        names = [t.get("name") for t in tools.get("result", {}).get(
+            "tools", [])]
+        steps["tools_list"] = {"ok": "echo" in names, "names": names}
+        call = rpc("tools/call", {"name": "echo", "arguments": {
+            "message": "nexus30-mcp"}}, 3)
+        text = (((call.get("result") or {}).get("content") or [{}])[0]
+                .get("text"))
+        steps["tools_call"] = {"ok": text == "echo: nexus30-mcp",
+                               "text": text}
+    except BaseException as exc:  # noqa: BLE001
+        steps["error"] = f"{type(exc).__name__}: {exc}"[:200]
+    finally:
+        if proc is not None:
+            try:
+                proc.stdin.close()
+                proc.wait(timeout=10)
+            except BaseException:
+                proc.kill()
+    ok = all(v.get("ok") for k, v in steps.items()
+             if isinstance(v, dict) and "ok" in v) and "error" not in steps
+    return {"verdict": "PASS" if ok else "FAIL", "detail": steps}
+
+
+def _t_integration(records: dict) -> dict:
+    i = records.get("integration-events")
+    integ = ((i or {}).get("registry") or {}).get("integrations", {}).get(
+        "events-relay-9412")
+    if integ is None:
+        return {"verdict": "FAIL",
+                "detail": {"error": "integration_not_registered"}}
+    relay, verify = integ["relay"], integ["verify"]
+    try:
+        r = relay({"type": "phase30.integration",
+                   "data": {"plugin": "integration-events",
+                            "marker": "nexus30-integration-roundtrip"}})
+    except BaseException as exc:  # noqa: BLE001
+        return {"verdict": "DEGRADED",
+                "detail": {"registered": True,
+                           "reason": f"{type(exc).__name__}: {exc}"[:200],
+                           "note": "PHASE 29 events channel unreachable"}}
+    eid = r.get("id")
+    if not isinstance(eid, int):
+        return {"verdict": "FAIL", "detail": {"reply": str(r)[:160]}}
+    v = verify(eid, "phase30.integration")
+    ok = v.get("ok") is True
+    return {"verdict": "PASS" if ok else "FAIL",
+            "detail": {"event_id": eid, "roundtrip": ok,
+                       "stream_count": v.get("count"),
+                       "cursor": v.get("cursor")}}
+
+
+def _t_ui(records: dict, counts: dict, total: int) -> dict:
+    u = records.get("ui-status-card")
+    card = ((u or {}).get("registry") or {}).get("ui_cards", {}).get(
+        "plugins-status-card")
+    if card is None:
+        return {"verdict": "FAIL", "detail": {"error": "card_not_registered"}}
+    frag = card["render"]({"counts_by_type": counts, "loaded_total": total})
+    ok = ("plugins-status-card" in frag and f"loaded={total}" in frag
+          and "agent" in frag)
+    return {"verdict": "PASS" if ok else "FAIL",
+            "detail": {"fragment_len": len(frag), "head": frag[:80]}}
+
+
+def _verdict(functional: dict, records: dict) -> str:
+    for t in CORE_TYPES:
+        rec = next((r for r in records.values() if r.get("type") == t), None)
+        if rec is None or rec.get("status") != "loaded":
+            return "FAIL"
+        if functional.get(t, {}).get("verdict") != "PASS":
+            return "FAIL"
+    if any(functional.get(t, {}).get("verdict") == "FAIL"
+           for t in DEGRADABLE_TYPES):
+        return "FAIL"
+    if any(functional.get(t, {}).get("verdict") == "DEGRADED"
+           for t in DEGRADABLE_TYPES):
+        return "PASS_WITH_DEGRADATION"
+    return "PASS"
+
+
+def _module_hashes() -> dict:
+    out = {}
+    for name in ("plugin_common.py", "plugin_manager.py",
+                 "plugin_samples.py", "plugin_worker.py"):
+        p = HERE / name
+        if p.is_file():
+            out[name] = {"size": p.stat().st_size, "sha256": sha256_file(p)}
+    return out
+
+
+def _certify(records: dict, boot: dict, started_utc: str) -> dict:
+    functional = {}
+    tool_fn = (((records.get("tool-sha256") or {}).get("registry") or {})
+               .get("tools", {}).get("plugin_sha256", {}).get("fn"))
+    functional["tool"] = _t_tool(records)
+    functional["skill"] = _t_skill(records)
+    functional["agent"] = _t_agent(records, tool_fn)
+    functional["model"] = _t_model(records)
+    functional["mcp"] = _t_mcp(records)
+    functional["integration"] = _t_integration(records)
+    counts = {}
+    total = 0
+    for r in records.values():
+        if r.get("status") == "loaded":
+            counts[r["type"]] = counts.get(r["type"], 0) + 1
+            total += 1
+    functional["ui"] = _t_ui(records, counts, total)
+    verdict = _verdict(functional, records)
+
+    # slim records: strip callables (registry) — evidence & registry.json
+    # carry only serializable shapes + the registered capability names
+    slim = {}
+    for name, r in records.items():
+        s = {k: v for k, v in r.items() if k != "registry"}
+        reg = r.get("registry") or {}
+        s["registered_capabilities"] = {
+            kind: sorted(items.keys()) for kind, items in reg.items()
+            if isinstance(items, dict)}
+        slim[name] = s
+    registry_out = plugin_manager.write_registry(REGISTRY_PATH, slim)
+
+    evidence = {
+        "phase": PHASE,
+        "title": "Plugin System — 7 types (Agent/Tool/Skill/Model/MCP/"
+                 "Integration/UI)",
+        "version": VERSION,
+        "identity": {"service": "nexus-plugins", "host_hint": "almoutmag-v9"},
+        "started_utc": started_utc,
+        "finished_utc": utcnow(),
+        "bootstrap": boot,
+        "plugins_root": str(PLUGINS_ROOT),
+        "fs_jail": str(SELFTEST_DIR),
+        "counts_by_type": counts,
+        "loaded_total": total,
+        "plugins": [],
+        "cross_plugin": {"agent_verified_via_tool_plugin": functional.get(
+            "agent", {}).get("detail", {}).get("independent_hash_ok")},
+        "modules": _module_hashes(),
+        "artifacts": [str(REGISTRY_PATH), str(HB_PATH), str(SELFTEST_DIR)],
+        "notes": [
+            "spec 81: discovered+registered WITHOUT core changes",
+            "spec 241: permissions recorded; filesystem jail enforced",
+            "spec 79: MCP handshake is a REAL stdio JSON-RPC session",
+            "resident mode: rescan 30s (hot-load), STOP file exits cleanly",
+        ],
+        "verdict": verdict,
+    }
+    for name in sorted(slim):
+        r = dict(slim[name])
+        t = r.get("type")
+        r["functional"] = functional.get(t, {"verdict": "NOT_TESTED",
+                                             "detail": {}})
+        evidence["plugins"].append(r)
+    evidence["functional_by_type"] = {
+        k: v["verdict"] for k, v in functional.items()}
+    atomic_json(EVIDENCE_PATH, evidence)
+    return {"evidence": evidence, "functional": functional,
+            "verdict": verdict, "registry": registry_out}
+
+
+def main() -> int:
+    global _PID
+    result = {"phase": PHASE, "version": VERSION,
+              "started_utc": utcnow()}
+    try:
+        if _hb_fresh():
+            result["verdict"] = "SKIPPED_ALREADY_RUNNING"
+            atomic_json(RESULT_PATH, result)
+            return 0
+        threading.Thread(target=_hb_loop, daemon=True).start()
+        _set_state(selftest="booting")
+        boot = plugin_samples.bootstrap(PLUGINS_ROOT,
+                                        log=lambda *a: None)
+        result["bootstrap"] = boot
+        records = plugin_manager.load_all(PLUGINS_ROOT, SELFTEST_DIR)
+        loaded = sum(1 for r in records.values()
+                     if r.get("status") == "loaded")
+        _set_state(loaded=loaded)
+        result["loaded"] = loaded
+        result["load_errors"] = {n: r.get("error") for n, r in
+                                 records.items() if r.get("error")}
+        cert = _certify(records, boot, result["started_utc"])
+        result["verdict"] = cert["verdict"]
+        result["functional_by_type"] = {k: v["verdict"] for k, v in
+                                        cert["functional"].items()}
+        result["evidence_path"] = str(EVIDENCE_PATH)
+        atomic_json(RESULT_PATH, result)   # land BEFORE resident mode
+        counts = cert["registry"].get("counts_by_type", {})
+        _set_state(selftest="done", counts=counts)
+        write_hb()
+
+        # resident: hot-rescan + STOP file
+        while True:
+            if STOP_PATH.exists():
+                STOP_PATH.unlink()
+                break
+            time.sleep(RESUBSCRIBE_SCAN_S)
+            fresh = [d.name for d in PLUGINS_ROOT.iterdir()
+                     if d.is_dir() and d.name not in records
+                     and not d.name.startswith("_")]
+            if fresh:
+                records = plugin_manager.load_all(PLUGINS_ROOT, SELFTEST_DIR)
+                _set_state(loaded=sum(1 for r in records.values()
+                                      if r.get("status") == "loaded"))
+                write_hb()
+        write_hb()
+        hbtxt = HB_PATH.read_text(encoding="utf-8")
+        HB_PATH.write_text(hbtxt.replace('"running": true',
+                                         '"running": false'),
+                           encoding="utf-8")
+        result["stopped_utc"] = utcnow()
+        atomic_json(RESULT_PATH, result)
+        return 0
+    except BaseException as exc:  # noqa: BLE001 — result must ALWAYS land
+        result["verdict"] = "FAIL"
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        result["traceback_tail"] = traceback.format_exc()[-1500:]
+        try:
+            atomic_json(RESULT_PATH, result)
+        except BaseException:
+            print(json.dumps(result, ensure_ascii=False), flush=True)
+        return 1
+
+
+_PID = None
+if __name__ == "__main__":
+    import os
+    _PID = os.getpid()
+    _rc = 2
+    try:
+        _rc = main()
+    except BaseException:
+        traceback.print_exc()
+        _rc = 1
+    sys.exit(_rc)

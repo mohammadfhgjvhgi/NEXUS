@@ -1,0 +1,8 @@
+PHASE 17 — Research Engine COMPLETE
+commit: 48ae307 (main == develop) — CI 11/11 green (runs #83 + #84)
+code: e7ccb86 (impl, 24 files: 7 research modules + 10 test/gate/proof + CI + README + CHANGELOG + report + pyproject) · 48ae307 (real-Windows fix: close the §12 memory before temp cleanup — WinError 32)
+files: 24 deployed + on-disk sha256 verified (file_hash, CRLF-aware) — live_research_ci.py redeployed after the fix
+tests: 73/73 on this box (contracts 18 · classify 9 · providers 13 · workflow 18 · memory 8 · engine 7)
+live proof: 6/6 rungs on this box — real api.github.com search + real public web search (Wikipedia) + repo corpus + eight-stage workflow + four confidence dimensions + §12 memory roundtrip with sources (proofs/phase17_live.json · python 3.14.5 · Windows-10-10.0.19045)
+real-Windows lesson: an open SQLite handle keeps the file locked (WinError 32) — close §12 memory before TemporaryDirectory cleanup
+nexus-core 0.17.0 · NEXUS_PHASE=17

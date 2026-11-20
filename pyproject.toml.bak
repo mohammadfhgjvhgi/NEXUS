@@ -1,0 +1,116 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexus-core"
+version = "0.14.0"
+description = "NEXUS — Local Autonomous Computer Intelligence Platform · Core + Workspace/Scope/Policy + Hardware/Resources + Local Model Runtime + Agent Runtime + Harness + Tool System + Windows Computer Runtime + Window Manager/Human Parallelism + Browser Runtime + Vision/OCR/Screen Understanding + Memory Engine (Phase 12) + Learning Engine (Phase 13) + Code Intelligence (Phase 14)"
+readme = "README.md"
+requires-python = ">=3.11"
+# Empty by design: the Core identity must not depend on any external
+# agent framework (Final Build Plan §2). External engines enter later,
+# behind adapters only (§0.4).
+dependencies = []
+
+# Optional, pinned, audited companions (Final Build Plan §0.2/§0.3 —
+# every entry went through the full DISCOVER→…→PIN→DOCUMENT cycle,
+# see docs/REPOSITORY-INTEGRATION.md). The Core still runs stdlib-only
+# with none of these installed; each integration degrades gracefully.
+[project.optional-dependencies]
+# psutil (BSD-3-Clause, MODE A — pin 7.2.2): real RSS observation for
+# §5.5 benchmarks and the §4.4 model-memory accounting, plus POSIX
+# CPU frequency for the hardware scanner.
+hardware = ["psutil>=7.2,<8"]
+# Windows-only companions for the user's box (MODE A; untestable on
+# Linux CI — install there with `pip install nexus-core[windows]`).
+windows = [
+    "psutil>=7.2,<8",
+    "pywin32>=308; sys_platform == 'win32'",
+    "wmi>=1.2; sys_platform == 'win32'",
+    "pynvml>=12; sys_platform == 'win32'",
+]
+# MCP interop (Plan §8.4 — the official Python SDK, v2 stable line,
+# MODE A; MIT): the client behind the NEXUS Tool Router. The Core
+# runs stdlib-only without it — the adapter reports the absence
+# honestly and the native tools keep working.
+mcp = [
+    "mcp>=2.0,<3",
+]
+# Windows computer backend (Plan §9.3 — pywinauto, BSD-3-Clause,
+# MODE A; pinned 18d2a95 upstream): deep UIA control matching and
+# per-control typing behind the Computer API. The native ctypes
+# client (§9.4) is the first layer and needs nothing; this extra
+# only deepens the §9.5 uia layer.
+computer = [
+    "pywinauto>=0.6.9",
+]
+# Browser execution engine (Plan §11.1 — microsoft/playwright,
+# Apache-2.0, MODE A «USE»; pinned via the PyPI distro of the
+# upstream repo): navigation · DOM · forms · upload · download ·
+# tabs · states, behind the §8.2 router. The engine drives the
+# operator's installed Chrome via the channel ladder when bundled
+# Chromium is absent.
+browser = [
+    "playwright>=1.55",
+]
+# OCR candidate engines (Plan §12.5 — the classic tesseract path;
+# the final engine choice is the DEVICE BENCHMARK's verdict, not a
+# dependency decision): pytesseract (MIT, pure Python) + Pillow
+# (HPND, the CI corpus renderer + image decoding) + the tesseract
+# binary (apt/tesseract-ocr — not pip). The OS-native winrt
+# candidate rides winsdk/winrt wheels on Windows; the model
+# candidate needs nothing new. The Core runs stdlib-only without
+# any of these — resolve_ocr_engine reports the absence honestly.
+ocr = [
+    "pytesseract>=0.3.10",
+    "Pillow>=10",
+]
+# Semantic memory engine (Plan §12.5 — qdrant/qdrant, Apache-2.0,
+# MODE A «USE» via the official qdrant-client distribution): vector
+# search + filtered retrieval in local mode (no server) or against a
+# live one. The Core runs stdlib-only without it — the factory falls
+# back to the local cosine index and *reports* the absence honestly
+# (the engine never fakes a backend).
+qdrant = [
+    "qdrant-client>=1.19,<2",
+]
+# Persistent-memory engine candidate (Plan §12.6/§13.4 —
+# mem0ai/mem0, Apache-2.0, MODE B «ADAPT»): the adapter wraps a
+# mem0-shaped backend (add/search/get_all/update/delete) behind the
+# NEXUS MemoryProvider contract; the side store keeps NEXUS-owned
+# semantics (scopes, links, audit). Optional by design — the default
+# engine is NEXUS-native SQLite + vectors.
+mem0 = [
+    "mem0ai>=2.0,<3",
+]
+
+# Code intelligence engine (New Plan §14.9 — tree-sitter/tree-sitter,
+# MIT, MODE A «USE»; pinned upstream 8351896): the real parsing
+# runtime behind the [codeintel] registry — multi-language parsing
+# (JavaScript/TypeScript, which stdlib cannot touch) and the §14.12
+# incremental live-index path (tree.edit → reparse with the old
+# tree). The Core runs stdlib-only without it — stdlib-ast covers
+# Python, the regex fallback covers the JS family, and
+# engine_status() reports the absence honestly.
+codeintel = [
+    "tree-sitter>=0.24,<1",
+    "tree-sitter-python>=0.23,<1",
+    "tree-sitter-javascript>=0.23,<1",
+    "tree-sitter-typescript>=0.23,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["nexus*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]
+
+[tool.pyright]
+include = ["nexus"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"

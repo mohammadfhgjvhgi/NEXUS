@@ -1,0 +1,47 @@
+{
+ "worker": "phase27",
+ "stages": {
+  "verify": {
+   "ui": {
+    "expected": "106e5ad2af04b723",
+    "got": "106e5ad2af04b723",
+    "ok": true
+   },
+   "launcher": {
+    "expected": "db354f0378aec0df",
+    "got": "db354f0378aec0df",
+    "ok": true
+   }
+  },
+  "backup": [
+   "nexus_ui.py.pre27.bak",
+   "nexus_launcher.py.pre27.bak"
+  ],
+  "compile": "ok",
+  "rebuild": {
+   "rc": 0,
+   "exe_bytes": 90815683,
+   "exe_sha256": "819d8a9996ec5b2841fde744a97d25d600805f20b31fc1f334b0c2ec7628f5ac"
+  },
+  "check": {
+   "rc": 0,
+   "tail": "a mind of its own.\n  local-first  ·  stdlib core  ·  evidence or silence\n==========================================================\ncore packages : 37 ok / 0 err (of 37)\nmodel runtime : offline at http://127.0.0.1:8080\nverdict       : PASS  (2.91s)\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\n"
+  },
+  "selftest": {
+   "rc": 0,
+   "verdict": "PASS",
+   "sections_ok": true,
+   "runtime_ok": true,
+   "seconds": 47.91
+  },
+  "certify": {
+   "status_md": "M:\\NEXUS\\build\\midpoint\\PHASE-27-STATUS.md",
+   "project_card": "M:\\NEXUS\\proofs\\PROJECT-CARD.md",
+   "phase27_cert_sha256": "321fcc1f19e52a064881187bd118ff6ae9596ebf81e91adb6093c9e96ed00ce6"
+  }
+ },
+ "utc_start": "2026-11-19T22:14:30Z",
+ "verdict": "PASS",
+ "seconds": 196.5,
+ "utc_end": "2026-11-19T22:17:47Z"
+}

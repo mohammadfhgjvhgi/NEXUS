@@ -1,0 +1,39 @@
+{
+ "worker": "worker_task910",
+ "utc": "2026-09-13T20:28:52Z",
+ "pid": 11052,
+ "build_setup": {
+  "rc": 0,
+  "seconds": 22.8,
+  "err_tail": "21736 INFO: Copying icon to EXE\r\n21745 INFO: Copying 0 resources to EXE\r\n21745 INFO: Embedding manifest in EXE\r\n21754 INFO: Appending PKG archive to EXE\r\n21769 INFO: Fixing EXE headers\r\n21970 INFO: Building EXE from EXE-00.toc completed successfully.\r\n21975 INFO: Build complete! The results are available in: M:\\NEXUS\\build\\midpoint\\installer\\dist\r\n"
+ },
+ "setup_exe": {
+  "size": 9423147,
+  "sha256": "7d44a5aded309a48a89c7e69d2b1d042c324bad01c93f9add051d2da45ed958b"
+ },
+ "install_run": {
+  "rc": 0,
+  "out_tail": "certificate: M:\\NEXUS\\proofs\\midpoint_install.json\r\n{\"verdict\": \"PASS\", \"install_root\": \"C:\\\\Users\\\\MohandsMohammad\\\\AppData\\\\Local\\\\Programs\\\\NEXUS\"}\r\n",
+  "err_tail": "",
+  "seconds": 23.8
+ },
+ "install_cert": {
+  "verdict": "PASS",
+  "error": null,
+  "install_root": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\NEXUS"
+ },
+ "passed9": true,
+ "gate_9": {
+  "updated": true
+ },
+ "gate_certificate": {
+  "path": "M:\\NEXUS\\proofs\\midpoint_gate.json",
+  "verdict": "PASS",
+  "sealed_sha256": "604e26b360fbc3620f64a4a97e2bcd500dc2f7776a9ec60b58af7bf6859af2f4"
+ },
+ "gate_10": {
+  "updated": true
+ },
+ "verdict": "PASS",
+ "finished_utc": "2026-09-13T20:29:40Z"
+}

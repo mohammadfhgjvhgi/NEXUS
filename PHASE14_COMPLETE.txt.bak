@@ -1,0 +1,47 @@
+PHASE 14 — CODE INTELLIGENCE · COMPLETE ON THIS MACHINE
+======================================================
+
+phase       : 14 / New Plan §14 — Code Intelligence
+identity    : تمكين NEXUS من فهم المشاريع الكبيرة — the
+              File Index, the Symbol Index, the AST (three
+              engines), the Dependency/API/Test graphs, the
+              Architecture + Repository Maps (Aider's §127
+              PageRank methodology), the 100k-scale engine
+              and the §14.12 live index update
+              (file changed → parse affected region →
+              update symbols → update graph)
+deploy      : 19/19 files written + SHA-verified via bridge
+              (Bearer) + the .gitkeep scaffold removed
+
+What landed (nexus\codeintel\, 6 modules):
+  contracts.py — §14.1–§14.8 the NEXUS-native shapes
+  parsers.py   — §14.3/§14.9 stdlib-ast + tree-sitter MODE A
+                 + the honest regex fallback
+  store.py     — one codeintel.db (WAL): files · symbols ·
+                 references · edges · endpoints · test links
+  graphs.py    — §14.4/§14.5/§14.6 the three graphs
+  repomap.py   — §14.7/§14.8 PageRank + budget rendering
+  engine.py    — §14.11 large-project engine + §14.12 live
+
+Repository Round 11 (audited pins — REPOSITORY-INTEGRATION.md):
+  tree-sitter/tree-sitter   8351896 (MIT, MODE A «USE» —
+                             the [codeintel] extra: JS/TS
+                             parsing + the incremental path)
+  Aider-AI/aider            5dc9490 (Apache-2.0, MODE D/C —
+                             the Repository-Map methodology,
+                             zero imports)
+
+The device proof (this machine is the judge):
+  cd /d M:\NEXUS
+  python -X utf8 tests\phase14\live_proof_device.py
+  → corpus scan + graphs + maps + §14.12 on real disk +
+    steady-state zero reparse + NEXUS indexing its own tree
+    + child-process restart
+    → proofs\phase14_live.json
+
+tree-sitter on this box: engine_status() reports honestly;
+stdlib-ast + regex answer when it is absent, the MODE A
+incremental path engages when it is present.
+
+Next: at the operator's command (New Plan tracks — PHASE 15
+or the parallel tracks toward MIDPOINT).

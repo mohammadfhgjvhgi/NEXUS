@@ -1,0 +1,14 @@
+{"utc": "2026-09-13T16:37:34Z", "phase": "detached:copy_begin", "detail": ""}
+{"utc": "2026-09-13T16:38:21Z", "phase": "detached:copy_done", "detail": "exit=1"}
+{"utc": "2026-09-13T16:38:21Z", "phase": "detached:verify_begin", "detail": ""}
+{"utc": "2026-09-13T16:38:21Z", "phase": "detached:verify_walk_done", "detail": "src=460f/3727268605B dst=460f/3727268605B"}
+{"utc": "2026-09-13T16:38:29Z", "phase": "detached:sha_file", "detail": "1 grd\\post-processing\\7e4b95038688eb7a072631493af24e41\\Display.Driver\\libnvdxdlker"}
+{"utc": "2026-09-13T16:38:32Z", "phase": "detached:sha_file", "detail": "2 grd\\post-processing\\7e4b95038688eb7a072631493af24e41\\Display.Driver\\nvdxdlkernel"}
+{"utc": "2026-09-13T16:38:33Z", "phase": "detached:sha_file", "detail": "3 grd\\post-processing\\7e4b95038688eb7a072631493af24e41\\Display.Driver\\nvlddmkm.sys"}
+{"utc": "2026-09-13T16:38:35Z", "phase": "detached:sha_file", "detail": "4 grd\\post-processing\\7e4b95038688eb7a072631493af24e41\\Display.Driver\\nvoptix.dll"}
+{"utc": "2026-09-13T16:38:37Z", "phase": "detached:sha_file", "detail": "5 grd\\post-processing\\7e4b95038688eb7a072631493af24e41\\Display.Driver\\nvrtum64.dll"}
+{"utc": "2026-09-13T16:38:48Z", "phase": "detached:sha_file", "detail": "6 grd\\7e4b95038688eb7a072631493af24e41\\582.28-desktop-win10-win11-64bit-internatio"}
+{"utc": "2026-09-13T16:38:48Z", "phase": "detached:sha_done", "detail": "checked=6 bad=0 aborted=0"}
+{"utc": "2026-09-13T16:38:48Z", "phase": "detached:purge_selfverify_begin", "detail": ""}
+{"utc": "2026-09-13T16:38:48Z", "phase": "detached:purge_begin", "detail": "files_to_delete=460"}
+{"utc": "2026-09-13T16:38:51Z", "phase": "detached:purge_done", "detail": "exit=2"}

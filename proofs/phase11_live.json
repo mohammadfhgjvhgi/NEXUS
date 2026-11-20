@@ -1,0 +1,71 @@
+{
+  "python": "3.14.5",
+  "machine": "DESKTOP-46N9B2S · Windows 10",
+  "capture available on the device (GDI)": {
+    "ok": true,
+    "detail": "GDI capture + stdlib PNG encoder (full · window · region)"
+  },
+  "full-screen capture through the router": {
+    "ok": true,
+    "detail": ""
+  },
+  "capture_full": {
+    "ok": true,
+    "size": "1680x1050",
+    "bytes": 103764
+  },
+  "window capture (PrintWindow/DWM) through the router": {
+    "ok": true,
+    "detail": ""
+  },
+  "capture_window": {
+    "ok": true,
+    "hwnd": 132358,
+    "size": "1680x1050",
+    "dwm_bounds": [
+      0,
+      0,
+      1680,
+      1050
+    ]
+  },
+  "region capture (clamped) through the router": {
+    "ok": true,
+    "detail": ""
+  },
+  "the §12.5 corpus rendered by the OS (GDI DrawTextW)": {
+    "ok": true,
+    "detail": "rendered 16/16"
+  },
+  "ocr_benchmark": {
+    "engines": [],
+    "winner": "",
+    "decided": false,
+    "reason": "no engine scored on this device",
+    "scores": []
+  },
+  "the §12.5 benchmark raced ≥2 engines on the device": {
+    "ok": false,
+    "detail": "engines=[]"
+  },
+  "the benchmark verdict is recorded (decided or honestly not)": {
+    "ok": false,
+    "detail": "no engine scored on this device"
+  },
+  "provider_probe": {
+    "ok": false,
+    "reason": "no model manager wired (provider is stub-only)"
+  },
+  "the §12.2 parsers hold on the device (UI-TARS tolerance)": {
+    "ok": true,
+    "detail": ""
+  },
+  "a real ocr op through the §8.2 router": {
+    "ok": false,
+    "detail": "ToolArgError: argument 'op': no OCR engine available: no OCR engine available on this runtime (honest)"
+  },
+  "the §9.5 vision rung hands off to real input (locate → click)": {
+    "ok": true,
+    "detail": "calls=[('mouse', {'op': 'click', 'x': 20, 'y': 20})]"
+  }
+}

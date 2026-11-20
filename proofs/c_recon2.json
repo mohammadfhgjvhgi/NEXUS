@@ -1,0 +1,323 @@
+{
+ "drives": {
+  "C:": {
+   "used_gb": 166.7,
+   "free_gb": 0.5
+  },
+  "M:": {
+   "used_gb": 300.0,
+   "free_gb": 258.1
+  }
+ },
+ "profiles_gb": {
+  "C:\\Users\\MohandsMohammad": 91.47,
+  "C:\\Users\\Default": 0.0,
+  "C:\\Users\\Default User": 0.0,
+  "C:\\Users\\Public": 0.0,
+  "C:\\Users\\TEMP": 0.0
+ },
+ "profile": "C:\\Users\\MohandsMohammad",
+ "profile_level1_gb": {
+  "C:\\Users\\MohandsMohammad\\AppData": 51.63,
+  "C:\\Users\\MohandsMohammad\\.mimo_storage": 26.8,
+  "C:\\Users\\MohandsMohammad\\.platformio": 2.52,
+  "C:\\Users\\MohandsMohammad\\.gradle": 2.16,
+  "C:\\Users\\MohandsMohammad\\.cache": 1.86,
+  "C:\\Users\\MohandsMohammad\\.lmstudio": 1.56,
+  "C:\\Users\\MohandsMohammad\\.bun": 1.37,
+  "C:\\Users\\MohandsMohammad\\.pm2": 1.01,
+  "C:\\Users\\MohandsMohammad\\.codeium": 0.96,
+  "C:\\Users\\MohandsMohammad\\.dsh": 0.37
+ },
+ "appdata_local_gb": {
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp": 8.0,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Arduino15": 5.95,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Google": 3.45,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs": 3.27,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Microsoft": 3.15,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\RobloxPCGDK": 2.53,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Android": 1.58,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Perplexity": 1.51,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Packages": 1.27,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA": 1.04,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Discord": 0.87,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\BraveSoftware": 0.81,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\arduino": 0.76,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\BeamNG.drive": 0.75,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\lm-studio-updater": 0.59,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Python": 0.57,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\ms-playwright": 0.41,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Spotify": 0.32
+ },
+ "appdata_roaming_gb": {
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\.minecraft": 2.83,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Code": 2.06,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\kingsoft": 1.85,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\npm": 0.73,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\.tlauncher": 0.55,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Zona": 0.55,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Telegram Desktop": 0.51,
+  "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Spotify": 0.36
+ },
+ "mimo_storage_total_gb": 26.8,
+ "mimo_storage_parts_gb": {
+  "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots": 26.8
+ },
+ "candidates_gb": {
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp": 8.0,
+  "C:\\ProgramData\\NVIDIA Corporation\\NVIDIA App\\UpdateFramework\\ota-artifacts": 3.47,
+  "C:\\Users\\MohandsMohammad\\.cache": 1.86,
+  "C:\\Users\\MohandsMohammad\\.cache\\huggingface": 1.85,
+  "C:\\Users\\MohandsMohammad\\.lmstudio": 1.56,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA": 1.04,
+  "C:\\ProgramData\\Epic": 0.79,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\pip": 0.3,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA Corporation": 0.27,
+  "C:\\Users\\MohandsMohammad\\AppData\\Local\\npm-cache": 0.18,
+  "C:\\Users\\MohandsMohammad\\Downloads": 0.02,
+  "C:\\Users\\MohandsMohammad\\Documents": 0.01,
+  "C:\\Users\\MohandsMohammad\\Desktop": 0.01,
+  "C:\\Users\\MohandsMohammad\\Videos": 0.0,
+  "C:\\Users\\MohandsMohammad\\Pictures": 0.0,
+  "C:\\Users\\MohandsMohammad\\Music": 0.0,
+  "C:\\Users\\MohandsMohammad\\.ollama": 0.0
+ },
+ "big_files_over_300mb": [
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000139_ministral-8b-q4km.gguf",
+   "gb": 4.842
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000009_llama32-3b-q4km.gguf",
+   "gb": 1.881
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000010_qwen25-coder-3b-q4km.gguf",
+   "gb": 1.797
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_ds-r1-distill-qwen-1.5b-q4km.gguf",
+   "gb": 1.041
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000008_qwen3-1.7b-q4km.gguf",
+   "gb": 1.031
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-0.5B-Instruct\\blobs\\fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+   "gb": 0.92
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000006_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.918
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000174_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.918
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000007_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.897
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.814
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000019_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.814
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000003_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.681
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000004_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.681
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000018_lfm2.5-1.2b-q4km.gguf",
+   "gb": 0.681
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\cuda_v12\\cublasLt64_12.dll",
+   "gb": 0.645
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000005_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.626
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000006_yi-coder-1.5b-q4km.gguf",
+   "gb": 0.626
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000031_bitnet-b1.58-2b.gguf",
+   "gb": 0.624
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\lm-studio-updater\\installer.exe",
+   "gb": 0.591
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000009_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.588
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000010_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.588
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.58
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000002_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.58
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000003_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.544
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000004_qwen25-coder-1.5b-q4km.gguf",
+   "gb": 0.544
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.31.42.05.Enemy destruction moment.DVR.mp4",
+   "gb": 0.536
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000011_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.527
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000012_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.527
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\NVIDIA\\DXCache\\b15aa9b80bec0c27.nvph",
+   "gb": 0.5
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.pm2\\pm2.log",
+   "gb": 0.498
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.lmstudio\\extensions\\backends\\llama.cpp-win-x86_64-nvidia-cuda-avx2-2.28.2\\ggml-cuda.dll",
+   "gb": 0.497
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\cuda_v13\\cublasLt64_13.dll",
+   "gb": 0.445
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\rocm_v7_1\\ggml-hip.dll",
+   "gb": 0.444
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.pm2\\logs\\mimo-app-error-0.log",
+   "gb": 0.444
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.45.46.23.Enemy destruction moment.DVR.mp4",
+   "gb": 0.433
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.47.09.26.Enemy destruction moment.DVR.mp4",
+   "gb": 0.415
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_bitnet-b1.58-2b.gguf",
+   "gb": 0.398
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000002_bitnet-b1.58-2b.gguf",
+   "gb": 0.398
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.codeium\\database\\9c0694567290725d9dcba14ade58e297\\3\\MODEL_EMBED_6591\\embedding_database.sqlite",
+   "gb": 0.376
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.30.11.02.Enemy destruction moment.DVR.mp4",
+   "gb": 0.373
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000001_qwen3-0.6b-q4km.gguf",
+   "gb": 0.369
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000002_qwen3-0.6b-q4km.gguf",
+   "gb": 0.369
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000017_qwen3-0.6b-q4km.gguf",
+   "gb": 0.369
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000003_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.367
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\.mimo_storage\\snapshots\\snap_000004_ds-coder-1.3b-q4km.gguf",
+   "gb": 0.367
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.07 - 19.06.38.02.Moment of death.DVR.mp4",
+   "gb": 0.349
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\kingsoft\\office6\\updatenew\\WPS_25242.exe",
+   "gb": 0.348
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Code\\CachedExtensionVSIXs\\openai.chatgpt-26.5810.52044-win32-x64",
+   "gb": 0.342
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 21.32.00.06.Moment of death.DVR.mp4",
+   "gb": 0.337
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.32.02.Moment of death.DVR.mp4",
+   "gb": 0.336
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\RobloxPCGDK\\rbx-storage.db",
+   "gb": 0.329
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Roaming\\Code\\CachedExtensionVSIXs\\.6ee5d72d-44c3-41be-8363-0103271f5234",
+   "gb": 0.322
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Programs\\Ollama\\lib\\ollama\\cuda_v12\\ggml-cuda.dll",
+   "gb": 0.321
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.36.03.Enemy destruction moment.DVR.mp4",
+   "gb": 0.318
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.09 - 22.09.54.45.Enemy destruction moment.DVR.mp4",
+   "gb": 0.315
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.38.05.Moment of death.DVR.mp4",
+   "gb": 0.311
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.38.06.Moment of death.DVR.mp4",
+   "gb": 0.311
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.38.04.Moment of death.DVR.mp4",
+   "gb": 0.31
+  },
+  {
+   "path": "C:\\Users\\MohandsMohammad\\AppData\\Local\\Temp\\Highlights\\War Thunder\\War Thunder 2026.09.06 - 15.09.39.07.Moment of death.DVR.mp4",
+   "gb": 0.304
+  }
+ ]
+}

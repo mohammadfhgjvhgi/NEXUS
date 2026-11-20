@@ -1,0 +1,8 @@
+{
+ "name": "model-local-8080",
+ "type": "model",
+ "version": "1.0.0",
+ "entry": "model_local.py",
+ "description": "OpenAI-compatible local provider probe (127.0.0.1:8080)",
+ "permissions": []
+}

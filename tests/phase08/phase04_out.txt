@@ -1,0 +1,117 @@
+PHASE 4 — LOCAL MODEL RUNTIME (Final Build Plan §5)
+
+  [PASS] (A/§5.1) ModelProvider exposes exactly the seven §5.1 members — abstractmethods=['benchmark', 'capabilities', 'generate', 'health', 'load', 'stream', 'unload']
+  [PASS] (A/§5.1) GenerateRequest carries the NEXUS Model API contract
+  [PASS] (A/§5.1) GenerateResult carries text + token/time accounting
+  [PASS] (A/§5.1) load returns LoadInfo(model_id, backend)
+  [PASS] (A/§5.1) generate returns accounting (prompt + generation tokens/seconds) — pps=12.0
+  [PASS] (A/§5.1) stream yields deltas with a final done chunk carrying stats — chunks=6
+  [PASS] (A/§5.1) health reports ok for a resident model
+  [PASS] (A/§5.1) health reports not_loaded after unload
+  [PASS] (A/§5.1) capabilities mirror the model record
+  [PASS] (A/§5.1) generate on unknown/unloaded model raises
+  [PASS] (A/§5.1) error hierarchy: ModelNotLoadedError is a ProviderError
+
+  [PASS] (B/§5.2) Model carries the twelve §5.2 fields (+2 documented auxiliary) — fields=['id', 'name', 'format', 'backend', 'size', 'context', 'capabilities', 'ram', 'vram', 'language', 'benchmark', 'status', 'path', 'benchmark_history']
+  [PASS] (B/§5.2) MODEL_FIELDS constant matches the plan verbatim
+  [PASS] (B/§5.2) register + get round trip
+  [PASS] (B/§5.2) find returns None for unknown ids
+  [PASS] (B/§5.2) duplicate registration rejected
+  [PASS] (B/§5.2) benchmark attaches + status → benchmarked
+  [PASS] (B/§5.2) status lifecycle mutable via mark_status
+  [PASS] (B/§5.2) unregister drops the record (pool not fixed)
+  [PASS] (B/§5.2) get on unknown id raises RegistryError
+  [PASS] (B/§5.2) save is atomic (no .tmp residue)
+  [PASS] (B/§5.2) persistence round trip — record + benchmark survive reload
+  [PASS] (B/§5.2) registry file carries schema/version markers
+  [PASS] (B/§5.2) benchmark history bounded at 8 runs
+  [PASS] (B/§5.2) find_by_capability filters
+  [PASS] (B/§5.2) summaries expose id/name/backend/status
+
+  [PASS] (C/§5.3) server argv: -m/-c/--host/--port/-ngl/-t + KV-Q4 flags — ['llama-server', '-m', 'M:/NEXUS/models/test.gguf', '-c', '8192', '--host', '127.0.0.1', '--port', '8081', '-ngl', '99', '-t', '8', '-ctk', 'q4_0', '-ctv', 'q4_0', '--verbose']
+  [PASS] (C/§5.3) CPU defaults: -ngl 0, no threads flag, no KV quant
+  [PASS] (C/§5.3) completion body: system+prompt, n_predict, sampling, stop, seed
+  [PASS] (C/§5.3) stream flag switches in the same encoder
+  [PASS] (C/§5.3) response parsing: text + prompt/gen tokens + seconds
+  [PASS] (C/§5.3) SSE delta parsing (not done)
+  [PASS] (C/§5.3) SSE final event carries the full stats
+  [PASS] (C/§5.3) missing binary raises a clear ProviderError
+  [PASS] (C/§5.3) adapter identifies as the llama.cpp backend
+  [PASS] (C/§5.3) chain: adapter spawned llama-server with -m <model path> — ['llama-server', '-m', 'M:/NEXUS/models/test-model-a.gguf', '-c']
+  [PASS] (C/§5.3) LoadInfo exposes the backend + endpoint
+  [PASS] (C/§5.3) generate POSTed /completion on the spawned server
+  [PASS] (C/§5.3) stream consumed the SSE endpoint and ended done
+  [PASS] (C/§5.3) health GET /health → ok while the server lives
+  [PASS] (C/§5.3) unload stopped the llama-server process
+  [PASS] (C/§5.3) ModelManager never imports the llama.cpp adapter directly
+  [PASS] (C/§5.3) runtime swap: the same §5.1 interface drives the simulated backend
+
+  [PASS] (D/§5.4) §5.4 verb «select» present on the ModelManager
+  [PASS] (D/§5.4) §5.4 verb «load» present on the ModelManager
+  [PASS] (D/§5.4) §5.4 verb «run» present on the ModelManager
+  [PASS] (D/§5.4) §5.4 verb «keep_warm» present on the ModelManager
+  [PASS] (D/§5.4) §5.4 verb «unload» present on the ModelManager
+  [PASS] (D/§5.4) select returns a model id from the §5.7 router
+  [PASS] (D/§5.4) load reserves RAM in the ResourceManager — allocated=2048MB
+  [PASS] (D/§5.4) events fire in order: model.loading → model.loaded
+  [PASS] (D/§5.4) run (generate) goes through the provider
+  [PASS] (D/§5.4) run (stream) yields chunks and updates liveness
+  [PASS] (D/§5.4) keep warm extends the TTL
+  [PASS] (D/§5.4) extended TTL survives an idle sweep
+  [PASS] (D/§5.4) unload releases the provider AND the ResourceManager allocation
+  [PASS] (D/§5.4) model.unloaded fired with the reason payload
+  [PASS] (D/§5.4) auto_load request loads on demand
+  [PASS] (D/§5.4) over-budget load refuses (LoadRefusedError)
+  [PASS] (D/§5.4) refusal leaves the registry marked error and nothing resident
+  [PASS] (D/§5.4) pressure load evicts the LRU idler and succeeds — alloc=3840
+  [PASS] (D/§5.4) idle TTL expiry unloads the resident model
+  [PASS] (D/§5.4) apply_pressure(unload_model) drops the idlest resident model — ['unload_model:qwen3-0.6b']
+  [PASS] (D/§5.4) apply_pressure(switch_model) frees the LRU model for the switch
+  [PASS] (D/§5.4) shutdown unloads every resident model + closes the provider
+  [PASS] (D/§5.4) only the four §2.2 model events are published (28 registry intact) — ['model.loaded', 'model.loading', 'model.unloaded']
+
+  [PASS] (E/§5.5) ModelBenchmark carries the seven §5.5 fields verbatim — fields=['warmup', 'prompt_speed', 'generation_speed', 'context', 'ram', 'vram', 'stability', 'source', 'measured_at', 'device', 'notes']
+  [PASS] (E/§5.5) Spec §135 order: load → warm-up → prompt bench → generation bench → memory → stability — ['load:bench-model', 'generate:bench-model', 'generate:bench-model', 'generate:bench-model', 'generate:bench-model', 'generate:bench-model']
+  [PASS] (E/§5.5) benchmark fields measured: warmup, speeds, context, RAM/VRAM, stability — gen=25.0 tps, stability=1.0
+  [PASS] (E/§5.5) benchmark provenance: source measured + device + timestamp
+  [PASS] (E/§5.5) manager benchmark wraps the §5.4 discipline (load → run → release)
+  [PASS] (E/§5.5) benchmark persisted on the registry record + status benchmarked
+  [PASS] (E/§5.5) benchmark survives a registry reload (real results, not guesses)
+  [PASS] (E/§5.5) seeded vs measured sources are distinguishable
+
+  [PASS] (F/§5.6–§5.7) the first Model Pool is exactly the five §5.6 models
+  [PASS] (F/§5.6–§5.7) pool is llama.cpp/GGUF tiny models with capabilities + language
+  [PASS] (F/§5.6–§5.7) Spec §88 baseline carried: qwen2.5-coder-1.5b @ 9.57 tok/s
+  [PASS] (F/§5.6–§5.7) Spec §88 baseline carried: lfm2.5-1.2b @ 7.54 tok/s
+  [PASS] (F/§5.6–§5.7) Spec §88 baseline carried: qwen3-0.6b @ 11.66 tok/s
+  [PASS] (F/§5.6–§5.7) Spec §88 baseline carried: ds-coder-1.3b @ 29.14 tok/s
+  [PASS] (F/§5.6–§5.7) Yi-Coder-1.5B honestly awaits its on-device benchmark
+  [PASS] (F/§5.6–§5.7) §88 device learnings kept: KV-Q4 note on Qwen3-0.6B
+  [PASS] (F/§5.6–§5.7) §88 DS-Coder measured with GPU offload
+  [PASS] (F/§5.6–§5.7) seeding is idempotent (once, never re-forced)
+  [PASS] (F/§5.6–§5.7) the pool is open: unregister + custom registration work
+  [PASS] (F/§5.6–§5.7) RoutingRequest carries the §5.7 inputs verbatim
+  [PASS] (F/§5.6–§5.7) router output is a selected model id (§5.7 literal) — qwen2.5-coder-1.5b
+  [PASS] (F/§5.6–§5.7) ModelScore exposes the Spec §178 components
+  [PASS] (F/§5.6–§5.7) §136 «Delete file → Fast tiny»: quick_action → qwen3-0.6b
+  [PASS] (F/§5.6–§5.7) §136 «General chat → Small general»: chat → a small chat model
+  [PASS] (F/§5.6–§5.7) §136 «Coding → Coder»: coding → a coder model
+  [PASS] (F/§5.6–§5.7) §136 «Large project analysis → Long-context candidate»
+  [PASS] (F/§5.6–§5.7) §136 «Image/screen → Vision»: no vision model → honest None + reason
+  [PASS] (F/§5.6–§5.7) §136 «Speech → Speech model»: honest None in this pool
+  [PASS] (F/§5.6–§5.7) VRAM budget filters DS-Coder out on a CPU-only host
+  [PASS] (F/§5.6–§5.7) current workload favors the already-warm model (§87) — lfm2.5-1.2b
+  [PASS] (F/§5.6–§5.7) complexity shifts the ranking (depth over cheapness) — low=qwen3-0.6b high=qwen2.5-coder-1.5b
+  [PASS] (F/§5.6–§5.7) runtime wires the ModelManager (§5 wiring)
+  [PASS] (F/§5.6–§5.7) system.started payload reports phase >= 4
+  [PASS] (F/§5.6–§5.7) first boot seeds the §5.6 pool (5 models)
+  [PASS] (F/§5.6–§5.7) reboot: registry persisted, no re-seed, custom model survives
+  [PASS] (F/§5.6–§5.7) runtime shutdown unloads resident models (§5.4 release)
+  [PASS] (F/§5.6–§5.7) models config: llama_server/host/port + keep_warm_seconds present
+  [PASS] (F/§5.6–§5.7) phase01 harness still green (98/98)
+  [PASS] (F/§5.6–§5.7) phase02 harness still green (143/143)
+  [FAIL] (F/§5.6–§5.7) phase03 harness still green (104/104)
+
+========================================================================
+PHASE 4 EXIT CRITERIA — 105/106 checks passed (1 failed)
+========================================================================

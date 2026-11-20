@@ -1,0 +1,2 @@
+FROM C:\Users\MohandsMohammad\.mimo_storage\snapshots\snap_000001_qwen3-0.6b-q4km.gguf
+PARAMETER num_ctx 2048

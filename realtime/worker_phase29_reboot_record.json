@@ -1,0 +1,10 @@
+{
+ "utc": "2026-11-19T23:28:32Z",
+ "shutdown": {
+  "http": 200,
+  "reply": "{\"ok\": true, \"op\": \"shutdown\", \"accepted\": true, \"note\": \"gateway will stop gracefully\"}"
+ },
+ "port_free_after_s": 1.0,
+ "port_free": true,
+ "respawn_pid": 13736
+}

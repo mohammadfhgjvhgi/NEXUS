@@ -1,0 +1,15 @@
+{
+ "name": "pm2",
+ "src": "C:\\Users\\MohandsMohammad\\.pm2",
+ "dst": "M:\\C-RELIEF\\mohands\\.pm2",
+ "status": "moved",
+ "robocopy_exit": 1,
+ "src_files": 24,
+ "src_bytes": 1088177872,
+ "dst_files": 24,
+ "dst_bytes": 1088177872,
+ "src_missing_in_dst": 0,
+ "sha_checked": 2,
+ "sha_bad": [],
+ "seconds": 28.4
+}

@@ -1,0 +1,23 @@
+
+import sys, io
+sys.path.insert(0, r"M:\NEXUS")
+buf = io.StringIO()
+from pathlib import Path
+root = Path(r"M:\NEXUS\data\memory-proof")
+print("root exists:", root.exists(), file=buf)
+if root.exists():
+    for p in sorted(root.rglob("*")):
+        print("  ", p.relative_to(root), p.stat().st_size if p.is_file() else "<dir>", file=buf)
+from nexus.memory.store import SQLiteMemoryStore
+db = root / "memory" / "memory.db"
+if db.exists():
+    store = SQLiteMemoryStore(db)
+    n = store.count_records()
+    print("records in db:", n, file=buf)
+    for rec in store.iter_records():
+        print("  -", rec.id[:14], rec.scope, rec.type, "|", rec.content[:60].replace("\n"," "), file=buf)
+    store.close()
+open(r"M:\NEXUS\proofs\diag2.txt", "w", encoding="utf-8").write(buf.getvalue())
+
+def test_diag():
+    assert True

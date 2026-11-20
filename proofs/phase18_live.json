@@ -1,0 +1,47 @@
+{
+  "phase": 18,
+  "verdict": "PASS",
+  "rungs_passed": 7,
+  "rungs_failed": 0,
+  "rungs": [
+    {
+      "ok": true,
+      "label": "18.3 docx: create → save → read → verify roundtrip",
+      "detail": "paragraphs=2 verify=True"
+    },
+    {
+      "ok": true,
+      "label": "18.3 docx: edit + format verbs hold on disk",
+      "detail": "text='edited text' bold=True size=14.0"
+    },
+    {
+      "ok": true,
+      "label": "18.4 pptx: slides + image + sources + verify",
+      "detail": "slides=3 image=True verify=True"
+    },
+    {
+      "ok": true,
+      "label": "18.5 pdf: read + search + extract + summarize + analyze",
+      "detail": "pages=2 hits=1 summary=3"
+    },
+    {
+      "ok": true,
+      "label": "18.2 index: real SQLite on disk answers *where*",
+      "detail": "doc_id=1 hit=paragraph 2 postings=8"
+    },
+    {
+      "ok": true,
+      "label": "18.1 docling: the availability probe tells the truth",
+      "detail": "honest absence — not installed — install with: pip install 'docling>=2.25,<3'"
+    },
+    {
+      "ok": true,
+      "label": "18.2 memory: documents remembered with provenance",
+      "detail": "records=2 sources=3"
+    }
+  ],
+  "nexus_version": "0.18.0",
+  "python": "3.14.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "timestamp": "2026-09-09T20:31:21"
+}

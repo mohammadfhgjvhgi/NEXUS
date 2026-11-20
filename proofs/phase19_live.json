@@ -1,0 +1,57 @@
+{
+  "phase": 19,
+  "verdict": "PASS",
+  "rungs_passed": 9,
+  "rungs_failed": 0,
+  "rungs": [
+    {
+      "ok": true,
+      "label": "1 fixtures-real",
+      "detail": "6 real utterances: [2.81, 5.14, 3.1, 3.34, 1.92, 1.86]s @16kHz"
+    },
+    {
+      "ok": true,
+      "label": "2 wavio-laws",
+      "detail": "foreign + truncated refused honestly"
+    },
+    {
+      "ok": true,
+      "label": "3 normalization-real",
+      "detail": "ar · en · mixed — one law per token"
+    },
+    {
+      "ok": true,
+      "label": "4 wer-math",
+      "detail": "known answers hold; whisper-tiny Arabic reference WER=1.00"
+    },
+    {
+      "ok": true,
+      "label": "5 intent-real",
+      "detail": "6/6 real utterances routed correctly (noise may miss)"
+    },
+    {
+      "ok": true,
+      "label": "6 providers-honest",
+      "detail": "sherpa installed=True model=True · sapi installed=False (0 recognizers)"
+    },
+    {
+      "ok": true,
+      "label": "7 pipeline-machinery",
+      "detail": "stages verbatim · task=open_application intent=open_app"
+    },
+    {
+      "ok": true,
+      "label": "8 memory-bridge",
+      "detail": "voice task remembered + recalled with provenance (engine closed)"
+    },
+    {
+      "ok": true,
+      "label": "9 provider-live",
+      "detail": "provider=sherpa-onnx hypothesis='Open the browser and run the tests.' wer=0.00 · ar detect=ar (native)"
+    }
+  ],
+  "nexus_version": "0.19.0",
+  "python": "3.14.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "timestamp": "2026-09-09T22:32:51"
+}

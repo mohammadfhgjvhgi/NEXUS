@@ -1,0 +1,7 @@
+{
+ "utc": "2026-09-12T15:51:51Z",
+ "mover_pid_13536": "INFO: No tasks are running which match the specified criteria.",
+ "robocopy": "INFO: No tasks are running which match the specified criteria.",
+ "python_procs": "\"python.exe\",\"1324\",\"Console\",\"1\",\"10,920 K\"\n\"python.exe\",\"13708\",\"Console\",\"1\",\"10,920 K\"\n\"python.exe\",\"8604\",\"Console\",\"1\",\"47,980 K\"\n\"python.exe\",\"7884\",\"Console\",\"1\",\"88,516 K\"\n\"python.exe\",\"19856\",\"Console\",\"1\",\"42,236 K\"",
+ "src_files": 0
+}

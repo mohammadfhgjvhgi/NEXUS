@@ -1,0 +1,27 @@
+{
+ "phase": 30,
+ "version": "0.30.0",
+ "started_utc": "2026-11-19T23:47:39Z",
+ "bootstrap": {
+  "tool-sha256": [],
+  "skill-summarize": [],
+  "agent-file-writer": [],
+  "model-local-8080": [],
+  "mcp-echo": [],
+  "integration-events": [],
+  "ui-status-card": []
+ },
+ "loaded": 7,
+ "load_errors": {},
+ "verdict": "PASS_WITH_DEGRADATION",
+ "functional_by_type": {
+  "tool": "PASS",
+  "skill": "PASS",
+  "agent": "PASS",
+  "model": "DEGRADED",
+  "mcp": "PASS",
+  "integration": "PASS",
+  "ui": "PASS"
+ },
+ "evidence_path": "M:\\NEXUS\\proofs\\phase30_plugins.json"
+}

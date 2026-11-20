@@ -1,0 +1,14 @@
+{
+ "product": "NEXUS.exe rebuild v5 (--say UI seam, utf-8 stdio)",
+ "utc": "2026-09-13T18:26:41Z",
+ "pid": 12912,
+ "python": "3.14.5",
+ "build_rc": 0,
+ "exe_size_bytes": 87587935,
+ "sha256": "c9e386bb8adf6c55df3d2a861e3ff4c05f197940f64dc4cb31bc7fd09a10c3a2",
+ "check_rc": 0,
+ "check_verdict": "PASS",
+ "verdict": "PASS",
+ "build_seconds": 256.57,
+ "utc_end": "2026-09-13T18:30:58Z"
+}

@@ -1,0 +1,66 @@
+{
+ "worker": "worker_cards",
+ "utc": "2026-10-24T12:42:59Z",
+ "pid": 14000,
+ "patch": {
+  "ok": true,
+  "patches": [
+   "p1:ok",
+   "p2:ok",
+   "p3:ok",
+   "p4:ok",
+   "p5:ok",
+   "p6:ok",
+   "p7:ok",
+   "p8:ok"
+  ],
+  "backup": "nexus_ui.py.pre_cards.bak",
+  "compile_rc": 0,
+  "compile_err": ""
+ },
+ "build": {
+  "rc": 0,
+  "seconds": 201.3
+ },
+ "exe": {
+  "size": 90703438,
+  "sha256": "728adddc6764c18a17957859339dee5255710f831c4dc1339e458d0eb519e642"
+ },
+ "check": {
+  "rc": 0,
+  "out_tail": "==========================================================\r\n  NEXUS 0.25.0  ·  NEXUS Windows Product v0.1 (MIDPOINT)\r\n  Your computer. With a mind of its own.\r\n  local-first  ·  stdlib core  ·  evidence or silence\r\n==========================================================\r\ncore packages : 37 ok / 0 err (of 37)\r\nmodel runtime : offline at http://127.0.0.1:8080\r\nverdict       : PASS  (3.38s)\r\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\r\n",
+  "err_tail": "",
+  "seconds": 20.9
+ },
+ "ui_run": {
+  "rc": 0,
+  "seconds": 21.6,
+  "out_tail": "11434).\r\n    llama-server: URLError: <urlopen error timed out>\r\n    ollama      : URLError: <urlopen error timed out>\r\ncertificate: M:\\NEXUS\\proofs\\midpoint_ui.json\r\n{\"verdict\": \"PASS\", \"title\": \"NEXUS 0.25.0 — Windows Product\", \"tasks_count\": 1, \"model\": \"offline\", \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_ui.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 564244, \"size_bytes\": 139412, \"ok\": true}}\r\n"
+ },
+ "ui_cert": {
+  "verdict": "PASS",
+  "caps_cards": 7,
+  "cap_seed_check": "ok",
+  "project_card": true,
+  "cap_clicks": 1,
+  "core_ok": 37,
+  "tasks_count": 1,
+  "model": "offline"
+ },
+ "ui_png": {
+  "exists": true,
+  "size": 139412
+ },
+ "certify": {
+  "cards_cert": "M:\\NEXUS\\proofs\\midpoint_cards.json",
+  "project_card": [
+   "build/midpoint",
+   "proofs"
+  ]
+ },
+ "gate_md": {
+  "updated": true
+ },
+ "verdict": "PASS",
+ "finished_utc": "2026-10-24T12:47:04Z"
+}

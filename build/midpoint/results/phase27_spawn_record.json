@@ -1,0 +1,11 @@
+{
+ "triggered_utc": "2026-11-19T22:14:30Z",
+ "pid": 4372,
+ "hb_before": {
+  "worker": "phase27",
+  "stage": "fatal",
+  "note": "RuntimeError: phase27-selftest verdict=FAIL rc=1 sections={\"ico\": {\"ok\": true, \"dir\": \"M:\\\\NEXUS\\\\assets\", \"files\": {\"ready\": {\"size\": 2097, \"sha256\": \"03297c740a84b4ac999e\"}, \"working\": {\"size\": 2095",
+  "utc": "2026-11-19T22:06:32Z",
+  "pid": 16188
+ }
+}

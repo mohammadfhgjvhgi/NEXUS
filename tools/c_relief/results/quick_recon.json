@@ -1,0 +1,69 @@
+{
+ "utc": "2026-09-12T14:26:53Z",
+ "C:": {
+  "used_gb": 166.7,
+  "free_gb": 8.26
+ },
+ "M:": {
+  "used_gb": 300.0,
+  "free_gb": 240.62
+ },
+ "candidates": {
+  "cache": {
+   "exists": true,
+   "junction": true
+  },
+  "gradle": {
+   "exists": true,
+   "junction": true
+  },
+  "platformio": {
+   "exists": true,
+   "junction": false
+  },
+  "bun": {
+   "exists": true,
+   "junction": false
+  },
+  "codeium": {
+   "exists": true,
+   "junction": true
+  },
+  "pm2": {
+   "exists": true,
+   "junction": true
+  },
+  "lmstudio": {
+   "exists": true,
+   "junction": true
+  },
+  "arduino15": {
+   "exists": true,
+   "junction": false
+  },
+  "android-sdk": {
+   "exists": true,
+   "junction": false
+  },
+  "roblox-gdk": {
+   "exists": true,
+   "junction": false
+  },
+  "perplexity": {
+   "exists": true,
+   "junction": false
+  },
+  "minecraft": {
+   "exists": true,
+   "junction": false
+  },
+  "nvidia-ota": {
+   "exists": true,
+   "junction": false
+  },
+  "mimo-snapshots": {
+   "exists": true,
+   "junction": false
+  }
+ }
+}

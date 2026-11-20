@@ -1,0 +1,377 @@
+"""Memory compression (New Plan §12.10) — the Mem0 extraction pattern,
+NEXUS-native (§12.6 MODE B: adapt the *behavior*, own the semantics).
+
+The pipeline, verbatim::
+
+    Raw history
+    ↓
+    Important events
+    ↓
+    Decisions
+    ↓
+    Lessons
+    ↓
+    Compact memory
+
+:func:`should_compress` triggers the run (turn count or total chars
+past the thresholds — the operator's long conversation never silently
+grows past the model's window). :class:`MemoryCompressor` then walks
+the turns once and extracts:
+
+* **events**  — turns that changed the world (tool receipts, state
+                transitions, artifacts written);
+* **decisions** — turns carrying decision markers (AR + EN);
+* **lessons** — turns carrying lesson/error markers;
+* a **compact summary** record of the whole span, linked to every
+  extracted record with ``compressed_from`` (§13.1 ``link``).
+
+All markers are deterministic, bilingual, and unit-tested — no model
+calls, no nondeterminism, CI-provable. (When a local model is present
+the harness can *additionally* ask it for a narrative summary — that
+seam lands with the Master Agent wiring, deferred and documented.)
+
+ضغط الذاكرة — الاستخراج القاعدي ثنائي اللغة والحتمي؛ ملخص
+مضغوط واحد لكل الامتداد مربوط بكل ما استُخرج منه.
+
+Stdlib only.
+"""
+
+from __future__ import annotations
+
+import secrets
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
+from typing import Any
+
+from .contracts import (
+    MemoryEvidence,
+    MemoryRecord,
+    MemoryType,
+    new_memory_id,
+    utc_now_iso,
+)
+
+#: §12.10 stage names, verbatim.
+COMPRESSION_STAGES: tuple[str, ...] = (
+    "raw_history",
+    "important_events",
+    "decisions",
+    "lessons",
+    "compact_memory",
+)
+
+#: Trigger thresholds (turns / chars) — one long evening of work.
+COMPRESS_TURN_THRESHOLD = 50
+COMPRESS_CHAR_THRESHOLD = 24_000
+
+#: Extraction markers — bilingual (AR first, EN second), lowercase match.
+_DECISION_MARKERS: tuple[str, ...] = (
+    "قرار",
+    "قرّر",
+    "قررنا",
+    "نقرر",
+    "اخترنا",
+    "سنعتمد",
+    "المطلوب:",
+    "الخيار النهائي",
+    "decided",
+    "decision:",
+    "we will use",
+    "final choice",
+    "going with",
+)
+_LESSON_MARKERS: tuple[str, ...] = (
+    "درس",
+    "تعلّمنا",
+    "تعلم",
+    "لا تكرر",
+    "خطأ كان",
+    "lesson",
+    "learned",
+    "mistake:",
+    "don't repeat",
+    "never again",
+)
+_ERROR_MARKERS: tuple[str, ...] = (
+    "خطأ",
+    "فشل",
+    "رسالة خطأ",
+    "traceback",
+    "error",
+    "failed",
+    "exception",
+)
+_EVENT_KINDS: tuple[str, ...] = (
+    "tool_call",
+    "tool_result",
+    "file_write",
+    "task_state",
+    "checkpoint",
+    "artifact",
+)
+
+#: Turn fields the compressor understands (house turn shape).
+TURN_FIELDS: tuple[str, ...] = (
+    "role",
+    "content",
+    "kind",
+    "tool",
+    "at",
+    "agent",
+)
+
+
+def _matches(text: str, markers: tuple[str, ...]) -> bool:
+    lowered = text.casefold()
+    return any(marker in lowered for marker in markers)
+
+
+def should_compress(
+    turns: Sequence[Mapping[str, Any]], total_chars: int | None = None
+) -> bool:
+    """The §12.10 trigger — either threshold crossed."""
+    if len(turns) >= COMPRESS_TURN_THRESHOLD:
+        return True
+    chars = total_chars if total_chars is not None else sum(
+        len(str(turn.get("content", ""))) for turn in turns
+    )
+    return chars >= COMPRESS_CHAR_THRESHOLD
+
+
+@dataclass(slots=True)
+class ExtractedMemory:
+    """One extraction product — a record-to-be plus its stage."""
+
+    stage: str
+    record: MemoryRecord
+
+
+@dataclass(slots=True)
+class CompressionResult:
+    """Everything one compression run produced (§12.10 output)."""
+
+    summary: MemoryRecord
+    extracted: list[ExtractedMemory] = field(default_factory=list)
+    turns_seen: int = 0
+    chars_seen: int = 0
+
+    @property
+    def stage_counts(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for item in self.extracted:
+            counts[item.stage] = counts.get(item.stage, 0) + 1
+        return counts
+
+
+def _turn_text(turn: Mapping[str, Any]) -> str:
+    parts = [str(turn.get("content", ""))]
+    if turn.get("tool"):
+        parts.append(f"[{turn['tool']}]")
+    return " ".join(part for part in parts if part).strip()
+
+
+class MemoryCompressor:
+    """One pass over raw history → events, decisions, lessons, summary.
+
+    Containers (session/task/project/workspace) may be stamped onto the
+    products; without them the extracted records land in the semantic
+    libraries (DECISION/LESSON/ERROR) and events+summary land in USER —
+    the §12.2 ladder keeps every product *visible* by construction.
+    """
+
+    def extract(
+        self,
+        turns: Sequence[Mapping[str, Any]],
+        *,
+        session: str | None = None,
+        task: str | None = None,
+        project: str | None = None,
+        workspace: str | None = None,
+        run: str | None = None,
+    ) -> list[ExtractedMemory]:
+        """Stage 1–3: the deterministic extraction pass.
+
+        ``run`` is a per-compression nonce (auto-generated when absent):
+        extraction ids stay content-stable *within* one run but never
+        collide across runs — compressing the same conversation twice
+        is two events, not one (the device proof caught the collision).
+        """
+        if run is None:
+            run = secrets.token_hex(4)
+        extracted: list[ExtractedMemory] = []
+        for index, turn in enumerate(turns):
+            text = _turn_text(turn)
+            if not text:
+                continue
+            role = str(turn.get("role", "user"))
+            kind = str(turn.get("kind", ""))
+            at = str(turn.get("at", "") or utc_now_iso())
+            evidence = (
+                MemoryEvidence(
+                    method="observation",
+                    uri=f"turn:{index}",
+                    snippet=text[:120],
+                    captured_at=at,
+                ),
+            )
+            if _matches(text, _DECISION_MARKERS):
+                extracted.append(
+                    ExtractedMemory(
+                        stage="decisions",
+                        record=MemoryRecord(
+                            id=new_memory_id(f"decision:{run}:{index}:{text[:64]}"),
+                            type=MemoryType.DECISION,
+                            scope="decision",
+                            content=text[:512],
+                            source=f"compression:turn:{index}",
+                            confidence=0.8,
+                            project=project,
+                            workspace=workspace,
+                            task=task,
+                            session=session,
+                            evidence=evidence,
+                        ),
+                    )
+                )
+            elif _matches(text, _LESSON_MARKERS):
+                extracted.append(
+                    ExtractedMemory(
+                        stage="lessons",
+                        record=MemoryRecord(
+                            id=new_memory_id(f"lesson:{run}:{index}:{text[:64]}"),
+                            type=MemoryType.LESSON,
+                            scope="lesson",
+                            content=text[:512],
+                            source=f"compression:turn:{index}",
+                            confidence=0.7,
+                            project=project,
+                            workspace=workspace,
+                            task=task,
+                            session=session,
+                            evidence=evidence,
+                        ),
+                    )
+                )
+            elif _matches(text, _ERROR_MARKERS):
+                extracted.append(
+                    ExtractedMemory(
+                        stage="lessons",
+                        record=MemoryRecord(
+                            id=new_memory_id(f"error:{run}:{index}:{text[:64]}"),
+                            type=MemoryType.ERROR,
+                            scope="error",
+                            content=text[:512],
+                            source=f"compression:turn:{index}",
+                            confidence=0.7,
+                            project=project,
+                            workspace=workspace,
+                            task=task,
+                            session=session,
+                            evidence=evidence,
+                        ),
+                    )
+                )
+            if kind in _EVENT_KINDS:
+                event_scope, event_session, event_task = self._event_scope(
+                    session, task
+                )
+                extracted.append(
+                    ExtractedMemory(
+                        stage="important_events",
+                        record=MemoryRecord(
+                            id=new_memory_id(f"event:{run}:{index}:{text[:64]}"),
+                            type=MemoryType.EVENT,
+                            scope=event_scope,
+                            content=f"{kind}: {text[:400]}",
+                            source=f"compression:turn:{index} ({role})",
+                            confidence=0.6,
+                            project=project,
+                            workspace=workspace,
+                            session=event_session,
+                            task=event_task,
+                            evidence=evidence,
+                        ),
+                    )
+                )
+        return extracted
+
+    _SCOPE_DECISION = "decision"
+    _SCOPE_LESSON = "lesson"
+    _SCOPE_ERROR = "error"
+
+    def _event_scope(
+        self, session: str | None, task: str | None
+    ) -> tuple[str, str | None, str | None]:
+        """(scope, session container, task container) for span records."""
+        if session:
+            return "session", session, None
+        if task:
+            return "task", None, task
+        return "user", None, None
+
+    def summarize(
+        self,
+        turns: Sequence[Mapping[str, Any]],
+        *,
+        session: str | None = None,
+        task: str | None = None,
+        project: str | None = None,
+        workspace: str | None = None,
+    ) -> tuple[list[ExtractedMemory], MemoryRecord]:
+        """Stage 4: run the extraction, then mint the compact record.
+
+        The compact content is the span's shape — counts per stage, first
+        and last turn timestamps, and the decision/lesson texts joined —
+        enough to *resume* without re-reading the raw history.
+        """
+        run = secrets.token_hex(4)
+        extracted = self.extract(
+            turns,
+            session=session,
+            task=task,
+            project=project,
+            workspace=workspace,
+            run=run,
+        )
+        decisions = [item for item in extracted if item.stage == "decisions"]
+        lessons = [item for item in extracted if item.stage == "lessons"]
+        events = [item for item in extracted if item.stage == "important_events"]
+        first_at = str(turns[0].get("at", "")) if turns else ""
+        last_at = str(turns[-1].get("at", "")) if turns else ""
+        lines = [
+            f"compressed conversation: {len(turns)} turns "
+            f"({first_at} → {last_at})",
+            f"important events: {len(events)}",
+            f"decisions: {len(decisions)}",
+        ]
+        for item in decisions[:10]:
+            lines.append(f"  • decision — {item.record.content[:160]}")
+        lines.append(f"lessons: {len(lessons)}")
+        for item in lessons[:10]:
+            lines.append(f"  • lesson — {item.record.content[:160]}")
+        chars = sum(len(_turn_text(turn)) for turn in turns)
+        lines.append(f"raw span: {chars} chars → this compact memory")
+        summary_scope, summary_session, summary_task = self._event_scope(
+            session, task
+        )
+        summary = MemoryRecord(
+            id=new_memory_id(f"summary:{run}:{first_at}:{len(turns)}:{chars}"),
+            type=MemoryType.SUMMARY,
+            scope=summary_scope,
+            content="\n".join(lines),
+            source="compression",
+            confidence=0.9,
+            project=project,
+            workspace=workspace,
+            session=summary_session,
+            task=summary_task,
+            evidence=(
+                MemoryEvidence(
+                    method="system",
+                    uri=f"turns:0..{max(len(turns) - 1, 0)}",
+                    snippet=f"{len(turns)} turns compressed",
+                    captured_at=last_at or utc_now_iso(),
+                ),
+            ),
+        )
+        return extracted, summary

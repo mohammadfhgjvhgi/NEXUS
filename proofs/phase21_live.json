@@ -1,0 +1,26 @@
+{
+  "phase": 21,
+  "section": "Security System (New Plan \u00a721)",
+  "verdict": "PASS",
+  "rungs": 10,
+  "passed": 10,
+  "labels": [
+    "1 \u00b7 \u00a721 vocabulary verbatim",
+    "2 \u00b7 admission walk allow/deny/confirm audited",
+    "3 \u00b7 \u00a721.6 reference law (no text outside the vault)",
+    "4 \u00b7 \u00a721.7+\u00a721.9 baseline scan redacts its findings",
+    "5 \u00b7 \u00a721.9 trivy scan (MODE A / honest MODE B)",
+    "6 \u00b7 \u00a721.9 license kind really scanned",
+    "7 \u00b7 \u00a721.10 four sinks refuse the planted secrets",
+    "8 \u00b7 \u00a721.8 audit artifact five fields + Activity split",
+    "9 \u00b7 \u00a721.3\u2013\u00a721.5 the three gates decide",
+    "10 \u00b7 identity \u2265 0.21.0 / phase \u2265 21"
+  ],
+  "host": {
+    "system": "Windows",
+    "release": "10",
+    "version": "10.0.19045",
+    "machine": "AMD64",
+    "python": "3.14.5"
+  }
+}

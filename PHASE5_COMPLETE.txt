@@ -1,0 +1,37 @@
+PHASE 5 — AGENT RUNTIME · COMPLETE ON THIS MACHINE
+=====================================================
+
+repo commit : f56a013 (develop == main)
+phase       : 5 / Plan §6 — Agent Runtime
+exit proof  : 116/116 local (tests\phase05\verify_exit_criteria.py)
+              + regressions 98/143/104/106 re-run inside §F
+              (A=13, B=29, C=24, D=12, E=16, F=22)
+CI          : NEXUS CI on f56a013 (job "Phases 1-5")
+deploy      : 21/21 files written + SHA-verified via bridge (Bearer)
+
+What landed (nexus\agents\, 7 modules):
+  §6.1 agent.py      — Agent (8 verbatim fields + 3 typed policies)
+  §6.2 loop.py       — the seven-phase traced cycle + strict JSON
+                       decision contract + ToolSink seam
+  §6.3 master.py     — the seven Master-Agent behaviors over the
+                       §2.4 task machine (bounded REPAIRING)
+  §6.4 registry.py   — the four verbs, atomic agents.registry.json
+                       under %USERPROFILE%\.nexus\data
+  §6.5 messages.py   — structured messages (8 verbatim fields) +
+                       per-task transcript tasks\<id>.messages.jsonl
+  §6.6 ownership.py  — resource -> owner; conflicts become
+                       coordination messages, never overwrites
+
+Repository Round 2 (MODE D references, zero code imports):
+  langchain-ai/langgraph    1.2.11        (loop shape)
+  microsoft/autogen         v0.4.4        (registry/messaging)
+  langchain-ai/deepagents   0.7.13        (master delegation)
+  To re-clone on this box (optional — staging study only):
+    git clone --depth 1 --branch 1.2.11 --single-branch https://github.com/langchain-ai/langgraph.git M:\NEXUS\vendor-staging\langgraph
+    git clone --depth 1 --branch v0.4.4 --single-branch https://github.com/microsoft/autogen.git M:\NEXUS\vendor-staging\autogen
+    git clone --depth 1 --branch "deepagents==0.7.13" --single-branch https://github.com/langchain-ai/deepagents.git M:\NEXUS\vendor-staging\deepagents
+
+Run the harness here (Python 3.11+):
+    python tests\phase05\verify_exit_criteria.py
+
+Next: PHASE 6 — Harness Integration (Plan §7) on operator command.

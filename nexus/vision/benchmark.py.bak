@@ -1,0 +1,347 @@
+"""OCR device benchmark (Final Build Plan §12.5 — the decision run).
+
+> اختيار OCR النهائي يجب أن يتم بالـbenchmark على جهازك.
+
+The benchmark is *designed to run on the operator's box*, not in CI:
+
+* **Corpus** — the four §12.5 requirement categories, verbatim:
+  English sentences, numbers, UI labels, document paragraphs. On
+  the device each truth is *rendered to a real PNG by the OS itself*
+  (GDI ``DrawTextW`` into a memory DC — the Phase-7 capture path),
+  so the ground truth is pixel-honest, not a downloaded dataset.
+  Without GDI (CI), :func:`build_corpus` returns the truth texts
+  only and the render step is honestly skipped.
+* **Scoring** — the character error rate (§12.5's metric) per case,
+  averaged per engine and per category, with timings.
+* **Winner** — :func:`decide_winner` is pure policy: lowest mean
+  CER; ties break on total seconds; an engine that fails a category
+  counts 1.0 for it (failure is data, not an exception).
+
+The result is an :class:`OcrBenchmarkReport` — plain JSON, ready
+for ``M:\\NEXUS\\proofs\\phase11_ocr_benchmark.json`` and the docs.
+
+المعيار على الجهاز — الحقيقة تُرسم بنظام التشغيل نفسه،
+والخاسر يُحتسب فشلًا لا استثناءً.
+
+Stdlib only.
+"""
+
+from __future__ import annotations
+
+import json
+import platform
+import sys
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from .models import (
+    OCR_CATEGORIES,
+    OcrBenchmarkReport,
+    OcrCase,
+    OcrEngineScore,
+)
+from .ocr import OcrEngine, character_error_rate, timed_recognize
+
+#: §12.5 corpus truths (English · numbers · UI labels · documents).
+CORPUS: dict[str, tuple[str, ...]] = {
+    "english": (
+        "The quick brown fox jumps over the lazy dog",
+        "Pack my box with five dozen liquor jugs",
+        "Sphinx of black quartz judge my vow",
+        "How vexingly quick daft zebras jump",
+    ),
+    "numbers": (
+        "0123456789",
+        "3.14159265358979",
+        "+962 79 000 0000",
+        "Order 40219 Total 1299.50 USD",
+    ),
+    "ui_labels": (
+        "File Edit View History Bookmarks Profiles Help",
+        "Settings Notifications Privacy Display Sound",
+        "Save Cancel Apply Retry Next Previous Finish",
+        "Username Password Sign in Remember me",
+    ),
+    "documents": (
+        "INVOICE 2026-09-07 Bill To NEXUS Community Due 30 days",
+        "Quarterly Report Revenue 412000 Costs 98400 Profit 313600",
+        "Meeting Notes Date Monday Attendees Sara Omar Lina Agenda",
+        "LICENSE Permission is granted free of charge to any person",
+    ),
+}
+
+#: Font for the GDI corpus renderer (device-side).
+_FONT = "Segoe UI"
+_FONT_SIZE = 28
+
+#: DrawTextW flags: DT_SINGLELINE | DT_VCENTER | DT_LEFT (winuser.h).
+_DT_SINGLELINE = 0x00000020
+_DT_VCENTER = 0x00000004
+_DT_LEFT = 0x00000000
+
+
+def build_corpus() -> list[OcrCase]:
+    """The §12.5 corpus as cases (truth always, PNG on GDI runtimes)."""
+    cases: list[OcrCase] = []
+    for category in OCR_CATEGORIES:
+        for truth in CORPUS[category]:
+            cases.append(OcrCase(category=category, expected=truth))
+    return cases
+
+
+def render_corpus(cases: Sequence[OcrCase]) -> int:
+    """Render each case's truth to a real PNG (device or CI).
+
+    GDI ``DrawTextW`` on win32 (the OS itself draws the corpus);
+    Pillow where installed (the CI live proof — a real renderer,
+    never a fake). Returns how many cases got a PNG (0 with neither
+    — honest).
+    """
+    renderer = _renderer()
+    if renderer is None:
+        return 0
+    rendered = 0
+    for case in cases:
+        try:
+            case.png = renderer(case.expected)
+        except Exception:  # noqa: BLE001 — one bad render skips one case
+            continue
+        rendered += 1
+    return rendered
+
+
+def _renderer():
+    """Pick the real renderer for this runtime (GDI → Pillow → None)."""
+    if sys.platform == "win32":
+        return render_text_png
+    try:
+        from PIL import Image, ImageDraw, ImageFont  # type: ignore[import-not-found]
+    except ImportError:
+        return None
+
+    def _pillow_render(text: str, *, width: int = 900, height: int = 120) -> bytes:
+        import io
+
+        image = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(image)
+        try:
+            font = ImageFont.truetype("DejaVuSans.ttf", 28)
+        except OSError:
+            font = ImageFont.load_default()
+        draw.text((10, height // 2 - 16), text, fill="black", font=font)
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
+
+    return _pillow_render
+
+
+def render_text_png(
+    text: str, *, width: int = 900, height: int = 120
+) -> bytes:
+    """Render one text line to a PNG via GDI ``DrawTextW`` (win32).
+
+    The same memory-DC + ``GetDIBits`` path the Phase-7 capture
+    uses — the corpus and the captures share one encoder.
+    """
+    import ctypes
+    import ctypes.wintypes as wintypes
+
+    user32 = ctypes.windll.user32  # type: ignore[attr-defined]
+    gdi32 = ctypes.windll.gdi32  # type: ignore[attr-defined]
+    hdc_screen = user32.GetDC(None)
+    try:
+        hdc = gdi32.CreateCompatibleDC(hdc_screen)
+        bitmap = gdi32.CreateCompatibleBitmap(hdc_screen, width, height)
+        gdi32.SelectObject(hdc, bitmap)
+        background = wintypes.COLORREF(0x00FFFFFF)  # white
+        gdi32.SetBkColor(hdc, background)
+        gdi32.SetTextColor(hdc, wintypes.COLORREF(0x00000000))  # black
+        font = gdi32.CreateFontW(
+            _FONT_SIZE, 0, 0, 0, 400, 0, 0, 0,
+            1,  # DEFAULT_CHARSET
+            0, 0, 5,  # CLEARTYPE_QUALITY
+            0, _FONT,
+        )
+        previous = gdi32.SelectObject(hdc, font)
+        try:
+            rect = wintypes.RECT(0, 0, width, height)
+            gdi32.DrawTextW(
+                hdc, text, -1, ctypes.byref(rect),
+                _DT_SINGLELINE | _DT_VCENTER | _DT_LEFT,
+            )
+        finally:
+            gdi32.SelectObject(hdc, previous)
+            gdi32.DeleteObject(font)
+        from .capture import _encode, _get_dibits
+
+        rows = _get_dibits(gdi32, hdc, bitmap, width, height)
+        png = _encode(width, height, rows)
+        gdi32.DeleteObject(bitmap)
+        gdi32.DeleteDC(hdc)
+        return png
+    finally:
+        user32.ReleaseDC(None, hdc_screen)
+
+
+def run_benchmark(
+    engines: Sequence[OcrEngine], cases: Sequence[OcrCase]
+) -> OcrBenchmarkReport:
+    """Run every available engine over the corpus → the §12.5 report."""
+    from .ocr import requirements_satisfied
+
+    scores: list[OcrEngineScore] = []
+    at = datetime.now(UTC).isoformat()
+    device = f"{platform.node()} · {platform.system()} {platform.release()}"
+    for engine in engines:
+        ok, _reason = engine.available()
+        if not ok:
+            continue
+        score = _score_engine(engine, cases)
+        score.supported_requirements = requirements_satisfied(engine)
+        scores.append(score)
+    winner, decided, reason = decide_winner(scores)
+    return OcrBenchmarkReport(
+        scores=scores,
+        winner=winner,
+        decided=decided,
+        reason=reason,
+        at=at,
+        device=device,
+    )
+
+
+def _score_engine(
+    engine: OcrEngine, cases: Sequence[OcrCase]
+) -> OcrEngineScore:
+    """One engine's aggregate — failures count 1.0, never crash."""
+    from .ocr import OcrError
+
+    total_seconds = 0.0
+    per_category: dict[str, list[float]] = {}
+    failures = 0
+    for case in cases:
+        if not case.png:
+            continue  # unrenderable case — not the engine's fault
+        try:
+            result, elapsed = timed_recognize(engine, case.png)
+            recognized = result.text
+        except OcrError:
+            recognized = ""
+            elapsed = 0.0
+            failures += 1
+        total_seconds += elapsed
+        rate = character_error_rate(case.expected, recognized)
+        per_category.setdefault(case.category, []).append(rate)
+    category_means = {
+        category: sum(values) / len(values)
+        for category, values in per_category.items()
+        if values
+    }
+    all_rates = [rate for values in per_category.values() for rate in values]
+    mean = sum(all_rates) / len(all_rates) if all_rates else 1.0
+    if failures:
+        # a crashing engine is a bad engine — each failure counts as
+        # a perfect miss in the mean (bounded honesty)
+        mean = (mean * len(all_rates) + failures) / (len(all_rates) + failures)
+    return OcrEngineScore(
+        engine=engine.name,
+        mean_cer=round(mean, 4),
+        total_seconds=round(total_seconds, 3),
+        per_category={
+            key: round(value, 4) for key, value in category_means.items()
+        },
+        cases=len(all_rates) + failures,
+    )
+
+
+def decide_winner(
+    scores: Sequence[OcrEngineScore],
+) -> tuple[str, bool, str]:
+    """The §12.5 policy (pure): lowest mean CER, ties → fastest.
+
+    Requires at least two scored engines and a real contest (the
+    leader must beat 0.30 mean CER — an engine that cannot read is
+    not a winner, it is a survivor).
+    """
+    ranked = sorted(
+        [score for score in scores if score.cases > 0],
+        key=lambda score: (round(score.mean_cer, 4), score.total_seconds),
+    )
+    if len(ranked) < 2:
+        if len(ranked) == 1:
+            return ranked[0].engine, False, (
+                "only one engine scored — no contest (§12.5 needs a race)"
+            )
+        return "", False, "no engine scored on this device"
+    leader = ranked[0]
+    if leader.mean_cer > 0.30:
+        return "", False, (
+            f"leader {leader.engine} mean CER {leader.mean_cer} > 0.30 — "
+            "no engine reads well enough to win §12.5"
+        )
+    return (
+        leader.engine,
+        True,
+        f"lowest mean CER {leader.mean_cer} "
+        f"(runner-up {ranked[1].engine} at {ranked[1].mean_cer})",
+    )
+
+
+def save_report(report: OcrBenchmarkReport, path: Path) -> Path:
+    """Write the JSON verdict (device proof artifact)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(report.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
+
+
+def main(provider: Any = None) -> int:
+    """Device entry: render the corpus, race the engines, save JSON.
+
+    ``provider`` (optional) wires the model candidate — the §12.2
+    VisionProvider over the live Model Runtime; without it the race
+    is winrt vs tesseract, honestly.
+    """
+    from .ocr import ModelOcrEngine, TesseractOcrEngine, WinrtOcrEngine
+
+    engines: list[OcrEngine] = [
+        WinrtOcrEngine(),
+        TesseractOcrEngine(),
+    ]
+    if provider is not None:
+        engines.append(ModelOcrEngine(provider))
+    cases = build_corpus()
+    rendered = render_corpus(cases)
+    print(f"[benchmark] corpus {len(cases)} cases · {rendered} rendered PNGs")
+    if not rendered:
+        print(
+            "[benchmark] no GDI renderer on this runtime — the §12.5 "
+            "decision run belongs on the operator's device"
+        )
+        return 2
+    report = run_benchmark(engines, cases)
+    out = Path("phase11_ocr_benchmark.json")
+    save_report(report, out)
+    print(f"[benchmark] winner: {report.winner or '(undecided)'} — {report.reason}")
+    print(f"[benchmark] report → {out}")
+    return 0 if report.decided else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+__all__ = [
+    "CORPUS",
+    "build_corpus",
+    "decide_winner",
+    "render_corpus",
+    "render_text_png",
+    "run_benchmark",
+    "save_report",
+]

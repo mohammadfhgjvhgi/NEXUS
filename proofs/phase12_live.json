@@ -1,0 +1,61 @@
+{
+  "python": "3.14.5",
+  "machine": "DESKTOP-46N9B2S · Windows 10",
+  "phase": 12,
+  "qdrant_probe": "qdrant-client not installed: No module named 'qdrant_client'",
+  "the vector backend is real and reported (§12.5)": {
+    "ok": true,
+    "detail": "backend=local-sqlite report=qdrant unavailable (qdrant-client not installed: No module named 'qdrant_client') — LocalVectorIndex fallback engaged"
+  },
+  "vector_backend": "local-sqlite",
+  "embedder": "hashing-baseline",
+  "dimension": 384,
+  "the SQLite index lives under M:\\NEXUS\\data (§12.4)": {
+    "ok": true,
+    "detail": "M:\\NEXUS\\data\\memory-proof\\memory\\memory.db"
+  },
+  "five memories written across four scopes": {
+    "ok": true,
+    "detail": "records=5 vectors=5"
+  },
+  "semantic search finds the decision (Arabic)": {
+    "ok": true,
+    "detail": "hits=['mem_b1f888b809b88d27', 'mem_505ca0f1db25e302']"
+  },
+  "semantic search finds it from English too": {
+    "ok": true,
+    "detail": ""
+  },
+  "task A sees its port memory only (isolation)": {
+    "ok": true,
+    "detail": ""
+  },
+  "the §12.8 ladder kept the decision, not the old lesson": {
+    "ok": true,
+    "detail": ""
+  },
+  "the context documents the conflict family": {
+    "ok": true,
+    "detail": ""
+  },
+  "the global rule rides the context (§12.2 GLOBAL)": {
+    "ok": true,
+    "detail": ""
+  },
+  "compression minted the summary + compressed_from links": {
+    "ok": true,
+    "detail": ""
+  },
+  "forget tombstones + audits on the real store": {
+    "ok": true,
+    "detail": ""
+  },
+  "restart persistence across a process boundary (fresh python)": {
+    "ok": true,
+    "detail": "  child: port=True rule=True forgotten-stays-gone=True"
+  },
+  "child_output_tail": [
+    "  child: port=True rule=True forgotten-stays-gone=True",
+    "CHILD RESTART: PASS"
+  ]
+}

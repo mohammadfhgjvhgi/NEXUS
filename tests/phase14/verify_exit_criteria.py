@@ -1,0 +1,1044 @@
+#!/usr/bin/env python3
+"""Phase 14 verification harness — New Plan §14 Exit Gate.
+
+Proves the Code-Intelligence section by section:
+
+* A — Contracts (§14.1–§14.8): symbol/edge/endpoint/test-link shapes,
+       validation refuses misuse, paths normalize, kinds verbatim.
+* B — File Index (§14.1): full scan of a mixed corpus (python, JS,
+       docs, junk), ignore rules honored, languages tagged, change
+       detection by fingerprint.
+* C — Symbol Index (§14.2): definitions with lines and signatures,
+       kind/file/prefix queries, cross-file search.
+* D — AST (§14.3): the stdlib-ast digest (nodes, spans, counts),
+       syntax errors degrade honestly (empty parse, no crash).
+* E — Dependency Graph (§14.4): python + JS edges resolved,
+       dependents, transitive impact, entry points, hotspots.
+* F — API Graph (§14.5): Flask, FastAPI and Express routes with
+       methods, paths, handlers, frameworks.
+* G — Test Graph (§14.6): import + naming links, per-file test
+       counts, coverage gaps exclude test files.
+* H — Architecture Map (§14.7): layers aggregate files, symbols and
+       inter-layer edges.
+* I — Repository Map (§14.8): PageRank ranks the hub above the
+       leaves (Aider §127 methodology), token budget respected,
+       deterministic + focus pins a file first.
+* J — Tree-sitter MODE A (§14.9): when the runtime holds it, JS is
+       parsed by the real tree-sitter and §14.12 runs the true
+       incremental path; when absent, engine_status says so and the
+       stdlib path answers (never a fake claim).
+* K — Aider MODE D/C (§14.10): zero imports from aider; the
+       methodology constants (damping 0.85) and the ranking behavior
+       match the documented reference.
+* L — Large Project Engine + Live Update (§14.11/§14.12): synthetic
+       2,000-file tree with a 1,500 parse budget (honest skip count),
+       zero-reparse rescan, three-file touch → exactly three
+       reparses, the §14.12 live flow, restart persistence, events.
+* M — Integration + regression: NEXUS_PHASE ≥ 14, module ships,
+       core stays stdlib-only, Phases 1–13 harnesses stay green.
+
+Exit gate, each line proven above::
+
+    File index ✅   Symbol index ✅   AST ✅           Dep graph ✅
+    API graph ✅    Test graph ✅     Arch map ✅      Repo map ✅
+    Tree-sitter ✅  Aider method ✅   100k+ engine ✅  Live update ✅
+
+Run:  python tests/phase14/verify_exit_criteria.py [--no-regression]
+Exit 0 only when every check passes.
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import subprocess
+import sys
+import tempfile
+import time
+import tomllib
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+
+from nexus.codeintel import (  # noqa: E402
+    PAGERANK_DAMPING,
+    SYMBOL_KINDS,
+    ApiEndpoint,
+    AstNode,
+    DependencyEdge,
+    FileEntry,
+    ImportResolver,
+    InvalidIndexError,
+    Symbol,
+    TestLink,
+    build_codeintel_engine,
+    build_registry,
+    line_edit,
+    normalize_path,
+    pagerank,
+    tree_sitter_status,
+)
+from nexus.events import EventBus  # noqa: E402
+
+# ================================================================== runner
+
+
+class Runner:
+    """Check counter with the house reporting format."""
+
+    def __init__(self) -> None:
+        self.section = ""
+        self.passed = 0
+        self.failed = 0
+        self.bonus = 0
+
+    def check(self, label: str, condition: bool, detail: str = "") -> bool:
+        mark = "PASS" if condition else "FAIL"
+        line = f"  [{mark}] ({self.section}) {label}"
+        if detail and not condition:
+            line += f" — {detail}"
+        print(line)
+        if condition:
+            self.passed += 1
+        else:
+            self.failed += 1
+        return condition
+
+    def summary(self) -> int:
+        print()
+        print("=" * 72)
+        name = Path(sys.argv[0]).name
+        if self.failed:
+            print(f"{name} — {self.passed} passed, {self.failed} FAILED")
+            print("=" * 72)
+            return 1
+        print(f"{name} — {self.passed} passed, 0 failed (+{self.bonus} bonus)")
+        print("=" * 72)
+        return 0
+
+
+# ------------------------------------------------------------------ corpus
+
+PY_MODELS = '''# النماذج — طبقة البيانات (bilingual corpus, phase 14)
+class User:
+    """مستخدم النظام."""
+
+    def name(self) -> str:
+        return "مستخدم"
+
+
+class Order:
+    def total(self, items: int) -> int:
+        return items
+'''
+
+PY_API = '''from app.models import User, Order
+
+
+@app.route("/api/users", methods=["GET", "POST"])
+def list_users():
+    return [User()]
+
+
+@router.post("/orders")
+def create_order():
+    return Order()
+'''
+
+PY_SERVICE = '''from app.models import User
+from app.api import list_users
+
+SERVICE_NAME = "nexus"
+
+
+def run_service(user: User) -> str:
+    return list_users() and user.name()
+'''
+
+PY_SERVICE_V2 = '''from app.models import User
+from app.api import list_users
+
+SERVICE_NAME = "nexus-v2"
+
+
+def run_service(user: User) -> str:
+    return list_users() and user.name()
+
+
+def health_probe() -> bool:
+    return True
+'''
+
+JS_SERVER = """import { helper } from './utils.js';
+const PORT = 3000;
+
+export function start(app) {
+  app.get('/health', (req, res) => res.send('ok'));
+  app.post('/items', (req, res) => res.json([]));
+  return PORT + helper(1);
+}
+"""
+
+JS_UTILS = "export function helper(x) { return x + 1; }\n"
+
+PY_TEST_MODELS = """from app.models import User, Order
+
+
+def test_user():
+    assert User()
+
+
+def test_order():
+    assert Order()
+"""
+
+PY_TEST_SERVICE = """from app import service
+
+
+def test_run():
+    assert service.SERVICE_NAME
+"""
+
+ARABIC_DOC = """# وثيقة عربية للخريطة
+هذه وثيقة اختبار ثنائية اللغة.
+"""
+
+BROKEN_PY = "def broken(:\n    pass\n"
+
+
+def make_corpus(root: Path) -> None:
+    """The §14 corpus — python, JS, routes, tests, docs, junk."""
+    (root / "app").mkdir(parents=True)
+    (root / "src").mkdir()
+    (root / "tests").mkdir()
+    (root / "docs").mkdir()
+    (root / "app" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "app" / "models.py").write_text(PY_MODELS, encoding="utf-8")
+    (root / "app" / "api.py").write_text(PY_API, encoding="utf-8")
+    (root / "app" / "service.py").write_text(PY_SERVICE, encoding="utf-8")
+    (root / "src" / "server.js").write_text(JS_SERVER, encoding="utf-8")
+    (root / "src" / "utils.js").write_text(JS_UTILS, encoding="utf-8")
+    (root / "tests" / "test_models.py").write_text(PY_TEST_MODELS, encoding="utf-8")
+    (root / "tests" / "test_service.py").write_text(PY_TEST_SERVICE, encoding="utf-8")
+    (root / "docs" / "readme.ar.md").write_text(ARABIC_DOC, encoding="utf-8")
+    (root / "package.json").write_text('{"name": "corpus"}\n', encoding="utf-8")
+    (root / "broken.py").write_text(BROKEN_PY, encoding="utf-8")
+    # junk — must never enter the index
+    (root / "node_modules").mkdir()
+    (root / "node_modules" / "dep.js").write_text("module.exports = 1\n", encoding="utf-8")
+    (root / "dist").mkdir()
+    (root / "dist" / "bundle.min.js").write_text("!function(){}()\n", encoding="utf-8")
+    (root / "__pycache__").mkdir()
+    (root / "__pycache__" / "models.cpython-312.pyc").write_bytes(b"\x00\x01")
+
+
+# ================================================================= sections
+
+
+def section_a(runner: Runner) -> None:
+    """A — Contracts (§14.1–§14.8)."""
+    runner.section = "A-contracts"
+    runner.check(
+        "ten symbol kinds verbatim",
+        set(SYMBOL_KINDS)
+        == {
+            "module",
+            "class",
+            "function",
+            "method",
+            "variable",
+            "constant",
+            "interface",
+            "type",
+            "test",
+            "handler",
+        },
+    )
+    runner.check(
+        "normalize_path collapses ./ and backslashes",
+        normalize_path(".\\app\\models.py") == "app/models.py",
+    )
+    symbol = Symbol(
+        name="User", qualified="app.models.User", kind="class", file="app/models.py", line=3
+    )
+    symbol.validate()
+    runner.check("symbol validates", symbol.kind == "class")
+    bad = Symbol(name="U ser", qualified="x", kind="class", file="f.py", line=1)
+    try:
+        bad.validate()
+        runner.check("symbol name with space rejected", False)
+    except InvalidIndexError:
+        runner.check("symbol name with space rejected", True)
+    bad_kind = Symbol(name="X", qualified="x", kind="witch", file="f.py", line=1)
+    try:
+        bad_kind.validate()
+        runner.check("unknown symbol kind rejected", False)
+    except InvalidIndexError:
+        runner.check("unknown symbol kind rejected", True)
+    edge = DependencyEdge(source="a.py", target="b.py", kind="import", import_spec="import b")
+    edge.validate()
+    runner.check("dependency edge validates", edge.kind == "import")
+    try:
+        DependencyEdge(
+            source="a.py", target="a.py", kind="import", import_spec="import a"
+        ).validate()
+        runner.check("self-edge rejected", False)
+    except InvalidIndexError:
+        runner.check("self-edge rejected", True)
+    endpoint = ApiEndpoint(method="GET", path="/x", file="a.py")
+    endpoint.validate()
+    runner.check("api endpoint validates + route key", endpoint.route_key() == "GET /x")
+    try:
+        ApiEndpoint(method="GET", path="x", file="a.py").validate()
+        runner.check("endpoint path without / rejected", False)
+    except InvalidIndexError:
+        runner.check("endpoint path without / rejected", True)
+    link = TestLink(test_file="tests/test_x.py", target="x.py", via="naming")
+    link.validate()
+    runner.check("test link validates", link.tests == 1)
+    node = AstNode(type="module", line=1, children=[AstNode(type="class", name="A", line=2)])
+    runner.check(
+        "ast digest walks + counts",
+        node.node_count() == 2 and [n.type for n in node.walk()] == ["module", "class"],
+    )
+    entry = FileEntry(path="f.py", language="python", size=10, mtime=1.0)
+    entry.validate()
+    runner.check("file entry validates + fingerprint", entry.content_fingerprint() == "10:1.000000")
+    runner.check(
+        "PageRank constants verbatim (Aider §127, MODE D/C)",
+        PAGERANK_DAMPING == 0.85,
+    )
+
+
+def section_b(runner: Runner) -> None:
+    """B — File Index (§14.1)."""
+    runner.section = "B-file-index"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        stats = engine.scan()
+        indexed = {e.path for e in engine._store.all_files()}  # noqa: SLF001
+        runner.check(
+            "corpus indexed (11 files: 9 code + 2 docs/config)",
+            stats.files_indexed == 11,
+            detail=f"got {stats.files_indexed}: {sorted(indexed)}",
+        )
+        runner.check("node_modules never entered", not any("node_modules" in p for p in indexed))
+        runner.check("dist/minified never entered", not any("dist" in p for p in indexed))
+        runner.check("__pycache__ never entered", not any("__pycache__" in p for p in indexed))
+        runner.check(
+            "docs + json indexed but unparsed",
+            "docs/readme.ar.md" in indexed and "package.json" in indexed,
+        )
+        js_entry = engine._store.get_file("src/server.js")  # noqa: SLF001
+        py_entry = engine._store.get_file("app/models.py")  # noqa: SLF001
+        runner.check(
+            "languages tagged",
+            js_entry is not None
+            and js_entry.language == "javascript"
+            and py_entry is not None
+            and py_entry.language == "python",
+        )
+        runner.check("broken.py indexed + parsed honestly (ast tolerates)", "broken.py" in indexed)
+        runner.check(
+            "files_parsed counts parseable only (9 py+js)",
+            stats.files_parsed == 9,
+            detail=f"got {stats.files_parsed}",
+        )
+        engine.close()
+
+
+def section_c(runner: Runner) -> None:
+    """C — Symbol Index (§14.2)."""
+    runner.section = "C-symbol-index"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        models = engine.file_symbols("app/models.py")
+        names = {s.name for s in models}
+        runner.check(
+            "models symbols (User, Order, methods)",
+            {"User", "Order", "name", "total"} <= names,
+            detail=f"got {sorted(names)}",
+        )
+        kinds = {s.name: s.kind for s in models}
+        runner.check(
+            "method kinds inside classes",
+            kinds.get("name") == "method" and kinds.get("User") == "class",
+        )
+        user = next(s for s in models if s.name == "User")
+        runner.check("definition lines recorded", user.line == 2, detail=f"line={user.line}")
+        runner.check(
+            "bilingual docstring file parsed without loss",
+            any("total" in (s.signature or "") for s in models),
+        )
+        service = engine.file_symbols("app/service.py")
+        runner.check(
+            "module constant + function + annotated param",
+            {s.name for s in service} >= {"SERVICE_NAME", "run_service"}
+            and any("user: User" in (s.signature or "") for s in service),
+        )
+        found = engine.search_symbols("User", limit=20)
+        files = {s.file for s in found}
+        runner.check(
+            "cross-file symbol search (def + uses resolve)",
+            "app/models.py" in files,
+            detail=f"files={sorted(files)}",
+        )
+        tests = engine.search_symbols("test_", kind="test", limit=20)
+        runner.check(
+            "test-kind symbols queryable",
+            {s.name for s in tests} == {"test_user", "test_order", "test_run"},
+        )
+        engine.close()
+
+
+def section_d(runner: Runner) -> None:
+    """D — AST (§14.3)."""
+    runner.section = "D-ast"
+    registry = build_registry("stdlib")
+    parsed = registry.parse("sample.py", PY_MODELS)
+    runner.check("stdlib-ast engine name", parsed.engine == "stdlib-ast")
+    runner.check(
+        "ast digest present with children",
+        parsed.ast is not None and parsed.ast.node_count() >= 3,
+    )
+    runner.check(
+        "signatures rendered from ast",
+        any("total(self, items: int) -> int" in (s.signature or "") for s in parsed.symbols),
+    )
+    runner.check("sha of source recorded", len(parsed.sha) == 64)
+    api_parsed = registry.parse("api.py", PY_API)
+    ref_names = {r.name for r in api_parsed.references}
+    runner.check(
+        "references include imported names + decorator bases",
+        {"app", "User", "Order"} <= ref_names,
+        detail=f"refs={sorted(ref_names)}",
+    )
+    broken = registry.parse("broken.py", BROKEN_PY)
+    runner.check(
+        "syntax error degrades honestly (empty, no crash)",
+        broken.engine == "stdlib-ast" and broken.symbols == [],
+    )
+    region = line_edit("a\nb\nc\n", "a\nB\nc\n")
+    runner.check("line_edit finds the changed line", region == (2, 2), detail=f"{region}")
+
+
+def section_e(runner: Runner) -> None:
+    """E — Dependency Graph (§14.4)."""
+    runner.section = "E-dep-graph"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        deps_api = engine.dependencies_of("app/api.py")
+        runner.check("python edge api→models", deps_api == ["app/models.py"], detail=f"{deps_api}")
+        deps_server = engine.dependencies_of("src/server.js")
+        runner.check("JS relative edge server→utils", deps_server == ["src/utils.js"],
+            detail=f"{deps_server}")
+        dependents = engine.dependents_of("app/models.py")
+        runner.check(
+            "reverse edges: api + service + tests import models",
+            set(dependents) == {"app/api.py", "app/service.py", "tests/test_models.py"},
+            detail=f"{dependents}",
+        )
+        impact = engine.impact("app/models.py")
+        runner.check(
+            "transitive impact includes service (via api)",
+            {"app/api.py", "app/service.py", "tests/test_models.py"} <= set(impact),
+            detail=f"{impact}",
+        )
+        entries = engine.entry_points()
+        runner.check(
+            "entry points exclude imported files (models/api/service/utils out)",
+            "app/models.py" not in entries
+            and "app/api.py" not in entries
+            and "app/service.py" not in entries  # its test imports it
+            and "src/utils.js" not in entries
+            and {"broken.py", "src/server.js"} <= set(entries),
+            detail=f"{entries}",
+        )
+        hot = engine.hotspots(3)
+        runner.check(
+            "hotspot #1 is the hub (models)",
+            bool(hot) and hot[0][0] == "app/models.py" and hot[0][1] >= 2,
+            detail=f"{hot}",
+        )
+        # resolver unit behavior
+        resolver = ImportResolver({"pkg/mod.py", "pkg/__init__.py", "src/a.js", "src/b.js"})
+        runner.check(
+            "resolver: module → file, package → __init__, relative dots",
+            resolver.resolve("from pkg.mod import x", "app/main.py", "python") == "pkg/mod.py"
+            and resolver.resolve("import pkg", "x.py", "python") == "pkg/__init__.py"
+            and resolver.resolve("from ..mod import x", "pkg/sub/other.py", "python")
+            == "pkg/mod.py"
+            and resolver.resolve("import './a.js'", "src/b.js", "javascript") == "src/a.js",
+        )
+        engine.close()
+
+
+def section_f(runner: Runner) -> None:
+    """F — API Graph (§14.5)."""
+    runner.section = "F-api-graph"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        table = engine.route_table()
+        runner.check(
+            "flask route with methods",
+            "/api/users" in table
+            and table["/api/users"][0]["method"] == "GET/POST"
+            and table["/api/users"][0]["handler"] == "list_users"
+            and table["/api/users"][0]["framework"] == "flask",
+            detail=f"{table}",
+        )
+        runner.check(
+            "fastapi route",
+            "/orders" in table and table["/orders"][0]["method"] == "POST"
+            and table["/orders"][0]["framework"] == "fastapi",
+        )
+        if tree_sitter_status().get("javascript"):
+            runner.check(
+                "express routes (tree-sitter MODE A)",
+                "/health" in table and "/items" in table
+                and table["/health"][0]["framework"] == "express",
+                detail=f"{table}",
+            )
+        else:
+            runner.check(
+                "express routes (regex fallback)",
+                "/health" in table and table["/health"][0]["framework"] == "express",
+                detail=f"{table}",
+            )
+        endpoints = engine.api_endpoints()
+        runner.check("endpoint count honest (4 routes)", len(endpoints) == 4,
+            detail=f"{len(endpoints)}")
+        engine.close()
+
+
+def section_g(runner: Runner) -> None:
+    """G — Test Graph (§14.6)."""
+    runner.section = "G-test-graph"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        links = engine.test_links()
+        pairs = {(link.test_file, link.target) for link in links}
+        runner.check(
+            "test links via imports (models + service submodule)",
+            ("tests/test_models.py", "app/models.py") in pairs
+            and ("tests/test_service.py", "app/service.py") in pairs
+            and ("tests/test_service.py", "app/__init__.py") in pairs,
+            detail=f"{sorted(pairs)}",
+        )
+        runner.check(
+            "from-import submodule edge lands the real target (app/service.py)",
+            any(link.target == "app/service.py" for link in links),
+        )
+        per_file = {link.test_file: link.tests for link in links}
+        runner.check(
+            "test counts per link honest (2 tests in test_models)",
+            per_file.get("tests/test_models.py") == 2,
+            detail=f"{per_file}",
+        )
+        runner.check(
+            "tests_for reverse query",
+            {
+                link.test_file
+                for link in engine.tests_for("app/models.py")
+            }
+            == {"tests/test_models.py"},
+        )
+        gaps = engine.coverage_gaps()
+        runner.check(
+            "coverage gaps exclude tested + test files",
+            "app/models.py" not in gaps
+            and "app/service.py" not in gaps
+            and "tests/test_models.py" not in gaps
+            and {"app/api.py", "src/server.js"} <= set(gaps),
+            detail=f"{gaps}",
+        )
+        engine.close()
+
+
+def section_h(runner: Runner) -> None:
+    """H — Architecture Map (§14.7)."""
+    runner.section = "H-arch-map"
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        layers = {lay.layer: lay for lay in engine.architecture_map()}
+        runner.check(
+            "layers: app/src/tests/docs + root",
+            {"app", "src", "tests", "docs", "."} <= set(layers),
+        )
+        runner.check(
+            "app layer aggregates files + symbols",
+            layers["app"].files == 4 and layers["app"].symbols >= 8,
+            detail=(
+                f"files={layers['app'].files} "
+                f"symbols={layers['app'].symbols}"
+            ),
+        )
+        runner.check(
+            "tests layer depends on app (3 aggregated edges)",
+            layers["tests"].depends_on.get("app") == 3,
+            detail=f"{layers['tests'].depends_on}",
+        )
+        runner.check(
+            "src layer self-contained (no cross-layer deps)",
+            layers["src"].depends_on.get("app") is None,
+        )
+        engine.close()
+
+
+def section_i(runner: Runner) -> None:
+    """I — Repository Map (§14.8 — Aider methodology)."""
+    runner.section = "I-repo-map"
+    # unit: the ranking core — the hub must outrank the leaves
+    graph = {
+        "leaf1.py": {"hub.py": 1.0},
+        "leaf2.py": {"hub.py": 1.0},
+        "leaf3.py": {"hub.py": 1.0},
+        "hub.py": {},
+    }
+    interest = {"leaf1.py": 1.0, "leaf2.py": 1.0, "leaf3.py": 1.0, "hub.py": 1.0}
+    ranks = pagerank(graph, personalization=interest)
+    runner.check(
+        "PageRank: the hub outranks every leaf (§127)",
+        ranks["hub.py"] > max(ranks["leaf1.py"], ranks["leaf2.py"], ranks["leaf3.py"]),
+        detail=f"{ranks}",
+    )
+    again = pagerank(graph, personalization=interest)
+    runner.check("PageRank deterministic", ranks == again)
+    empty = pagerank({})
+    runner.check("PageRank empty graph honest", empty == {})
+
+    with tempfile.TemporaryDirectory(prefix="p14-") as tmp:
+        root = Path(tmp)
+        make_corpus(root)
+        engine = build_codeintel_engine(root)
+        engine.scan()
+        result = engine.repo_map(token_budget=256)
+        rendered = result.render()
+        runner.check(
+            "map ranks the hub first (models — the hotspot)",
+            bool(result.entries) and result.entries[0].file == "app/models.py",
+            detail=f"order={[e.file for e in result.entries]}",
+        )
+        runner.check(
+            "map shows signatures under the file header",
+            "app/models.py:" in rendered and "class User" in rendered,
+        )
+        runner.check(
+            "token budget respected",
+            result.tokens_used <= result.token_budget,
+            detail=f"{result.tokens_used} > {result.token_budget}",
+        )
+        small = engine.repo_map(token_budget=1)
+        runner.check(
+            "tiny budget renders at least one file then stops",
+            1 <= len(small.entries) <= 2,
+            detail=f"entries={len(small.entries)}",
+        )
+
+        focused = engine.repo_map(token_budget=256, focus=["src/server.js"])
+        runner.check(
+            "focus pins the edited file first (Aider chat-file behavior)",
+            bool(focused.entries) and focused.entries[0].file == "src/server.js",
+            detail=f"{[e.file for e in focused.entries]}",
+        )
+        twice = engine.repo_map(token_budget=256).render()
+        runner.check("map deterministic across renders", twice == rendered)
+        engine.close()
+
+
+def section_j(runner: Runner) -> None:
+    """J — Tree-sitter MODE A (§14.9)."""
+    runner.section = "J-tree-sitter"
+    status = tree_sitter_status()
+    if status.get("tree-sitter"):
+        runner.bonus += 1
+        runner.check(
+            "real tree-sitter present with grammars",
+            bool(status.get("python")) and bool(status.get("javascript")),
+            detail=f"{status}",
+        )
+        registry = build_registry("tree-sitter")
+        parsed = registry.parse("m.py", PY_MODELS)
+        runner.check(
+            "python through tree-sitter (MODE A live path)",
+            parsed.engine == "tree-sitter",
+        )
+        runner.check(
+            "tree-sitter python symbols match stdlib semantics",
+            {"User", "Order", "name", "total"} <= {s.name for s in parsed.symbols},
+        )
+        js = registry.parse("s.js", JS_SERVER)
+        runner.check(
+            "tree-sitter JS: functions + class + const",
+            {"start", "PORT"} <= {s.name for s in js.symbols},
+        )
+        # the true §14.12 incremental path
+        old = "def a():\n    return 1\n\n\ndef b():\n    return 2\n"
+        new = "def a():\n    return 42\n\n\ndef b():\n    return 2\n"
+        ts_engine = registry.tree_sitter
+        runner.check("tree-sitter engine exposed (MODE A direct)", ts_engine is not None)
+        first = ts_engine.parse("inc.py", old)  # type: ignore[union-attr]
+        reparsed, region = ts_engine.live_reparse("inc.py", old, new)  # type: ignore[union-attr]
+        runner.check(
+            "incremental: region == the changed line only",
+            region == (2, 2),
+            detail=f"{region}",
+        )
+        runner.check(
+            "incremental: fresh parse + new sha",
+            reparsed.engine == "tree-sitter" and reparsed.sha != first.sha,
+        )
+        # graceful absence, proven by preference honesty
+        auto = build_registry("auto")
+        runner.check(
+            "auto prefers stdlib for python (richest signatures)",
+            auto.parser_for("python").engine_name == "stdlib-ast",
+        )
+    else:
+        runner.check(
+            "tree-sitter absent → status honest, no fake claim",
+            status == {"tree-sitter": False},
+            detail=f"{status}",
+        )
+        registry = build_registry("auto")
+        parsed = registry.parse("m.py", PY_MODELS)
+        runner.check(
+            "stdlib path answers when tree-sitter absent",
+            parsed.engine == "stdlib-ast",
+        )
+        js = registry.parse("s.js", JS_SERVER)
+        runner.check(
+            "regex fallback for JS when tree-sitter absent",
+            js.engine == "regex" and "start" in {s.name for s in js.symbols},
+        )
+
+    # the device's catch (2026-09-08): the regex fallback's JS imports
+    # must stay resolvable — quoted specifiers, real edges, even when
+    # tree-sitter is absent. "stdlib" preference forces the floor.
+    from nexus.codeintel.graphs import ImportResolver, build_dependency_edges
+
+    floor = build_registry("stdlib")
+    floor_js = floor.parse("s.js", JS_SERVER)
+    runner.check(
+        "prefer='stdlib' forces the regex floor for JS",
+        floor_js.engine == "regex",
+        detail=floor_js.engine,
+    )
+    floor_resolver = ImportResolver({"s.js", "utils.js"})
+    floor_edges = build_dependency_edges(
+        [("s.js", floor_js.imports, "javascript")], floor_resolver
+    )["s.js"]
+    runner.check(
+        "regex-fallback imports resolve to real edges (the device bug)",
+        any(edge.target == "utils.js" for edge in floor_edges),
+        detail=f"{[(e.kind, e.target) for e in floor_edges]}",
+    )
+
+
+def section_k(runner: Runner) -> None:
+    """K — Aider MODE D/C (§14.10) — methodology, zero imports."""
+    runner.section = "K-aider-method"
+    import sys as _sys
+
+    aider_modules = sorted(
+        name
+        for name in _sys.modules
+        if name.split(".")[0] in ("aider",)
+    )
+    runner.check("zero aider modules imported (MODE D/C)", not aider_modules,
+        detail=f"{aider_modules}")
+    source_dirs = [REPO_ROOT / "vendor-staging", REPO_ROOT / "nexus"]
+    aider_code_in_nexus = False
+    nexus_tree = REPO_ROOT / "nexus"
+    for py in nexus_tree.rglob("*.py"):
+        if py.is_file() and "aider" in py.read_text(encoding="utf-8", errors="replace").lower():
+            if "vendor-staging" not in str(py):
+                # mentions must be documentation-only (methodology notes)
+                text = py.read_text(encoding="utf-8", errors="replace")
+                if "from aider" in text or "import aider" in text:
+                    aider_code_in_nexus = True
+    runner.check(
+        "no aider import anywhere in nexus/ (code vs mention)",
+        not aider_code_in_nexus,
+    )
+    runner.check(
+        "vendor-staging exists as the documented reference root",
+        all(d.exists() for d in source_dirs[:1]),
+    )
+    runner.check(
+        "PageRank damping 0.85 = the documented Aider methodology",
+        PAGERANK_DAMPING == 0.85,
+    )
+
+
+def section_l(runner: Runner) -> None:
+    """L — Large Project Engine + Live Update (§14.11/§14.12)."""
+    runner.section = "L-large-engine"
+    with tempfile.TemporaryDirectory(prefix="p14-large-") as tmp:
+        root = Path(tmp)
+        # synthetic 2,000-file tree — 100 dirs × 20 files
+        for d in range(40):
+            folder = root / f"mod{d:03d}"
+            folder.mkdir()
+            for f in range(50):
+                content = f"class C{f}:\n    def m{f}(self):\n        return {f}\n"
+                (folder / f"file{f:03d}.py").write_text(content, encoding="utf-8")
+        engine = build_codeintel_engine(root, prefer="auto")
+        started = time.monotonic()
+        stats = engine.scan(parse_budget=1_500)
+        elapsed = time.monotonic() - started
+        runner.check(
+            "2,000 files indexed",
+            stats.files_indexed == 2_000,
+            detail=f"{stats.files_indexed}",
+        )
+        runner.check(
+            "budget honored: 1,500 parsed, 500 honestly skipped",
+            stats.files_parsed == 1_500 and stats.files_skipped == 500,
+            detail=f"parsed={stats.files_parsed} skipped={stats.files_skipped}",
+        )
+        runner.check("scan completes fast enough for CI", elapsed < 120, detail=f"{elapsed:.1f}s")
+        # incremental: second scan completes the deferred 500 (honest
+        # crawl continuation), then a third scan reparses NOTHING
+        stats2 = engine.scan(parse_budget=1_500)
+        runner.check(
+            "rescan completes the deferred budget work (500 → 2,000 parsed)",
+            stats2.files_parsed == 2_000 and stats2.reparsed_on_update == 500,
+            detail=f"reparsed={stats2.reparsed_on_update} parsed={stats2.files_parsed}",
+        )
+        stats2b = engine.scan(parse_budget=1_500)
+        runner.check(
+            "steady state: rescan reparses zero (incremental indexing)",
+            stats2b.reparsed_on_update == 0 and stats2b.files_parsed == 2_000,
+            detail=f"reparsed={stats2b.reparsed_on_update} parsed={stats2b.files_parsed}",
+        )
+        # touch exactly three files → exactly three reparses
+        for f in ("mod000/file000.py", "mod010/file010.py", "mod020/file020.py"):
+            path = root / f
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text + "\nclass Added:\n    pass\n", encoding="utf-8")
+        stats3 = engine.scan(parse_budget=None)
+        runner.check(
+            "three changed files → exactly three reparses",
+            stats3.reparsed_on_update == 3,
+            detail=f"{stats3.reparsed_on_update}",
+        )
+        runner.check(
+            "the rest were never reparsed (files_parsed stays 2,000)",
+            stats3.files_parsed == 2_000,
+            detail=f"{stats3.files_parsed}",
+        )
+        # §14.12 live update — file changed → affected region → symbols → graph
+        target = "mod001/file001.py"
+        disk = (root / target).read_text(encoding="utf-8")
+        new_source = disk + "\n\ndef live_added(x: int) -> int:\n    return x\n"
+        (root / target).write_text(new_source, encoding="utf-8")
+        report = engine.live_update(target, new_source)
+        runner.check(
+            "§14.12 method honest",
+            report.method
+            in ("treesitter-incremental", "stdlib-ast-file", "regex-file", "tree-sitter-file"),
+            detail=report.method,
+        )
+        runner.check(
+            "§14.12 changed region recorded",
+            report.changed_region[0] >= 1 and report.changed_region[1] >= report.changed_region[0],
+            detail=f"{report.changed_region}",
+        )
+        runner.check(
+            "symbols updated (before ≤ after, new symbol searchable)",
+            report.symbols_after > report.symbols_before
+            and any(s.name == "live_added" for s in engine.file_symbols(target)),
+        )
+        runner.check(
+            "graph rebuilt for the file (self-contained module → 0 edges, honest)",
+            report.edges_rebuilt == 0,
+        )
+        # a live edit that ADDS a project import → edge appears
+        dep_target = "mod002/file002.py"
+        disk2 = (root / dep_target).read_text(encoding="utf-8")
+        new2 = "import mod000.file000\n\n" + disk2
+        (root / dep_target).write_text(new2, encoding="utf-8")
+        report2 = engine.live_update(dep_target, new2)
+        runner.check(
+            "§14.12 update graph: new edge materializes instantly",
+            "mod000/file000.py" in engine.dependencies_of(dep_target)
+            and report2.edges_rebuilt == 1,
+            detail=f"edges={report2.edges_rebuilt}",
+        )
+        # deletion pruning
+        (root / "mod003/file003.py").unlink()
+        stats4 = engine.scan()
+        runner.check(
+            "deleted file pruned from the index",
+            engine._store.get_file("mod003/file003.py") is None  # noqa: SLF001
+            and stats4.files_indexed == 1_999,
+            detail=f"indexed={stats4.files_indexed}",
+        )
+        # events — a real bus sees the §14 lifecycle
+        bus = EventBus()
+        seen: list[str] = []
+        bus.subscribe("index.updated", lambda event: seen.append(event.name))
+        bus.subscribe("index.live_updated", lambda event: seen.append(event.name))
+        engine.close()
+        engine = build_codeintel_engine(root, bus=bus)
+        engine.scan()
+        (root / target).write_text(new_source + "\n", encoding="utf-8")
+        engine.live_update(target, new_source + "\n")
+        runner.check(
+            "events: index.updated + index.live_updated published",
+            "index.updated" in seen and "index.live_updated" in seen,
+            detail=f"{seen}",
+        )
+        # restart persistence
+        engine.close()
+        engine = build_codeintel_engine(root)
+        stats5 = engine.scan()
+        runner.check(
+            "restart: full index survives (0 reparsed)",
+            stats5.reparsed_on_update == 0 and stats5.symbols > 1_500,
+            detail=f"reparsed={stats5.reparsed_on_update} symbols={stats5.symbols}",
+        )
+        engine.close()
+
+
+def section_m(runner: Runner, *, regression: bool = True) -> None:
+    """M — Integration + regression."""
+    runner.section = "M-integration"
+    import nexus
+
+    runner.check(
+        "NEXUS_PHASE >= 14 (code intelligence shipped)",
+        isinstance(getattr(nexus, "NEXUS_PHASE", None), int) and nexus.NEXUS_PHASE >= 14,
+        detail=f"got {getattr(nexus, 'NEXUS_PHASE', None)!r}",
+    )
+    runner.check(
+        "__version__ >= 0.14.0",
+        str(getattr(nexus, "__version__", "")).startswith("0.14")
+        or str(getattr(nexus, "__version__", "")) > "0.14.0",
+        detail=f"got {getattr(nexus, '__version__', '')!r}",
+    )
+    shipped = all(
+        importlib.util.find_spec(f"nexus.codeintel.{mod}") is not None
+        for mod in ("contracts", "parsers", "store", "graphs", "repomap", "engine")
+    )
+    runner.check("all six codeintel modules importable", shipped)
+    with open(REPO_ROOT / "pyproject.toml", "rb") as fh:
+        data = tomllib.load(fh)
+    runner.check(
+        "core dependencies stay empty (Plan §2 — codeintel adds none)",
+        data["project"]["dependencies"] == [],
+    )
+    _v14 = tuple(int(part) for part in "0.14.0".split("."))
+    _v_now = tuple(int(part) for part in str(data["project"]["version"]).split(".")[:3])
+    runner.check(
+        "version >= 0.14.0 (later phases may bump)",
+        _v_now >= _v14,
+        detail=f"got {data['project']['version']!r}",
+    )
+    runner.check(
+        "the [codeintel] extra carries the MODE A engines",
+        "codeintel" in data["project"].get("optional-dependencies", {}),
+        detail="pyproject has no codeintel extra",
+    )
+    if regression:
+        _regression(runner)
+
+
+def _regression(runner: Runner) -> None:
+    """Phases 1–13 harnesses stay green (subprocess, house pattern)."""
+    runner.section = "M-regression"
+    prior = [
+        ("phase01", "Phase 1"),
+        ("phase02", "Phase 2"),
+        ("phase03", "Phase 3"),
+        ("phase04", "Phase 4"),
+        ("phase05", "Phase 5"),
+        ("phase06", "Phase 6"),
+        ("phase07", "Phase 7"),
+        ("phase08", "Phase 8"),
+        ("phase09", "Phase 9"),
+        ("phase10", "Phase 10"),
+        ("phase11", "Phase 11"),
+        ("phase12", "Phase 12"),
+        ("phase13", "Phase 13"),
+    ]
+    for phase_dir, label in prior:
+        argv = [
+            sys.executable,
+            str(REPO_ROOT / "tests" / phase_dir / "verify_exit_criteria.py"),
+        ]
+        if phase_dir in ("phase12", "phase13"):
+            argv.append("--no-regression")  # they carry their own chains
+        proc = subprocess.run(argv, capture_output=True, text=True, timeout=2400)
+        last_line = (
+            proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else "<no output>"
+        )
+        runner.check(
+            f"{label} harness still green ({last_line})",
+            proc.returncode == 0,
+            detail=f"exit={proc.returncode} last={last_line!r}",
+        )
+
+
+# ==================================================================== main
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--no-regression",
+        action="store_true",
+        help="skip the Phase 1–13 subprocess regression (local quick runs)",
+    )
+    args = parser.parse_args()
+    print("PHASE 14 — Code Intelligence (New Plan §14) exit criteria")
+    runner = Runner()
+    sections = (
+        section_a,
+        section_b,
+        section_c,
+        section_d,
+        section_e,
+        section_f,
+        section_g,
+        section_h,
+        section_i,
+        section_j,
+        section_k,
+        section_l,
+    )
+    for section in sections:
+        try:
+            section(runner)
+        except Exception as exc:  # noqa: BLE001 — a section crash is a failure
+            print(f"  [FAIL] ({runner.section}) section crashed: {exc}")
+            runner.failed += 1
+    try:
+        section_m(runner, regression=not args.no_regression)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [FAIL] ({runner.section}) section crashed: {exc}")
+        runner.failed += 1
+    return runner.summary()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,8 @@
+PHASE 16 — Git / GitHub COMPLETE
+commit: dcc1b78 (main == develop) — CI 10/10 green (runs #79 + #80)
+code: 5a8a92e (impl, 24 files, 4740 lines) · c08345a (device wrapper) · 9181642+35fd3fc (device fixes) · 3080bae+dcc1b78 (CI identity lessons)
+files: 23 deployed + on-disk sha256 verified (file_hash, CRLF-aware) — engine.py redeployed after each fix
+tests: 64/64 on this box (git 26 · github 15 · lifecycle 12 · parallel 11)
+live proof: 10/10 rungs on this box — real git binary + real github.com clone + full eight-stage lifecycle (proofs/phase16_live.json · python 3.14.5 · Windows-10-10.0.19045)
+identity-less CI lessons: commit/tag-a/merge self-provision a repo-local NEXUS identity (never global, never overrides)
+nexus-core 0.16.0 · NEXUS_PHASE=16

@@ -1,0 +1,9 @@
+{
+ "name": "mimo-snapshots",
+ "status": "sha_ok",
+ "sha_checked": 12,
+ "sha_bad": [],
+ "sha_aborted_by_deadline": 0,
+ "phase": "sha",
+ "seconds": 103.6
+}

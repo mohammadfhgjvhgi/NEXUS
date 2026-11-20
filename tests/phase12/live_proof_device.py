@@ -1,0 +1,252 @@
+"""Phase-12 live proof — runs ON the real Windows box (via the t1 bridge).
+
+Proves the §12 Memory System against the operator's real machine:
+
+* **§12.4** — a real SQLite memory.db under ``M:\\NEXUS\\data``:
+  records, evidence, relationships, audit — all on the real disk;
+* **§12.5** — the real vector backend this box resolves (qdrant
+  when the extra is installed — local persisted mode, no server;
+  else the stdlib local index, honestly reported), bilingual
+  semantic search (AR + EN);
+* **§12.7** — the full retrieval pipeline roundtrip: remember →
+  retrieve (ranked, budget-capped, conflict-resolved context);
+* **§12.2** — scope isolation on the real store (task A vs task B);
+* **§12.8** — a real conflict family resolved by the ladder;
+* **§12.9** — forget + the audit trail on the real disk;
+* **§12.10** — compression of a bilingual conversation into the
+  compact memory + compressed_from links;
+* **§12.11 Restart persistence** — a *fresh subprocess* (this
+  script re-invokes itself with ``--child``) reopens the same root
+  and proves the memories survived the process boundary.
+
+Run:  python -X utf8 tests\\phase12\\live_proof_device.py   (from M:\\NEXUS)
+Writes: proofs\\phase12_live.json · data\\memory\\memory.db (+ qdrant/ if used)
+"""
+
+from __future__ import annotations
+
+import json
+import platform
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, r"M:\NEXUS")
+
+print("python:", sys.version.split()[0], "| platform:", sys.platform)
+PROOFS = Path(r"M:\NEXUS\proofs")
+PROOFS.mkdir(parents=True, exist_ok=True)
+ROOT = Path(r"M:\NEXUS\data") / "memory-proof"
+REPORT_NAME = "phase12_live.json"
+report: dict = {
+    "python": sys.version.split()[0],
+    "machine": f"{platform.node()} · {platform.system()} {platform.release()}",
+    "phase": 12,
+}
+failures: list[str] = []
+
+
+def check(name: str, ok: bool, detail: str = "") -> bool:
+    mark = "PASS" if ok else "FAIL"
+    print(f"  [{mark}] {name}" + (f" — {detail}" if detail and not ok else ""))
+    report[name] = {"ok": bool(ok), "detail": detail[:300]}
+    if not ok:
+        failures.append(name)
+    return ok
+
+
+def main() -> int:
+    from nexus.memory import (
+        MemoryQuery,
+        MemoryScope,
+        MemoryType,
+        build_memory_engine,
+        qdrant_probe,
+    )
+    _ = MemoryScope  # scope vocabulary exercised via the verbs below
+
+    # ---- 0. the child restart proof runs first-come --------------------
+    if "--child" in sys.argv:
+        return child_restart_proof()
+    # a clean slate per run — a proof re-run must re-prove, not collide
+    shutil.rmtree(ROOT, ignore_errors=True)
+
+    # ---- 1. the factory resolves a real backend on this box ------------
+    engine = build_memory_engine(ROOT, vector_backend="auto")
+    backend = engine.backend()
+    report["qdrant_probe"] = qdrant_probe() or "importable"
+    check(
+        "the vector backend is real and reported (§12.5)",
+        backend["vector_backend"] in ("qdrant-local", "local-sqlite"),
+        f"backend={backend['vector_backend']} report={backend['report']}",
+    )
+    report["vector_backend"] = backend["vector_backend"]
+    report["embedder"] = backend["embedder"]
+    report["dimension"] = backend["dimension"]
+
+    # ---- 2. §12.4 the real SQLite file on the real disk ----------------
+    check(
+        "the SQLite index lives under M:\\NEXUS\\data (§12.4)",
+        (ROOT / "memory" / "memory.db").exists(),
+        str(ROOT / "memory" / "memory.db"),
+    )
+
+    # ---- 3. bilingual corpus across the §12.2 scopes --------------------
+    r_dec = engine.remember(
+        "قررنا أن محرّك الاستدلال الأساسي هو llama.cpp",
+        type=MemoryType.DECISION,
+        scope=MemoryScope.PROJECT,
+        project="nexus",
+        conflict_key="engine",
+    )
+    r_lesson = engine.remember(
+        "old lesson: ONNX كان محرّك الاستدلال سابقًا وهو أبطأ",
+        type=MemoryType.LESSON,
+        scope=MemoryScope.LESSON,
+        conflict_key="engine",
+    )
+    engine.remember(
+        "النفق الرئيسي يعمل على المنفذ 8452",
+        type=MemoryType.FACT,
+        scope=MemoryScope.TASK,
+        task="task-device",
+    )
+    engine.remember(
+        "task B private: never committed to git",
+        type=MemoryType.FACT,
+        scope=MemoryScope.TASK,
+        task="task-other",
+    )
+    engine.remember(
+        "global rule: evidence or it did not happen",
+        type=MemoryType.RULE,
+        scope=MemoryScope.GLOBAL,
+    )
+    counts = engine.backend()
+    check(
+        "five memories written across four scopes",
+        counts["records"] == 5 and counts["vectors"] == 5,
+        f"records={counts['records']} vectors={counts['vectors']}",
+    )
+
+    # ---- 4. §12.5 bilingual semantic retrieval --------------------------
+    hits_ar = engine.search(
+        MemoryQuery(text="أي محرّك الاستدلال llama اخترنا", project="nexus")
+    )
+    check(
+        "semantic search finds the decision (Arabic)",
+        any(h.record.id == r_dec.id for h in hits_ar[:2]),
+        f"hits={[h.record.id for h in hits_ar[:2]]}",
+    )
+    hits_en = engine.search(
+        MemoryQuery(text="llama.cpp engine choice", project="nexus")
+    )
+    check(
+        "semantic search finds it from English too",
+        any(h.record.id == r_dec.id for h in hits_en[:3]),
+    )
+
+    # ---- 5. §12.2 scope isolation on the real store ---------------------
+    ctx_task = engine.retrieve("المنفذ", task="task-device")
+    check(
+        "task A sees its port memory only (isolation)",
+        any("8452" in b.text for b in ctx_task.blocks)
+        and all("task B" not in b.text for b in ctx_task.blocks),
+    )
+
+    # ---- 6. §12.7 the full pipeline + §12.8 the ladder ------------------
+    ctx_engine = engine.retrieve("محرّك الاستدلال", project="nexus")
+    joined = ctx_engine.as_prompt()
+    check(
+        "the §12.8 ladder kept the decision, not the old lesson",
+        "llama.cpp" in joined and "ONNX" not in joined,
+    )
+    check(
+        "the context documents the conflict family",
+        any("engine" in line for line in ctx_engine.conflicts),
+    )
+    check(
+        "the global rule rides the context (§12.2 GLOBAL)",
+        "evidence" in joined,
+    )
+
+    # ---- 7. §12.10 compression ------------------------------------------
+    summary = engine.summarize(
+        turns=(
+            {"role": "user",
+             "content": "قررنا اعتماد Qdrant للذاكرة الدلالية",
+             "at": "2026-09-08T09:00:00+00:00"},
+            {"role": "assistant", "content": "تم تنفيذ الطلب",
+             "kind": "file_write", "at": "2026-09-08T09:01:00+00:00"},
+            {"role": "user",
+             "content": "lesson: always close the engine before reopening",
+             "at": "2026-09-08T09:02:00+00:00"},
+        ),
+        project="nexus",
+    )
+    links = engine._store.links_of(summary.id)  # noqa: SLF001
+    check(
+        "compression minted the summary + compressed_from links",
+        summary.type == MemoryType.SUMMARY
+        and any(link["relation"] == "compressed_from" for link in links),
+    )
+
+    # ---- 8. §12.9 forget + audit on the real disk ------------------------
+    result = engine.forget(record_id=r_lesson.id, reason="device proof")
+    audit = engine.audit_log()
+    check(
+        "forget tombstones + audits on the real store",
+        result.audit_rows == 1 and len(audit) >= 1,
+    )
+    engine.close()
+
+    # ---- 9. §12.11 restart persistence — a FRESH subprocess --------------
+    proc = subprocess.run(
+        [sys.executable, "-X", "utf8", str(Path(__file__).resolve()), "--child"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=r"M:\NEXUS",
+    )
+    child_ok = "CHILD RESTART: PASS" in proc.stdout
+    check(
+        "restart persistence across a process boundary (fresh python)",
+        child_ok,
+        (proc.stdout[-300:] if not child_ok else proc.stdout.strip().splitlines()[-2]),
+    )
+    if proc.stdout:
+        report["child_output_tail"] = proc.stdout.strip().splitlines()[-2:]
+
+    # ---- verdict -----------------------------------------------------------
+    out = PROOFS / REPORT_NAME
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    print()
+    print(f"report → {out}")
+    print("PROOF RESULT:", "PASS" if not failures else f"FAIL ({failures})")
+    return 0 if not failures else 1
+
+
+def child_restart_proof() -> int:
+    """The fresh-process half: reopen the same root, prove survival."""
+    from nexus.memory import MemoryQuery, build_memory_engine
+
+    engine = build_memory_engine(ROOT, vector_backend="auto")
+    hits = engine.search(
+        MemoryQuery(text="منفذ النفق", task="task-device")
+    )
+    port_ok = any("8452" in h.record.content for h in hits[:2])
+    ctx = engine.retrieve("evidence rule global")
+    rule_ok = "evidence" in ctx.as_prompt()
+    gone_ok = all("ONNX" not in h.record.content for h in engine.search(
+        MemoryQuery(text="ONNX slower")
+    ))
+    engine.close()
+    ok = port_ok and rule_ok and gone_ok
+    print(f"  child: port={port_ok} rule={rule_ok} forgotten-stays-gone={gone_ok}")
+    print("CHILD RESTART:", "PASS" if ok else "FAIL")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

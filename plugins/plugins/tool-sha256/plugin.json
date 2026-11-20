@@ -1,0 +1,8 @@
+{
+ "name": "tool-sha256",
+ "type": "tool",
+ "version": "1.0.0",
+ "entry": "tool_sha256.py",
+ "description": "SHA-256 text/file hashing tool (spec 76 fields)",
+ "permissions": []
+}

@@ -1,0 +1,78 @@
+{
+ "worker": "worker_task678 v4",
+ "utc": "2026-09-13T20:19:12Z",
+ "pid": 13612,
+ "spec_text_head": "# -*- mode: python ; coding: utf-8 -*-\n\"\"\"PyInstaller spec — the first real NEXUS.exe (MIDPOINT).\n\nBuild ON DEVICE (Windows):\n    py -3.14 -m pip install pyinstaller\n    py -3.14 -m PyInstaller --noconfirm --clean NEXUS.exe.spec\nResult: build\\\\midpoint\\\\dist\\\\NEXUS.exe  (onefile, console)\n\nCore is stdlib-only by law — heavy deps only ever sit behind adapters,\nso the exe stays small and the build stays hermetic. All 28+ core\npackages are pinned as hiddenimports because the package root is lazy\n(docstring + registry only) — without the pins the bundle would carry\nonly the root and the exe's own boot check would silently degrade to\ndisk imports instead of proving the exe is self-contained.\n\nv2 (gate #6/#7/#8): + nexus_ui + tkinter (explicit hiddenimports, and\ntkinter REMOVED from excludes — it was silently stripped before, which\nkilled every selftest mode with an ImportError at import time).\n\"\"\"\n\nCORE = [\n    \"nexus\", \"nexus.core.config\", \"nexus.events\", \"nexus.core.session\",\n    \"nexus.core.engine\", \"nexus.core.persistence\", \"nexus.core.workspace\",\n    \"nexus.core.scope\", \"nexus.core.policy\", \"nexus.resources\",\n    \"nexus.models\", \"nexus.agents\", \"nexus.harness\", \"nexus.tools\",\n    \"nexus.computer\", \"nexus.windows\", \"nexus.browser\", \"nexus.vision\",\n    \"nexus.verification\", \"nexus.recovery\", \"nexus.health\", \"nexus.horizon\",\n    \"nexus.orchestration\", \"nexus.security\", \"nexus.memory\", \"nexus.learning\",\n    \"nexus.research\", \"nexus.documents\", \"nexus.speech\", \"nexus.codeintel\",\n    \"nexus.coding\", \"nexus.git\", \"nexus.github\", \"nexus.remote\",\n    \"nexus.skills\", \"nexus.plugins\", \"nexus.ui\", \"nexus.workspace\",\n]\n\na = Analysis(\n    [\"nexus_launcher.py\"],\n    pathex=[\"M:\\\\NEXUS\"],\n    binaries=[],\n    datas=[],\n    hiddenimports=CORE + [\"nexus_ui\", \"tkinter\", \"tkinter.scrolledtext\",\n                          \"tkinter.filedialog\"],\n    hookspath=[],\n    runtime_hooks=[],\n    excludes=[\"matplotlib\", \"numpy\", \"pandas\", \"torch\", \"cv2\"],\n    noarchive=False,\n)\npyz = PYZ(a.pure)\n\nexe = EXE(\n    pyz,\n    a.scripts,\n    a.binaries,\n    a.datas,\n    [],\n    name=\"NEXUS\",\n    debug=False,\n    strip=False,\n    upx=False,\n    console=True,\n    icon=None,\n)\n",
+ "spec_check": {
+  "ok": true,
+  "hiddenimports_ok": true,
+  "excludes_still_block_tkinter": false
+ },
+ "build": {
+  "rc": 0,
+  "seconds": 168.0,
+  "err_tail": "oader EXE to M:\\NEXUS\\build\\midpoint\\dist\\NEXUS.exe\r\n164178 INFO: Copying icon to EXE\r\n164184 INFO: Copying 0 resources to EXE\r\n164184 INFO: Embedding manifest in EXE\r\n164192 INFO: Appending PKG archive to EXE\r\n164348 INFO: Fixing EXE headers\r\n166569 INFO: Building EXE from EXE-00.toc completed successfully.\r\n166638 INFO: Build complete! The results are available in: M:\\NEXUS\\build\\midpoint\\dist\r\n"
+ },
+ "exe": {
+  "size": 90701203,
+  "sha256": "6d49d19bd2cf90b1dd67bb83afb8bcfe000876dc080630668b35d381b2f31df9"
+ },
+ "check": {
+  "rc": 0,
+  "out_head": "==========================================================\r\n  NEXUS 0.25.0  ·  NEXUS Windows Product v0.1 (MIDPOINT)\r\n  Your computer. With a mind of its own.\r\n  local-first  ·  stdlib core  ·  evidence or silence\r\n==========================================================\r\ncore packages : 37 ok / 0 err (of 37)\r\nmodel runtime : offline at http://127.0.0.1:8080\r\nverdict       : PASS  (3.15s)\r\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\r\n",
+  "out_tail": "==========================================================\r\n  NEXUS 0.25.0  ·  NEXUS Windows Product v0.1 (MIDPOINT)\r\n  Your computer. With a mind of its own.\r\n  local-first  ·  stdlib core  ·  evidence or silence\r\n==========================================================\r\ncore packages : 37 ok / 0 err (of 37)\r\nmodel runtime : offline at http://127.0.0.1:8080\r\nverdict       : PASS  (3.15s)\r\ncertificate   : M:\\NEXUS\\proofs\\midpoint_boot.json\r\n",
+  "err_head": "",
+  "err_tail": "",
+  "seconds": 18.3
+ },
+ "ui": {
+  "run_rc": 0,
+  "seconds": 18.0,
+  "out_head": "[x] no local model runtime — needs llama-server (8080) or Ollama (11434).\r\n    llama-server: URLError: <urlopen error timed out>\r\n    ollama      : URLError: <urlopen error timed out>\r\ncertificate: M:\\NEXUS\\proofs\\midpoint_ui.json\r\n{\"verdict\": \"PASS\", \"title\": \"NEXUS 0.25.0 — Windows Product\", \"tasks_count\": 1, \"model\": \"offline\", \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_ui.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 530714, \"size_bytes\": 63089, \"ok\": true}}\r\n",
+  "err_head": "",
+  "out_tail": "[x] no local model runtime — needs llama-server (8080) or Ollama (11434).\r\n    llama-server: URLError: <urlopen error timed out>\r\n    ollama      : URLError: <urlopen error timed out>\r\ncertificate: M:\\NEXUS\\proofs\\midpoint_ui.json\r\n{\"verdict\": \"PASS\", \"title\": \"NEXUS 0.25.0 — Windows Product\", \"tasks_count\": 1, \"model\": \"offline\", \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_ui.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 530714, \"size_bytes\": 63089, \"ok\": true}}\r\n",
+  "err_tail": "",
+  "cert_verdict": "PASS",
+  "cert_error": null,
+  "png_exists": true,
+  "png_size": 63089,
+  "passed": true
+ },
+ "gate_ui": {
+  "updated": true
+ },
+ "tray": {
+  "run_rc": 0,
+  "seconds": 12.3,
+  "out_head": "certificate: M:\\NEXUS\\proofs\\midpoint_tray.json\r\n{\"verdict\": \"PASS\", \"add_ok\": true, \"modify_ok\": true, \"delete_ok\": true, \"menu_items\": [\"فتح NEXUS\", \"إيقاف مؤقت\", \"استئناف\", \"خروج\"], \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_tray.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 413866, \"size_bytes\": 65166, \"ok\": true}}\r\n",
+  "err_head": "Exception ignored while calling ctypes callback function <_FuncPtr object at 0x0000016756F232F0>:\r\nTraceback (most recent call last):\r\n  File \"nexus_ui.py\", line 350, in tray_selftest\r\n    hwnd = user32.CreateWindowExW(0, wc.lpszClassName, \"NEXUS tray host\",\r\nctypes.ArgumentError: argument 4: OverflowError: int too long to convert\r\nException ignored while calling ctypes callback function <_FuncPtr object at 0x0000016756F232F0>:\r\nTraceback (most recent call last):\r\n  File \"nexus_ui.py\", line 350, in tray_selftest\r\n    hwnd = user32.CreateWindowExW(0, wc.lpszClassName, \"NEXUS tray host\",\r\nctypes.ArgumentError: argument 4: OverflowError: int too long to convert\r\nException ignored while calling ",
+  "out_tail": "certificate: M:\\NEXUS\\proofs\\midpoint_tray.json\r\n{\"verdict\": \"PASS\", \"add_ok\": true, \"modify_ok\": true, \"delete_ok\": true, \"menu_items\": [\"فتح NEXUS\", \"إيقاف مؤقت\", \"استئناف\", \"خروج\"], \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_tray.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 413866, \"size_bytes\": 65166, \"ok\": true}}\r\n",
+  "err_tail": "rgumentError: argument 4: OverflowError: int too long to convert\r\nException ignored while calling ctypes callback function <_FuncPtr object at 0x0000016756F232F0>:\r\nTraceback (most recent call last):\r\n  File \"nexus_ui.py\", line 350, in tray_selftest\r\n    hwnd = user32.CreateWindowExW(0, wc.lpszClassName, \"NEXUS tray host\",\r\nctypes.ArgumentError: argument 4: OverflowError: int too long to convert\r\n",
+  "cert_verdict": "PASS",
+  "cert_error": null,
+  "png_exists": true,
+  "png_size": 65166,
+  "passed": true
+ },
+ "gate_tray": {
+  "updated": true
+ },
+ "overlay": {
+  "run_rc": 0,
+  "seconds": 15.9,
+  "out_head": "certificate: M:\\NEXUS\\proofs\\midpoint_overlay.json\r\n{\"verdict\": \"PASS\", \"topmost\": true, \"alpha\": 0.88, \"pause_worked\": true, \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_overlay.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 413408, \"size_bytes\": 60617, \"ok\": true}}\r\n",
+  "err_head": "",
+  "out_tail": "certificate: M:\\NEXUS\\proofs\\midpoint_overlay.json\r\n{\"verdict\": \"PASS\", \"topmost\": true, \"alpha\": 0.88, \"pause_worked\": true, \"screenshot\": {\"method\": \"ctypes GDI BitBlt → GetDIBits → zlib PNG\", \"path\": \"M:\\\\NEXUS\\\\proofs\\\\midpoint_overlay.png\", \"width\": 1680, \"height\": 1050, \"getdibits_lines\": 1050, \"pixel_checksum\": 413408, \"size_bytes\": 60617, \"ok\": true}}\r\n",
+  "err_tail": "",
+  "cert_verdict": "PASS",
+  "cert_error": null,
+  "png_exists": true,
+  "png_size": 60617,
+  "passed": true
+ },
+ "gate_overlay": {
+  "updated": true
+ },
+ "verdict": "PASS",
+ "finished_utc": "2026-09-13T20:23:05Z"
+}

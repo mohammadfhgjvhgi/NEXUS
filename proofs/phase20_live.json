@@ -1,0 +1,63 @@
+{
+  "phase": 20,
+  "section": "Verification Engine",
+  "verdict": "PASS",
+  "rungs_passed": 10,
+  "rungs_failed": 0,
+  "rungs": [
+    {
+      "ok": true,
+      "label": "1 §20.1 framework vocabulary",
+      "detail": "Verifier · Evidence · Criterion · Result verbatim"
+    },
+    {
+      "ok": true,
+      "label": "2 §20.2 nine domains verbatim",
+      "detail": "nine domains · nine verifiers: software, windows, browser, documents, research, git, memory, models, system"
+    },
+    {
+      "ok": true,
+      "label": "3 §20.3 evidence five fields",
+      "detail": "method · output · timestamp · artifact · result"
+    },
+    {
+      "ok": true,
+      "label": "4 §20.4 repair stages verbatim",
+      "detail": "Fail → Diagnose → Fix → Retest → Verify"
+    },
+    {
+      "ok": true,
+      "label": "5 engine over nine domains",
+      "detail": "overall=DEGRADED pass=24 skip=3 fail=0 err=0"
+    },
+    {
+      "ok": true,
+      "label": "6 evidence on every result",
+      "detail": "27 sealed evidence artifacts"
+    },
+    {
+      "ok": true,
+      "label": "7 report persisted + sealed",
+      "detail": "report sealed · overall DEGRADED"
+    },
+    {
+      "ok": true,
+      "label": "8 repair loop real chain",
+      "detail": "fail → diagnose → fix → retest → verify · repaired PASS"
+    },
+    {
+      "ok": true,
+      "label": "9 repair evidence sealed",
+      "detail": "every §20.4 stage left a sealed observation"
+    },
+    {
+      "ok": true,
+      "label": "10 honest SKIP observed",
+      "detail": "on the real box: the platform probe PASSes"
+    }
+  ],
+  "nexus_version": "0.20.0",
+  "python": "3.14.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "timestamp": "2026-09-09T23:41:25"
+}

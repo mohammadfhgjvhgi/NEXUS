@@ -1,0 +1,13 @@
+{
+ "name": "mimo-snapshots",
+ "status": "purged",
+ "src_files": 187,
+ "src_bytes": 28771850231,
+ "dst_files": 187,
+ "dst_bytes": 28771850231,
+ "src_missing_in_dst": 0,
+ "purge_exit": 2,
+ "husk_removed": true,
+ "phase": "purge",
+ "seconds": 1.4
+}

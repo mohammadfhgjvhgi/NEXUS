@@ -1,0 +1,64 @@
+{
+  "host": "DESKTOP-46N9B2S",
+  "python": "3.14.5",
+  "tree_sitter_status": {
+    "tree-sitter": false
+  },
+  "checked_at": "2026-09-09T03:46:38",
+  "corpus scanned (7 files, all parsed)": {
+    "ok": true,
+    "detail": "indexed=7 parsed=7"
+  },
+  "symbol index: classes + methods with lines + bilingual docstrings kept": {
+    "ok": true,
+    "detail": "['Order', 'User', 'name', 'total']"
+  },
+  "dependency graph: python + JS edges resolved": {
+    "ok": true,
+    "detail": "['app/models.py'] / ['src/utils.js']"
+  },
+  "API graph: flask + fastapi + express routes": {
+    "ok": true,
+    "detail": "['/api/users', '/health', '/orders']"
+  },
+  "test graph: test file links its target": {
+    "ok": true,
+    "detail": ""
+  },
+  "§14.12 live update: symbols + graph (region recorded)": {
+    "ok": true,
+    "detail": "{'file': 'app/models.py', 'changed_region': [12, 16], 'method': 'stdlib-ast-file', 'symbols_before': 4, 'symbols_after': 6, 'symbols_updated': 4, 'edges_rebuilt': 0}"
+  },
+  "§14.12 method honest for this runtime": {
+    "ok": true,
+    "detail": "stdlib-ast-file"
+  },
+  "incremental: steady rescan reparses zero": {
+    "ok": true,
+    "detail": "reparsed=0"
+  },
+  "incremental: two touched files → exactly two reparses": {
+    "ok": true,
+    "detail": "reparsed=2"
+  },
+  "repository map: hub first + token budget": {
+    "ok": true,
+    "detail": "first=['app/models.py', 'app/api.py', 'app/service.py']"
+  },
+  "architecture map: layers aggregated": {
+    "ok": true,
+    "detail": "['app', 'src', 'tests']"
+  },
+  "engine status: honest absence (stdlib-ast + regex answer)": {
+    "ok": true,
+    "detail": "{'tree-sitter': False}"
+  },
+  "NEXUS indexes its own tree (M:\\NEXUS)": {
+    "ok": true,
+    "detail": "indexed=1522 parsed=252 symbols=6218 edges=632 in 24.8s"
+  },
+  "child process reopens the index (restart persistence)": {
+    "ok": true,
+    "detail": "indexed=7 reparsed=0 symbols=14"
+  }
+}

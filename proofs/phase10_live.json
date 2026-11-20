@@ -1,0 +1,73 @@
+{
+  "navigate": {
+    "ok": true,
+    "url": "navigated → https://example.org/ (Example Domain)"
+  },
+  "dom_read": {
+    "ok": true,
+    "text": "Example Domain"
+  },
+  "vault_store": {
+    "ok": true,
+    "stored": "{'site': 'proof.example', 'username': 'nexus-agent', 'stored': True}"
+  },
+  "vault_list": {
+    "ok": true,
+    "entries": [
+      {
+        "site": "proof.example",
+        "username": "nexus-agent"
+      }
+    ]
+  },
+  "vault_type": {
+    "ok": true,
+    "secret_echoed": false
+  },
+  "secret_in_events": false,
+  "event_count": 14,
+  "vault_roundtrip": {
+    "username": "nexus-agent",
+    "ok": true,
+    "redaction": true
+  },
+  "tabs": {
+    "ok": true,
+    "count": 1
+  },
+  "screenshot": {
+    "ok": true,
+    "bytes": 7370
+  },
+  "channel": "chrome",
+  "cdp_chrome_found": true,
+  "cdp_attach": {
+    "ok": true,
+    "pages": "attach ok"
+  },
+  "user_session_snapshot": {
+    "ok": true
+  },
+  "sessions": {
+    "count": 2,
+    "kinds": [
+      "agent",
+      "user"
+    ],
+    "profiles_isolated": true
+  },
+  "claim_new_windows": {
+    "claimed": 1,
+    "windows": [
+      "win-29034352"
+    ]
+  },
+  "nexus_owned_windows": [
+    {
+      "window_id": "win-29034352",
+      "application": "chrome.exe",
+      "title": "‪NEXUS Agent Session - Google Chrome‬"
+    }
+  ],
+  "result": "PASS"
+}
