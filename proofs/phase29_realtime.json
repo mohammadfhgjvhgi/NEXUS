@@ -6,8 +6,8 @@
   "service": "nexus-realtime",
   "host_hint": "almoutmag-v9"
  },
- "started_utc": "2026-11-19T23:28:34Z",
- "finished_utc": "2026-11-19T23:28:37Z",
+ "started_utc": "2026-11-20T12:57:00Z",
+ "finished_utc": "2026-11-20T12:57:04Z",
  "duration_s": 3.4,
  "config": {
   "bind": "127.0.0.1",
@@ -45,22 +45,22 @@
        "control": {
         "up": true,
         "port": 9411,
-        "started_utc": "2026-11-19T23:28:34Z"
+        "started_utc": "2026-11-20T12:57:01Z"
        },
        "events": {
         "up": true,
         "port": 9412,
-        "started_utc": "2026-11-19T23:28:34Z"
+        "started_utc": "2026-11-20T12:57:01Z"
        },
        "screen": {
         "up": true,
         "port": 9413,
-        "started_utc": "2026-11-19T23:28:34Z"
+        "started_utc": "2026-11-20T12:57:01Z"
        },
        "files": {
         "up": true,
         "port": 9414,
-        "started_utc": "2026-11-19T23:28:34Z"
+        "started_utc": "2026-11-20T12:57:01Z"
        }
       }
      }
@@ -71,7 +71,7 @@
       "http": 200,
       "rc": 0,
       "stdout_head": "nexus29-control-ok\r\n",
-      "duration_ms": 335.4
+      "duration_ms": 269.8
      }
     },
     "control_exec_denied": {
@@ -84,8 +84,8 @@
     "audit_on_disk": {
      "verdict": "PASS",
      "detail": {
-      "audit_file": "M:\\NEXUS\\realtime\\logs\\audit-20261119.log",
-      "tail_n": 30
+      "audit_file": "M:\\NEXUS\\realtime\\logs\\audit-20261120.log",
+      "tail_n": 7
      }
     }
    }
@@ -128,7 +128,7 @@
      "verdict": "PASS",
      "detail": {
       "http": 200,
-      "count": 2
+      "count": 3
      }
     },
     "screen_capture": {
@@ -136,10 +136,10 @@
      "detail": {
       "w": 3360,
       "h": 1050,
-      "size": 316582,
-      "sha256": "66d5518371ae2218642db80f67ece609",
+      "size": 239541,
+      "sha256": "175adcb48690fadf99768f6a8cb69636",
       "duration_ms": null,
-      "file": "cap_20261119_232834.png"
+      "file": "cap_20261120_125701.png"
      }
     }
    }
@@ -154,7 +154,7 @@
      "detail": {
       "http": 200,
       "size": 16384,
-      "sha256": "b1f72898a5ecb847acca113e2b8c686f"
+      "sha256": "08b4a1a45b3bf6824c9690432f70882c"
      }
     },
     "files_get_roundtrip": {
@@ -188,7 +188,7 @@
   "events_down_confirmed": true,
   "restart_ok": true,
   "events_back_ok": true,
-  "downtime_ms": 2.7,
+  "downtime_ms": 2.2,
   "events_down_error": "ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it"
  },
  "modules": {
@@ -224,7 +224,7 @@
  "artifacts": [
   "M:\\NEXUS\\realtime\\gateway.json",
   "M:\\NEXUS\\realtime\\.hb.json",
-  "M:\\NEXUS\\realtime\\logs\\audit-20261119.log",
+  "M:\\NEXUS\\realtime\\logs\\audit-20261120.log",
   "M:\\NEXUS\\realtime\\captures"
  ],
  "persistent": true,

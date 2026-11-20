@@ -1,0 +1,25 @@
+{
+ "triggered_utc": "2026-11-20T12:59:00Z",
+ "pid": 12740,
+ "hb_before": {
+  "utc": "2026-11-20T12:58:31Z",
+  "phase": 31,
+  "version": "0.31.0",
+  "pid": 412,
+  "uptime_s": 185.2,
+  "running": false,
+  "selftest": "done",
+  "skills_total": 5,
+  "counts": {
+   "total": 5,
+   "invalid": 0,
+   "executable": 3,
+   "render_only": 2,
+   "by_source": {
+    "imported": 1,
+    "created": 3,
+    "learned": 1
+   }
+  }
+ }
+}

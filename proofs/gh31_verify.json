@@ -1,0 +1,69 @@
+{
+ "probe": "gh31_verify",
+ "utc": "2026-11-20T13:04:46Z",
+ "token_present": true,
+ "nexus": {
+  "repo": "M:\\NEXUS",
+  "exists": true,
+  "local_head": {
+   "rc": 0,
+   "out": "4622555d2d1be3435a252bed35441e30e8da0c37",
+   "err": ""
+  },
+  "local_subject": "NEXUS v0.29.0 - PHASE 0-29 full snapshot: MIDPOINT product + realtime Control/Events/Screen/Files + device proofs",
+  "branch": "main",
+  "origin_url": "https://github.com/mohammadfhgjvhgi/NEXUS.git",
+  "ahead_of_last_fetch": 0,
+  "behind_last_fetch": 0,
+  "status_count": 15,
+  "status_top15": [
+   "M plugins/.hb.json",
+   " M proofs/phase29_realtime.json",
+   " M realtime/.hb.json",
+   " M realtime/captures/latest.json",
+   " M realtime/gateway.json",
+   " M realtime/selftest/up29.bin",
+   " M realtime/worker_phase29.result.json",
+   " M realtime/worker_phase29_spawn_record.json",
+   "?? proofs/gh31_verify.json",
+   "?? proofs/phase31_skills.json",
+   "?? realtime/captures/cap_20261120_125701.png",
+   "?? realtime/logs/audit-20261120.log",
+   "?? skills/",
+   "?? tests/test_gh31_verify.py",
+   "?? tests/test_gh31_verify.py.bak"
+  ],
+  "owner_repo": "mohammadfhgjvhgi/NEXUS",
+  "remote_head_sha": "4622555d2d1be3435a252bed35441e30e8da0c37",
+  "remote_head_msg": "NEXUS v0.29.0 - PHASE 0-29 full snapshot: MIDPOINT product + realtime Control/Events/Screen/Files + device proofs\n\nEvide",
+  "head_match": true
+ },
+ "almoutmag_v8": {
+  "repo": "M:\\ps\\almoutmag-v8",
+  "exists": true,
+  "local_head": {
+   "rc": 0,
+   "out": "f3879005cbccf980653847692a6020513457d414",
+   "err": ""
+  },
+  "local_subject": "Merge branch 'main' of https://github.com/mohammadfhgjvhgi/almoutmag-v8",
+  "branch": "main",
+  "origin_url": "https://github.com/mohammadfhgjvhgi/almoutmag-v8.git",
+  "ahead_of_last_fetch": 0,
+  "behind_last_fetch": 0,
+  "status_count": 7,
+  "status_top15": [
+   "M session.txt",
+   " M tunnel_logs/s1.err",
+   " M tunnel_logs/s2.err",
+   " D tunnel_logs/server.err",
+   " M tunnel_logs/t1.err",
+   " M tunnel_logs/t2.err",
+   " D tunnel_logs/tunnel.err"
+  ],
+  "owner_repo": "mohammadfhgjvhgi/almoutmag-v8",
+  "remote_head_sha": "f3879005cbccf980653847692a6020513457d414",
+  "remote_head_msg": "Merge branch 'main' of https://github.com/mohammadfhgjvhgi/almoutmag-v8",
+  "head_match": true
+ }
+}

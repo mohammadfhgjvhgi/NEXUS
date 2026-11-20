@@ -1,0 +1,144 @@
+{
+ "generated_utc": "2026-11-20T12:59:01Z",
+ "phase": 31,
+ "version": "0.31.0",
+ "store_root": "M:\\NEXUS\\skills\\skills",
+ "counts": {
+  "total": 5,
+  "invalid": 0,
+  "executable": 3,
+  "render_only": 2,
+  "by_source": {
+   "imported": 1,
+   "created": 3,
+   "learned": 1
+  }
+ },
+ "skills": [
+  {
+   "name": "download-sorter",
+   "version": "1.2.0",
+   "source": "imported",
+   "executable": true,
+   "manifest_sha256": "da2d7d8321c418c42c35c6376c5e1fb652743247c2e972f42daa3f8626443ff6",
+   "files": [
+    ".meta.json",
+    "skill.json"
+   ],
+   "meta": {
+    "imported_utc": "2026-11-20T12:55:26Z",
+    "actor": "phase31-worker",
+    "origin": "M:\\NEXUS\\skills\\staging\\download-sorter",
+    "origin_manifest_sha256": "ad69b355cd0d2347329598118a9621daeabfb36e31d01aeb9e2d22ce959577a9"
+   }
+  },
+  {
+   "name": "note-organizer",
+   "version": "1.0.0",
+   "source": "created",
+   "executable": true,
+   "manifest_sha256": "0c6d5f88c1f7b76d9666bd405d1eff57704ad247d0febd099c3f24834158d7f5",
+   "files": [
+    ".meta.json",
+    "skill.json"
+   ],
+   "meta": {
+    "created_utc": "2026-11-20T12:55:26Z",
+    "actor": "phase31-bootstrap",
+    "manifest_sha256": "0c6d5f88c1f7b76d9666bd405d1eff57704ad247d0febd099c3f24834158d7f5"
+   }
+  },
+  {
+   "name": "organize-downloads",
+   "version": "1.0.0",
+   "source": "learned",
+   "executable": true,
+   "manifest_sha256": "81a0921bac63e2d9791438965e069aef3bb0f25dc51e73d27479b5df6e5ed4f3",
+   "files": [
+    ".meta.json",
+    "skill.json"
+   ],
+   "meta": {
+    "created_utc": "2026-11-20T12:55:26Z",
+    "actor": "phase31",
+    "manifest_sha256": "81a0921bac63e2d9791438965e069aef3bb0f25dc51e73d27479b5df6e5ed4f3"
+   }
+  },
+  {
+   "name": "text-summarize",
+   "version": "1.0.0",
+   "source": "created",
+   "executable": false,
+   "manifest_sha256": "0565ee77ecd43eedd6ab2d12d88badcbcf7ab461a41cd6cd7e50bce441fc4dc9",
+   "files": [
+    ".meta.json",
+    "skill.json"
+   ],
+   "meta": {
+    "created_utc": "2026-11-20T12:55:26Z",
+    "actor": "phase31-bootstrap",
+    "manifest_sha256": "0565ee77ecd43eedd6ab2d12d88badcbcf7ab461a41cd6cd7e50bce441fc4dc9"
+   }
+  },
+  {
+   "name": "workspace-report",
+   "version": "1.0.0",
+   "source": "created",
+   "executable": false,
+   "manifest_sha256": "7153e10c6c8c70baad6f05fe991d957b2c2e7fd9036426ba14e8780108cc276c",
+   "files": [
+    ".meta.json",
+    "skill.json"
+   ],
+   "meta": {
+    "created_utc": "2026-11-20T12:55:26Z",
+    "actor": "phase31-bootstrap",
+    "manifest_sha256": "7153e10c6c8c70baad6f05fe991d957b2c2e7fd9036426ba14e8780108cc276c"
+   }
+  }
+ ],
+ "observations_total": 4,
+ "lifecycle": {
+  "create": "PASS",
+  "import": "SKIPPED_ALREADY",
+  "learn": "PASS"
+ },
+ "integration": {
+  "verdict": "PASS",
+  "detail": {
+   "event_id": 13,
+   "roundtrip": true,
+   "stream_count": 1,
+   "cursor": 13
+  }
+ },
+ "cross_system": {
+  "plugins": {
+   "registry_present": true,
+   "generated_utc": "2026-11-19T23:47:48Z",
+   "loaded_total": 7,
+   "counts_by_type": {
+    "agent": 1,
+    "tool": 1,
+    "skill": 1,
+    "model": 1,
+    "mcp": 1,
+    "integration": 1,
+    "ui": 1
+   }
+  },
+  "realtime": {
+   "hb_present": true,
+   "hb_utc": "2026-11-20T12:58:51Z",
+   "hb_age_s": 9.7,
+   "hb_running": true,
+   "pid": 9408,
+   "channels_up": [
+    "control",
+    "events",
+    "files",
+    "screen"
+   ]
+  }
+ }
+}

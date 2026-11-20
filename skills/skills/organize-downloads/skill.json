@@ -1,0 +1,24 @@
+{
+ "name": "organize-downloads",
+ "version": "1.0.0",
+ "description": "تنظيم مجلد التنزيلات: فهرسة + تدوين في سجل — نمط متكرر مفيد وقابل للتحقق",
+ "inputs": {},
+ "tools": [
+  "append_journal",
+  "write_note"
+ ],
+ "workflow": [
+  {
+   "name": "downloads-index.txt",
+   "op": "write_note",
+   "text": "files sorted by type"
+  },
+  {
+   "op": "append_journal",
+   "text": "downloads organized"
+  }
+ ],
+ "verification": "replay_observations_and_hash_outputs;observations=3",
+ "source": "learned",
+ "executable": true
+}

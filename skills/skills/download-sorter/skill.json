@@ -1,0 +1,29 @@
+{
+ "name": "download-sorter",
+ "version": "1.2.0",
+ "description": "حزمة أجنبية واردة من خارج المتجر — تُستورد بهوية بايت-ببايت وأصل مُسجل (provenance)",
+ "inputs": {
+  "folder": {
+   "type": "string",
+   "required": true,
+   "description": "المجلد المراد فرزه"
+  }
+ },
+ "tools": [
+  "echo",
+  "append_journal"
+ ],
+ "workflow": [
+  {
+   "op": "echo",
+   "text": "sort plan for {{input.folder}}"
+  },
+  {
+   "op": "append_journal",
+   "text": "scanned {{input.folder}}"
+  }
+ ],
+ "verification": "echo_marker_and_journal_present",
+ "source": "imported",
+ "executable": true
+}

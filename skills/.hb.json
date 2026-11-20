@@ -1,0 +1,21 @@
+{
+ "utc": "2026-11-20T13:07:12Z",
+ "phase": 31,
+ "version": "0.31.0",
+ "pid": 12740,
+ "uptime_s": 492.0,
+ "running": true,
+ "selftest": "done",
+ "skills_total": 5,
+ "counts": {
+  "total": 5,
+  "invalid": 0,
+  "executable": 3,
+  "render_only": 2,
+  "by_source": {
+   "imported": 1,
+   "created": 3,
+   "learned": 1
+  }
+ }
+}

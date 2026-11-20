@@ -1,0 +1,143 @@
+{
+ "phase": 31,
+ "version": "0.31.0",
+ "started_utc": "2026-11-20T12:59:00Z",
+ "bootstrap": {
+  "created": [],
+  "staged": [],
+  "observed": {
+   "organize-downloads": {
+    "have": 3,
+    "target": 3,
+    "appended": 0
+   },
+   "temp-cache-cleanup": {
+    "have": 1,
+    "target": 1,
+    "appended": 0
+   }
+  }
+ },
+ "discovered": [
+  "download-sorter",
+  "note-organizer",
+  "organize-downloads",
+  "text-summarize",
+  "workspace-report"
+ ],
+ "import": {
+  "status": "SKIPPED_ALREADY",
+  "detail": {
+   "note": "already in store"
+  }
+ },
+ "learn": {
+  "status": "PASS",
+  "promoted": null,
+  "rejected": {
+   "repeat_key": "temp-cache-cleanup",
+   "status": "REJECTED",
+   "reasons": [
+    "not_repeated:1<3",
+    "temporary_info"
+   ],
+   "observations": 1
+  },
+  "skipped": {
+   "repeat_key": "organize-downloads",
+   "note": "already registered from an earlier boot"
+  }
+ },
+ "selftest": {
+  "download-sorter": {
+   "verdict": "PASS",
+   "detail": {
+    "run_dir": "M:\\NEXUS\\skills\\runs\\download-sorter\\20261120_125900",
+    "outputs": 2,
+    "jailed": true,
+    "hashed": true
+   }
+  },
+  "note-organizer": {
+   "verdict": "PASS",
+   "detail": {
+    "run_dir": "M:\\NEXUS\\skills\\runs\\note-organizer\\20261120_125900",
+    "outputs": 2,
+    "jailed": true,
+    "hashed": true
+   }
+  },
+  "organize-downloads": {
+   "verdict": "PASS",
+   "detail": {
+    "run_dir": "M:\\NEXUS\\skills\\runs\\organize-downloads\\20261120_125900",
+    "outputs": 2,
+    "jailed": true,
+    "hashed": true
+   }
+  },
+  "text-summarize": {
+   "verdict": "PASS",
+   "detail": {
+    "rendered_head": "[{\"op\": \"prompt\", \"text\": \"لخص النص التالي في 3 نقاط مع الحفاظ على المصطلحات:\\n\\"
+   }
+  },
+  "workspace-report": {
+   "verdict": "PASS",
+   "detail": {
+    "rendered_head": "[{\"op\": \"prompt\", \"text\": \"تقرير مساحة العمل M:/NEXUS-Test — عدد الملفات: 128. ا"
+   }
+  }
+ },
+ "cross_system": {
+  "plugins": {
+   "registry_present": true,
+   "generated_utc": "2026-11-19T23:47:48Z",
+   "loaded_total": 7,
+   "counts_by_type": {
+    "agent": 1,
+    "tool": 1,
+    "skill": 1,
+    "model": 1,
+    "mcp": 1,
+    "integration": 1,
+    "ui": 1
+   }
+  },
+  "realtime": {
+   "hb_present": true,
+   "hb_utc": "2026-11-20T12:58:51Z",
+   "hb_age_s": 9.7,
+   "hb_running": true,
+   "pid": 9408,
+   "channels_up": [
+    "control",
+    "events",
+    "files",
+    "screen"
+   ]
+  }
+ },
+ "integration": {
+  "verdict": "PASS",
+  "detail": {
+   "event_id": 13,
+   "roundtrip": true,
+   "stream_count": 1,
+   "cursor": 13
+  }
+ },
+ "verdict": "PASS",
+ "evidence_path": "M:\\NEXUS\\proofs\\phase31_skills.json",
+ "registry_counts": {
+  "total": 5,
+  "invalid": 0,
+  "executable": 3,
+  "render_only": 2,
+  "by_source": {
+   "imported": 1,
+   "created": 3,
+   "learned": 1
+  }
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "name": "text-summarize",
+ "version": "1.0.0",
+ "description": "قالب ملخص قابل لإعادة الاستخدام (§82 render-only)",
+ "inputs": {
+  "text": {
+   "type": "string",
+   "required": true,
+   "description": "النص المدخل"
+  },
+  "count": {
+   "type": "string",
+   "required": true,
+   "description": "عدد النقاط المطلوبة"
+  }
+ },
+ "tools": [],
+ "workflow": [
+  {
+   "op": "prompt",
+   "text": "لخص النص التالي في {{input.count}} نقاط مع الحفاظ على المصطلحات:\n\n{{input.text}}"
+  }
+ ],
+ "verification": "rendered_prompt_contains_inputs",
+ "source": "created",
+ "executable": false
+}

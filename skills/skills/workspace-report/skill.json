@@ -1,0 +1,27 @@
+{
+ "name": "workspace-report",
+ "version": "1.0.0",
+ "description": "تقرير حالة مساحة عمل بقالب ثابت (render-only)",
+ "inputs": {
+  "workspace": {
+   "type": "string",
+   "required": true,
+   "description": "مسار مساحة العمل"
+  },
+  "files_count": {
+   "type": "string",
+   "required": true,
+   "description": "عدد الملفات المرصودة"
+  }
+ },
+ "tools": [],
+ "workflow": [
+  {
+   "op": "prompt",
+   "text": "تقرير مساحة العمل {{input.workspace}} — عدد الملفات: {{input.files_count}}. التوصية: القرص يحكم — راجع المجلدات الكبيرة قبل أي حذف."
+  }
+ ],
+ "verification": "rendered_report_contains_markers",
+ "source": "created",
+ "executable": false
+}

@@ -1,0 +1,35 @@
+{
+ "name": "note-organizer",
+ "version": "1.0.0",
+ "description": "يحفظ ملاحظة داخل سجل تشغيل محصور مع فهرسة في journal",
+ "inputs": {
+  "title": {
+   "type": "string",
+   "required": true,
+   "description": "اسم الملاحظة (يُستخدم كاسم ملف)"
+  },
+  "body": {
+   "type": "string",
+   "required": true,
+   "description": "نص الملاحظة"
+  }
+ },
+ "tools": [
+  "write_note",
+  "append_journal"
+ ],
+ "workflow": [
+  {
+   "op": "write_note",
+   "name": "{{input.title}}.txt",
+   "text": "{{input.body}}"
+  },
+  {
+   "op": "append_journal",
+   "text": "note '{{input.title}}' filed"
+  }
+ ],
+ "verification": "outputs_hashed_and_files_exist_in_jail",
+ "source": "created",
+ "executable": true
+}

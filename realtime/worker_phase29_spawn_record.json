@@ -1,5 +1,36 @@
 {
- "triggered_utc": "2026-11-19T23:08:04Z",
- "pid": 13212,
- "hb_before": null
+ "triggered_utc": "2026-11-20T12:57:00Z",
+ "pid": 9408,
+ "hb_before": {
+  "utc": "2026-11-20T00:26:49Z",
+  "phase": 29,
+  "version": "0.29.0",
+  "pid": 13736,
+  "uptime_s": 3495.2,
+  "running": true,
+  "selftest": "done",
+  "gateway": "serving",
+  "channels": {
+   "control": {
+    "up": true,
+    "port": 9411,
+    "started_utc": "2026-11-19T23:28:34Z"
+   },
+   "events": {
+    "up": true,
+    "port": 9412,
+    "started_utc": "2026-11-19T23:28:37Z"
+   },
+   "screen": {
+    "up": true,
+    "port": 9413,
+    "started_utc": "2026-11-19T23:28:34Z"
+   },
+   "files": {
+    "up": true,
+    "port": 9414,
+    "started_utc": "2026-11-19T23:28:34Z"
+   }
+  }
+ }
 }

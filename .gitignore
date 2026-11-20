@@ -91,3 +91,9 @@ build/midpoint/dist/*
 
 # push-protection auto-exclusions
 /SESSION_RESUME.txt.bak
+
+# gh31 runtime-log guard
+realtime/logs/
+skills/runs/
+skills/worker_phase31.log
+_gh31_worker.log
